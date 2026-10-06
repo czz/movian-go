@@ -1,0 +1,1942 @@
+language: Japanese
+native: 日本語
+maintainer: Kyan_dudl 
+#
+# ./glwskins/flat/ctxmenu/default_details.view
+#
+id: Bookmark
+# Missing translation
+msg: 
+
+id: Bookmarked
+# Missing translation
+msg: 
+
+id: Copy to clipboard
+# Missing translation
+msg: 
+
+id: Copy to location...
+# Missing translation
+msg: 
+
+id: Delete
+msg: 削除
+
+id: Queue
+msg: キューに追加
+
+#
+# ./glwskins/flat/ctxmenu/plugin_details.view
+#
+id: Author:
+# Missing translation
+msg: 
+
+id: Available version:
+msg: 利用可能なバージョン:
+
+id: Changelog
+# Missing translation
+msg: 
+
+id: Install
+msg: インストール
+
+id: Installed version:
+# Missing translation
+msg: 
+
+id: Status:
+# Missing translation
+msg: 
+
+id: Uninstall
+msg: アンインストール
+
+id: Upgrade
+msg: アップグレード
+
+#
+# ./glwskins/flat/ctxmenu/video_details.view
+#
+id: Continue from %s
+msg: %s から再生
+
+id: Mark as seen
+msg: 再生済みにする
+
+id: Mark as unseen
+msg: 未再生にする
+
+id: Play from beginning
+msg: 最初から再生
+
+id: Play until end of list
+msg: リストを最後まで再生
+
+id: Video Cast
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/items/details/video.view
+#
+id: Season %d - Episode %d
+# Missing translation
+msg: 
+
+id: Seen %d times, %s
+# Missing plural translation for 'Seen %d times, %s' and 'Seen %d time, %s'
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwskins/flat/items/list/add.view
+#
+id: Add new entry
+msg: 新規作成
+
+#
+# ./glwskins/flat/items/list/bool.view
+#
+id: Off
+msg: オフ
+
+id: On
+msg: オン
+
+#
+# ./glwskins/flat/items/list/font.view
+#
+id: Condensed
+msg: コンデンス
+
+id: Subtitles
+msg: 字幕設定
+
+id: User interface
+msg: ユーザーインターフェース
+
+#
+# ./glwskins/flat/items/list/tvepisode.view
+#
+id: Episode %d - %s
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/loading.view
+#
+id: %d kb/s
+msg: %d kb/s
+
+id: Bitrate:
+msg: ビットレート:
+
+#
+# ./glwskins/flat/log.view
+#
+id: System log
+msg: システムログ
+
+#
+# ./glwskins/flat/mediainfo.view
+#
+id: A/V diff
+# Missing translation
+msg: 
+
+id: Audio bitrate
+# Missing translation
+msg: 
+
+id: Audio codec
+# Missing translation
+msg: 
+
+id: Audio packets
+# Missing translation
+msg: 
+
+id: Buffer usage
+# Missing translation
+msg: 
+
+id: No media loaded
+msg: No media loaded
+
+id: Remaining buffer
+# Missing translation
+msg: 
+
+id: Source
+# Missing translation
+msg: 
+
+id: Video bitrate
+# Missing translation
+msg: 
+
+id: Video codec
+# Missing translation
+msg: 
+
+id: Video framerate
+# Missing translation
+msg: 
+
+id: Video packets
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/menu/sidebar.view
+#
+id: Bookmark page
+# Missing translation
+msg: 
+
+id: Page settings
+# Missing translation
+msg: 
+
+id: Paste
+# Missing translation
+msg: 
+
+id: Reload page
+# Missing translation
+msg: 
+
+id: Remove bookmark
+# Missing translation
+msg: 
+
+id: Settings
+msg: 設定
+
+#
+# ./glwskins/flat/menu/sidebar_common.view
+#
+id: Activate sleep timer
+msg: スリープタイマーを有効にする
+
+id: Disable sleep timer
+msg: スリープタイマーを無効にする
+
+id: Exit %s
+msg: %sを終了する
+
+id: Hide media info
+# Missing translation
+msg: 
+
+id: Hide system info
+msg: システム情報を非表示にする
+
+id: Master volume
+msg: 主音量
+
+id: Show media info
+# Missing translation
+msg: 
+
+id: Show system info
+msg: システム情報を表示する
+
+id: Suspend
+msg: サスペンド
+
+id: Time until sleep
+msg: スリープまでの時間
+
+id: View log
+# Missing translation
+msg: 
+
+id: dB
+msg: dB
+
+id: min
+msg: min
+
+#
+# ./glwskins/flat/osd/osd_audio.view
+#
+id: Audio
+msg: オーディオ
+
+#
+# ./glwskins/flat/osd/osd_main.view
+#
+id: Audio settings
+msg: オーディオ設定
+
+id: Subtitle settings
+msg: 字幕設定
+
+id: Video settings
+msg: ビデオ設定
+
+#
+# ./glwskins/flat/osk.view
+#
+id: Default
+msg: デフォルト
+
+id: Keyboard layout:
+msg: キーボードレイアウト:
+
+#
+# ./glwskins/flat/pages/directory.view
+#
+id: Album
+msg: アルバム
+
+id: Artist
+msg: アーティスト
+
+id: Custom
+msg: カスタム
+
+id: Grid
+# Missing translation
+msg: 
+
+id: List
+msg: リスト
+
+id: Page layout
+# Missing translation
+msg: 
+
+id: Search results
+# Missing translation
+msg: 
+
+id: TV Season
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/empty.view
+#
+id: No contents
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/home.view
+#
+id: Dismiss
+msg: 消去
+
+id: Home
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/openerror.view
+#
+id: Unable to open resource
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/playqueue.view
+#
+id: Playqueue
+msg: キューを再生する
+
+#
+# ./glwskins/flat/pages/searchresults.view
+#
+id: Show more
+# Missing translation
+msg: 
+
+id: %d hits
+# Missing plural translation for '%d hits' and '%d hit'
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwskins/flat/pages/slideshow.view
+#
+id: Interval: %ds
+# Missing translation
+msg: 
+
+id: Play/Pause
+# Missing translation
+msg: 
+
+id: Stop
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/stpp.view
+#
+id: Remote control - %s
+# Missing translation
+msg: 
+
+id: Remote controlling %s
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/stppstpp.view
+#
+id: Nested remote controll is not supported
+# Missing translation
+msg: 
+
+id: Remote control
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/stppvideo.view
+#
+id: Audio tracks
+msg: オーディオトラック
+
+id: Audio volume adjustment: %d dB
+msg: オーディオ音量: %d dB
+
+id: CPU is too slow to decode this video
+msg: このビデオを再生するにはCPUのデコード速度が遅すぎます。
+
+id: Next
+# Missing translation
+msg: 
+
+id: Previous
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/tvseason.view
+#
+id: Season %d
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/upgrade.view
+#
+id: %s is up to date
+msg: %s は最新です。
+
+id: An error occured during download
+msg: ダウンロード中にエラーが発生しました。
+
+id: Changelog for %s releases
+msg: %s のアップデート内容
+
+id: Check for updates now
+msg: 最新のアップデートを確認する
+
+id: Checking for updates
+# Missing translation
+msg: 
+
+id: Current version:
+msg: 現在のバージョン:
+
+id: Download and install
+# Missing translation
+msg: 
+
+id: Downloading %s
+msg: ダウンロード中 %s
+
+id: New version %s is available for download
+msg: %s の最新版をダウンロードできます。
+
+id: No upgrade available
+msg: 更新はありません。
+
+id: Retry
+# Missing translation
+msg: 
+
+id: Stable
+msg: Stable
+
+id: Testing
+msg: Testing
+
+id: Unable to query for new version
+msg: 最新のバージョンが確認できません。
+
+#
+# ./glwskins/flat/popups/auth.view
+#
+id: Domain
+msg: ドメイン
+
+id: Password
+msg: パスワード
+
+id: Remember me
+msg: Remember me
+
+id: Username
+msg: ユーザーネーム
+
+#
+# ./glwskins/flat/popups/common.view
+#
+id: Cancel
+msg: 中止
+
+id: Ok
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/filepicker.view
+#
+id: Back
+# Missing translation
+msg: 
+
+id: Close
+# Missing translation
+msg: 
+
+id: Folder select mode, press right to open subfolder
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/resume.view
+#
+id: No, Start over
+msg: 始めから再生
+
+id: Resume from %s
+# Missing translation
+msg: 
+
+id: Yes
+msg: はい
+
+#
+# ./glwskins/flat/popups/textDialog.view
+#
+id: OK
+msg: OK
+
+#
+# ./glwskins/flat/sysinfo.view
+#
+id: CPU Temp
+msg: CPU温度
+
+id: Connected
+# Missing translation
+msg: 
+
+id: Fragmentation
+msg: フラグメンテーション
+
+id: Framerate
+# Missing translation
+msg: 
+
+id: GPU Temp
+msg: GPU温度
+
+id: HDD Avail
+msg: HDD空き容量
+
+id: IP Address
+# Missing translation
+msg: 
+
+id: Inactive memory
+# Missing translation
+msg: 
+
+id: Memory usage
+msg: メモリ使用量
+
+id: Network
+# Missing translation
+msg: 
+
+id: Not available
+# Missing translation
+msg: 
+
+id: System Free
+msg: システム空き容量
+
+id: System Total
+msg: システム容量
+
+id: VM Page In/Out
+# Missing translation
+msg: 
+
+id: Version
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/universe.view
+#
+id: Audio muted
+msg: ミュート
+
+id: Copying %d files
+# Missing translation
+msg: 
+
+id: Master volume: %d dB
+msg: 主音量: %d dB
+
+id: Overscan adjustment\nPosition border at screen edges
+# Missing translation
+msg: 
+
+#
+# ./src/api/stpp.c
+#
+id: Allow remote control
+# Missing translation
+msg: 
+
+id: Device not available
+# Missing translation
+msg: 
+
+id: Movians for remote control
+# Missing translation
+msg: 
+
+#
+# ./src/api/tmdb.c
+#
+id: Language (ISO 639-1 code)
+msg: 使用言語(ISO 639-1 コード)
+
+id: Use original title
+msg: 元のタイトルを使用
+
+#
+# ./src/arch/android/android.c
+#
+id: Android Storage
+msg: アンドロイド端末
+
+#
+# ./src/arch/linux/pulseaudio.c
+#
+id: Unable to initialize audio system %s -- %s
+msg: オーディオシステムを初期化できません。 %s -- %s
+
+#
+# ./src/arch/ps3/ps3_main.c
+#
+id: System is low on memory (%d kB RAM available)
+msg: システムメモリが少なくなっています。 (%d kB RAM 利用可能です。)
+
+#
+# ./src/arch/ps3/ps3_vdec.c
+#
+id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
+msg: Cell-h264: このコンテンツはPS3のハードウェアデコーダーと互換性がありません。アクセラレーションを無効化します。
+
+id: Cell-h264: Broken headers, Disabling acceleration
+msg: Cell-h264: データが壊れています。アクセラレーションを無効化します。
+
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: レベル %d のコンテンツにレベル 4.2 を強制します。このコンテンツ %d は正しく再生されない可能性があります。
+
+id: Unable to accelerate %s, library not loaded.
+msg: %s にアクセラレーターが適用できません。ライブラリはロードされません。
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Cellコーデックが開けません。 エラー 0x%x
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Cellコーデックが開けません。RAMに %d バイト割り当てできません。
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Cellコーデックが照会できません。 エラー 0x%x
+
+#
+# ./src/arch/rpi/rpi_audio.c
+#
+id: 8 Channel PCM
+msg: 8ch PCM
+
+id: AC3 Pass-Through
+msg: AC3パススルー
+
+id: Analog
+msg: アナログ
+
+id: Audio output port
+msg: 音声出力
+
+id: Autodetect
+msg: 自動検出
+
+id: DTS Pass-Through
+msg: DTSパススルー
+
+id: HDMI
+msg: HDMI
+
+#
+# ./src/arch/rpi/rpi_tv.c
+#
+id: Match display and content framerate
+msg: ディスプレイとコンテンツのフレームレートを一致
+
+#
+# ./src/audio2/audio.c
+#
+id: Audio delay
+msg: オーディオディレイ
+
+id: Audio gain
+msg: オーディオゲイン
+
+id: Setup audio output
+msg: 音声出力について設定します。
+
+id: Video playback
+msg: ビデオ再生設定
+
+#
+# ./src/audio2/audio_test.c
+#
+id: 440Hz sinewave -12dB
+msg: 440Hz サイン波 -12dB
+
+id: Audio test
+msg: オーディオテスト
+
+id: Center
+msg: センター
+
+id: Front Left
+msg: フロントL
+
+id: Front Right
+msg: フロントR
+
+id: LFE
+msg: サブウーファー
+
+id: Pink noise
+msg: ピンクノイズ
+
+id: Play test signal
+msg: テスト信号を再生する
+
+id: Rear Left
+msg: リアL
+
+id: Rear Right
+msg: リアR
+
+id: Speaker position
+msg: スピーカーポジション
+
+id: Surround Left
+msg: サラウンドL
+
+id: Surround Right
+msg: サラウンドR
+
+id: Test signal type
+msg: テスト信号の種類を選択
+
+#
+# ./src/backend/bittorrent/bt_backend.c
+#
+id: No files in torrent
+msg: トレントにファイルがありません。
+
+id: Unable to open torrent: %s
+msg: トレントが開けません。: %s
+
+#
+# ./src/backend/bittorrent/diskio.c
+#
+id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
+msg: %d MB をトレントのキャッシュに使用します。許容量: %d MB / 空き容量: %d MB
+
+#
+# ./src/backend/bittorrent/fa_torrent.c
+#
+id: Connected peers
+msg: 接続中のピア
+
+id: Known peers
+msg: 既知のピア
+
+id: Receiving from
+msg: 受信中...
+
+id: Torrent leechers
+msg: リーチャー
+
+id: Torrent seeders
+msg: シーダー
+
+#
+# ./src/backend/bittorrent/torrent_settings.c
+#
+id: BitTorrent
+msg: ビットトレント
+
+id: Clear cache
+msg: キャッシュをクリアする
+
+id: Enable bittorrent
+msg: ビットトレントを有効化
+
+id: Max upload speed
+msg: 最大アップロード速度
+
+id: Max usage of free space for caching torrents
+msg: トレントキャッシュの最大使用量
+
+id: Status
+msg: ステータス
+
+id: Torrent cache path
+msg: トレントキャッシュのパス
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+msg: DVD
+
+id: DVD read error, restarting disc
+msg: DVDの読込に失敗しました。ディスクを再度読み込みます。
+
+#
+# ./src/backend/hls/hls.c
+#
+id: Primary
+msg: プライマリー
+
+id: Supplementary
+msg: サプリメンタリ
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Channels
+msg: チャンネル
+
+id: Invalid HTSP URL
+msg: 無効なHTSP URLです。
+
+id: No such channel
+msg: チャンネルがありません。
+
+id: Recorded shows
+msg: 録画
+
+id: Recorder
+msg: レコーダー
+
+#
+# ./src/backend/playlist.c
+#
+id: Unable to open playlist
+# Missing translation
+msg: 
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: 検索
+
+id: Search result for: %s
+msg: 検索結果: %s
+
+#
+# ./src/backend/slideshow/slideshow.c
+#
+id: 3 seconds
+msg: 3 秒
+
+id: 5 seconds
+msg: 5 秒
+
+id: 7 seconds
+msg: 7 秒
+
+id: Slideshow speed
+msg: スライドショーの速さ
+
+#
+# ./src/blobcache_file.c
+#
+id: Cache cleared
+msg: キャッシュのクリア
+
+id: Clear cached files
+msg: キャッシュファイルを空にする
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: コンテンツタイプ%dを処理できません。
+
+id: Checking file contents
+msg: ファイル内容を確認します。
+
+id: Invalid URL from redirect
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+msg: ファイルを開けません。: %s
+
+#
+# ./src/fileaccess/fa_filepicker.c
+#
+id: Select a file
+msg: ファイルを選択
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Unix locatedb を使用して検索
+
+#
+# ./src/fileaccess/fa_scanner.c
+#
+id: Deleted %s
+msg: %s を削除しました。
+
+id: Filename
+msg: ファイル名順
+
+id: Include in library
+# Missing translation
+msg: 
+
+id: Newest first
+msg: 作成日時順(降順)
+
+id: Oldest first
+msg: 作成日時順(昇順)
+
+id: Show only supported files
+msg: 再生可能なファイルのみを表示する
+
+id: Sort folders first
+msg: フォルダを優先しソートする
+
+id: Sort on
+msg: 並べかえ
+
+id: Unable to delete %s\n%s
+msg: %s を削除できません。\n%s
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: spotlightで検索
+
+#
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+msg: 本当に削除しますか？:
+
+id: Browse archives as folders
+msg: フォルダとアーカイブを閲覧する
+
+id: Enable file deletion from item menu
+msg: ファイルの削除を有効にする
+
+id: Show filename extensions
+msg: ファイルの拡張子を表示する
+
+id: Store per-file settings in filesystem
+msg: システム内のファイルごとに設定を保存する
+
+id: %d archive parts
+msg[0]: %d アーカイブ
+msg[1]: %d アーカイブ
+
+id: %d directories
+msg[0]: %d ディレクトリ
+msg[1]: %d ディレクトリ
+
+id: %d files
+msg[0]: %d ファイル
+msg[1]: %d ファイル
+
+#
+# ./src/fileaccess/smb/fa_nativesmb.c
+#
+id: Access denied
+msg: アクセスが拒否されました。
+
+id: Account restricted
+msg: アカウントが制限されています。
+
+id: Bad network share name
+msg: 不正なネットワーク共有名です。
+
+id: Logon failure
+msg: ログオンに失敗しました。
+
+id: Object name not found
+msg: オブジェクトが見つかりません。
+
+#
+# ./src/i18n.c
+#
+id: 12 Hour
+msg: 12 時間
+
+id: 24 Hour
+msg: 24 時間
+
+id: Default character set
+msg: デフォルト文字コード
+
+id: Ignore 'The' at beginning of words when sorting
+msg: ファイル名順のソート時に'The'を無視する
+
+id: Language
+msg: 表示言語
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: 言語コードは eng, swe, fra のように、3文字のISOコードで設定する必要があります。
+
+id: Languages
+msg: 言語設定
+
+id: Preferred languages
+msg: 使用する言語について設定します。
+
+id: Primary audio language code
+msg: プライマリオーディオの言語コード
+
+id: Primary subtitle language code
+msg: プライマリ字幕の言語コード
+
+id: Secondary audio language code
+msg: セカンダリオーディオの言語コード
+
+id: Secondary subtitle language code
+msg: セカンダリ字幕の言語コード
+
+id: System default
+msg: システム初期設定
+
+id: Tertiary audio language code
+msg: ターシャリオーディオの言語コード
+
+id: Tertiary subtitle language code
+msg: ターシャリ字幕の言語コード
+
+id: Time format
+msg: 時刻表時
+
+id: Timezone
+msg: タイムゾーン
+
+#
+# ./src/ipc/libcec.c
+#
+id: Longpress SELECT for item menu
+msg: セレクト長押しでアイテムメニューへ移動
+
+id: Switch TV input source
+msg: TV入力ソースを切り替える
+
+id: Use STOP key for combo input
+msg: 停止キーを設定
+
+#
+# ./src/keyring.c
+#
+id: Forget remembered passwords
+msg: 保存したパスワードを消去
+
+id: Rembered passwords erased
+msg: パスワードを消去しました。
+
+#
+# ./src/media/media_settings.c
+#
+id: Align on video frame
+msg: ビデオフレームを基準にアライメント
+
+id: Audio volume
+msg: 音量調整
+
+id: Delay
+msg: ディレイ
+
+id: Go to standby after video ends
+msg: 再生終了後にスタンバイモードへ移行
+
+id: Horizontal pan
+msg: 水平位置調整
+
+id: Horizontal position
+msg: 位置(水平方向)
+
+id: Horizontal scale
+msg: サイズ(水平方向)
+
+id: Reset defaults for folder '%s'
+msg: フォルダ'%s'の設定をデフォルトに戻す
+
+id: Save as defaults for folder '%s'
+msg: フォルダ'%s'の設定をデフォルトとして保存
+
+id: Save as global default
+msg: デフォルトとして保存する
+
+id: Scaling
+msg: スケーリング
+
+id: Stretch video to fullscreen
+msg: フルスクリーン表示を有効化
+
+id: Stretch video to widescreen
+msg: ワイドスクリーン表示を有効化
+
+id: Vertical pan
+msg: 垂直位置調整
+
+id: Vertical position
+msg: 位置(垂直方向)
+
+id: Vertical scale
+msg: サイズ(垂直方向)
+
+id: Video frame interpolation
+msg: フレーム補間を有効にする
+
+id: Video zoom
+msg: ズーム設定
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+msg: 索引
+
+#
+# ./src/metadata/decoration.c
+#
+id: Automatic
+msg: 自動
+
+id: Erase all playback info
+msg: すべての再生情報を削除する
+
+id: Manual
+msg: 手動
+
+id: Mark all as seen
+msg: すべて再生済みにする
+
+id: Mark all as unseen
+msg: すべて未再生にする
+
+id: Metadata mode
+msg: メタデータモード
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+msg: Embedded in file
+
+id: Track %d
+msg: トラック %d
+
+#
+# ./src/metadata/metadata_sources.c
+#
+id: Enabled
+msg: 有効にする
+
+id: Metadata
+msg: メタデータ設定
+
+id: Metadata configuration and provider settings
+msg: メタデータのプロバイダについて設定します。
+
+id: Providers for Music
+msg: ミュージックプロバイダ
+
+id: Providers for Video
+msg: ビデオプロバイダ
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: %d を削除しました。
+
+id: Clear all metadata
+msg: すべてのメタデータを削除する
+
+id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
+msg: この作業を実行すると、themoviedb.org などの外部ソースから保存されたキャッシュを含め<b>全ての</b>メタデータを失います。\n\nコンテンツのレジューム位置や再生回数などの情報は維持されます。\n削除してもよろしいですか?
+
+#
+# ./src/metadata/mlp.c
+#
+id: Custom search query
+msg: 検索クエリを設定する
+
+id: Custom title
+msg: タイトルを変更する
+
+id: IMDb ID
+msg: IMDb ID
+
+id: Metadata loaded from <b>%s</b> based on %s
+msg: メタデータを読み込んでいます。 <b>%s</b> based on %s
+
+id: Metadata source
+msg: メタデータのソース
+
+id: Movie
+msg: ムービー
+
+id: Movie title
+msg: 動画タイトル
+
+id: No data found
+msg: データが見つかりません。
+
+id: None
+msg: None
+
+id: Refresh metadata
+msg: メタデータの再読み込み
+
+id: Title, Season, Episode
+msg: タイトル、シーズン、エピソード
+
+id: custom IMDb ID
+msg: IMDb IDを編集
+
+id: custom query
+msg: クエリを編集
+
+id: filename
+msg: ファイル名
+
+id: filename as TV episode
+msg: TVシリーズ名
+
+id: folder name
+msg: フォルダ名
+
+#
+# ./src/navigator.c
+#
+id: Add and remove items on homepage
+msg: ホームにブックマークを登録 / 削除します。
+
+id: Added %s to home page
+msg: ホームページに　%s　を追加
+
+id: Added new bookmark: %s
+msg: 新規ブックマークを追加: %s
+
+id: Bookmarks
+msg: ブックマーク設定
+
+id: Icon
+msg: アイコン
+
+id: Music
+msg: ミュージック
+
+id: No handler for URL
+msg: URL向けのハンドラがありません。
+
+id: Other
+msg: その他
+
+id: Photos
+msg: フォト
+
+id: Removed %s from homepage
+msg: ホームページから %s を削除
+
+id: Removed bookmark: %s
+msg: ブックマークを削除: %s
+
+id: TV
+msg: TV
+
+id: Title
+msg: タイトル
+
+id: Type
+msg: 種類
+
+id: URL
+msg: URL
+
+id: Video
+msg: ビデオ
+
+#
+# ./src/networking/connman.c
+#
+id: Enable Wi-Fi
+msg: Wi-Fiを有効にする
+
+id: Network connections
+msg: ネットワーク接続
+
+#
+# ./src/networking/ftp_server.c
+#
+id: Enable FTP server
+msg: FTPサーバーを有効化する
+
+id: FTP server
+msg: FTPサーバー設定
+
+id: Server TCP port
+msg: TCPポート
+
+#
+# ./src/networking/http_server.c
+#
+id: Power Off
+# Missing translation
+msg: 
+
+id: Rebooting
+# Missing translation
+msg: 
+
+id: Restarting
+# Missing translation
+msg: 
+
+id: Standby
+msg: スタンバイ
+
+#
+# ./src/notifications.c
+#
+id: Show news on home screen
+# Missing translation
+msg: 
+
+#
+# ./src/plugins.c
+#
+id: Alternate plugin Repository URL
+msg: プラグインリポジトリのURL
+
+id: Audio decoders
+# Missing translation
+msg: 
+
+id: Auto install plugins on demand
+# Missing translation
+msg: 
+
+id: Auto installed plugin %s (Version %s)
+# Missing translation
+msg: 
+
+id: Automatically upgrade plugins
+msg: プラグイン自動アップグレードを有効にする
+
+id: Available plugins
+msg: 利用可能なプラグイン
+
+id: Background
+msg: 背景
+
+id: Beta testing passwords
+msg: ベータテストパスワード
+
+id: Browse available plugins
+msg: 利用可能なプラグインを表示する
+
+id: Browsing
+msg: 情報表示設定
+
+id: Cloud services
+msg: クラウドサービス
+
+id: Corrupt plugin bundle
+msg: プラグイン・バンドルが破損しています。
+
+id: Custom backgrounds can now be set in Settings -> Look and Feel
+msg: 壁紙は設定から変更が可能です。 -> ルックアンドフィール
+
+id: Disk write error
+msg: 書き込み中にエラーが発生しました。
+
+id: Downloading
+msg: ダウンロード中
+
+id: File open error
+msg: ファイルを開けません。
+
+id: Home page
+msg: ホームページ
+
+id: Images
+msg: 画像
+
+id: Installed
+# Missing translation
+msg: 
+
+id: Installed plugins
+msg: インストール済みのプラグイン
+
+id: Installed version higher than available
+msg: 利用可能なバージョンより新しいバージョンがインストールされています。
+
+id: Installing
+msg: インストール中
+
+id: List of albums
+msg: アルバムリスト
+
+id: Loading screen
+msg: ロード画面
+
+id: Movies
+msg: ムービー
+
+id: Music streaming
+msg: 音楽ストリーミング
+
+id: Not installable
+msg: インストールできません。
+
+id: Not installed
+msg: インストールされていません。
+
+id: Not upgradable
+msg: アップグレードできません。
+
+id: On Screen Keyboards
+msg: ソフトウェアキーボード
+
+id: Online TV
+msg: オンラインTV
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+msg: プラグイン %s %s は問題を引き起こす可能性があるためアンインストールされました。\n手動で別のバージョンをインストールしてください。
+
+id: Plugin %s has been uninstalled - %s
+msg: プラグイン %s はアンインストールされています。 - %s
+
+id: Plugin categories
+msg: プラグインのカテゴリー
+
+id: Plugins
+msg: プラグイン設定
+
+id: Preferred views from plugins
+msg: プラグイン表示設定
+
+id: Screen saver
+msg: スクリーンセーバー
+
+id: TV channels
+msg: TVチャンネル
+
+id: Unable to load plugin.json: %s
+msg: plugin.jsonを読み込めません。: %s
+
+id: Unable to load plugin.json: Malformed JSON
+msg: plugin.jsonを読み込めません。: JSON形式が不正です。
+
+id: Uncategorized
+msg: 未分類
+
+id: Up to date
+msg: 最新バージョン
+
+id: Upgradable
+msg: アップグレード
+
+id: Upgraded plugin %s to version %s
+msg: %s プラグインはバージョン %s へ更新されました。
+
+id: User interface extensions
+msg: ユーザーインターフェース
+
+id: Version %s is no longer compatible with Movian
+msg: バージョン %s はMovianと互換性がありません。
+
+id: Video streaming
+msg: ビデオストリーミング
+
+#
+# ./src/prop/prop_proxy.c
+#
+id: Remote exited
+# Missing translation
+msg: 
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: 自動電源オフ 設定時間
+
+id: Enable SSH server
+msg: SSHサーバーを有効にする
+
+id: Logout
+msg: ログアウト
+
+id: Open shell
+msg: shellを開く
+
+id: Power off system
+msg: システムの電源を切る
+
+id: Quit
+msg: 終了
+
+id: SSH server
+msg: SSHサーバー
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled on home screen
+msg: ホームに表示する
+
+id: Name
+msg: 名前
+
+#
+# ./src/service.c
+#
+id: Local network
+msg: ローカルネットワーク
+
+id: Remove from homepage
+# Missing translation
+msg: 
+
+#
+# ./src/settings.c
+#
+id: About
+msg: About
+
+id: Applications and installed plugins
+msg: アプリケーションとインストール済みのプラグイン
+
+id: Configure communications with your TV
+msg: テレビとの通信設定
+
+id: Developer settings
+msg: 開発者向け設定
+
+id: Discovered media sources
+msg: 接続中のデバイス
+
+id: File browsing
+msg: ファイルブラウザ設定
+
+id: Fonts and user interface styling
+msg: フォントやインターフェースなどスタイリングに関する設定です。
+
+id: General
+msg: 一般設定
+
+id: Global settings
+msg: 設定
+
+id: Look and feel
+msg: インターフェース設定
+
+id: Network services, etc
+msg: ネットワークサービスなどを設定します。
+
+id: Network settings
+msg: ネットワーク設定
+
+id: Reset
+# Missing translation
+msg: 
+
+id: Settings useful for developers
+msg: 開発者向けオプション
+
+id: Software upgrade
+msg: ソフトウェアアップグレード
+
+id: Starting and stopping
+msg: 起動 / 終了設定
+
+id: System name
+msg: 機器名称
+
+id: System related settings
+msg: システム全般の設定をします。
+
+id: TV Control
+msg: TVコントロール
+
+#
+# ./src/subtitles/subtitles.c
+#
+id: Any subtitle in central folder
+msg: 字幕フォルダの全ての字幕
+
+id: Any subtitle in same folder as video
+msg: ビデオと同じフォルダ内の全ての字幕
+
+id: Auto
+msg: 自動
+
+id: Automatically select from this source
+msg: ソースから字幕を自動選択する
+
+id: Central subtitle folder
+msg: 字幕フォルダ設定
+
+id: Color
+msg: 字幕色
+
+id: External file
+msg: 外部ファイル
+
+id: Force subtitles to reside on video frame
+msg: 字幕を常に表示する
+
+id: Generic settings for video subtitles
+msg: 字幕の各種設定をします。
+
+id: Ignore embedded styling
+msg: スタイルの組み込みを無視する
+
+id: Left
+msg: 左
+
+id: Outline color
+msg: アウトラインの色
+
+id: Outline size
+msg: アウトラインのサイズ
+
+id: Path to central folder
+msg: メイン字幕フォルダのパス
+
+id: Providers for Subtitles
+msg: 字幕プロバイダ設定
+
+id: Right
+msg: 右
+
+id: Shadow color
+msg: ドロップシャドウの色
+
+id: Shadow offset
+msg: ドロップシャドウのオフセット
+
+id: Subtitle horizontal displacement
+msg: 字幕の位置を調整(水平方向)
+
+id: Subtitle position
+msg: 字幕の位置
+
+id: Subtitle size
+msg: 字幕のサイズ
+
+id: Subtitle size and positioning
+msg: 字幕のサイズと位置設定
+
+id: Subtitle vertical displacement
+msg: 字幕の位置を調整(垂直方向)
+
+id: Subtitles embedded in video file
+msg: ビデオに字幕を埋め込む
+
+id: Subtitles with matching filename in central folder
+msg: 字幕フォルダ内にある同じファイル名の字幕
+
+id: Subtitles with matching filename in same folder as video
+msg: ビデオと同じフォルダ内にある同じファイル名の字幕
+
+#
+# ./src/text/fontstash.c
+#
+id: Defaults
+msg: デフォルト
+
+id: Fonts
+msg: フォント設定
+
+id: Installed fonts
+msg: インストール済みのフォント
+
+id: Narrow text
+msg: ナローテキスト
+
+id: Reset main font to default
+msg: メインフォントをデフォルトに戻す
+
+id: Reset narrow font to default
+msg: ナローフォントをデフォルトに戻す
+
+id: Reset subtitle font to default
+msg: 字幕用フォントをデフォルトに戻す
+
+id: Unable to install font: %s
+msg: %s フォントはインストールできません。
+
+id: Use font %s for
+msg: %s フォントを使用してください。: 
+
+#
+# ./src/ui/clipboard.c
+#
+id: Copy failed: %s
+# Missing translation
+msg: 
+
+id: Target folder
+# Missing translation
+msg: 
+
+#
+# ./src/ui/glw/glw_ps3.c
+#
+id: Dual-Shock Remote
+msg: デュアルショックリモート
+
+id: No
+msg: いいえ
+
+id: Seek using L2 and R2 button
+msg: L2 / R2 ボタンをシークに割り当てる
+
+id: Yes with Select button
+msg: はい (w/セレクトボタン)
+
+#
+# ./src/ui/glw/glw_settings.c
+#
+id: Custom background image
+msg: 壁紙の変更
+
+id: Emulate Up/Down buttons with mouse wheel
+msg: Up/Down ボタンをマウスホイールに割り当てる
+
+id: Folder for screensaver images
+msg: スクリーンセーバーの参照フォルダ
+
+id: Font and icon size
+msg: フォントとアイコンのサイズを変更
+
+id: Interface horizontal shrink
+msg: インターフェースを横方向に縮小
+
+id: Interface vertical shrink
+msg: インターフェースを縦方向に縮小
+
+id: Screensaver
+msg: スクリーンセーバー
+
+id: Screensaver delay
+msg: スクリーンセーバーが起動するまでの時間
+
+id: Seconds per image
+# Missing translation
+msg: 
+
+id: Use Bing images of the day
+msg: Bingのトップ写真を使う
+
+id: Wrap when reaching beginning/end of lists
+msg: リストの先頭 / 最後尾をループさせる
+
+#
+# ./src/ui/glw/glw_view_eval.c
+#
+id: %d days ago
+msg: %d 日前
+
+id: %d hours ago
+msg: %d 時間前
+
+id: %d minutes ago
+msg: %d 分前
+
+id: %d months ago
+msg: %d ヶ月前
+
+id: %d weeks ago
+msg: %d 週間前
+
+id: %d years ago
+msg: %d 年前
+
+id: Just now
+msg: 現在
+
+id: One day ago
+msg: 昨日
+
+id: One hour ago
+msg: 1 時間前
+
+id: One minute ago
+msg: 1 分前
+
+id: One month ago
+msg: 1 ヶ月前
+
+#
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: 現在のモードに自動的に切り替える
+
+id: DVI-Video color range
+msg: DVI-Videoカラーレンジ
+
+id: Switch to this mode now
+msg: このモードに切り替える
+
+id: Video modes
+msg: ビデオのモード
+
+#
+# ./src/upgrade.c
+#
+id: %s version %s is available
+msg: %s バージョン %s が利用可能です。
+
+id: Notify about upgrades
+msg: アップグレード通知を受け取る
+
+id: Open download page
+msg: ダウンロードページを開く
+
+id: System
+msg: システム
+
+id: Upgrade to releases from
+msg: 適用するアップグレードのバージョン
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Date (newest first)
+msg: 作成日時順(降順)
+
+id: Date (oldest first)
+msg: 作成日時順(昇順)
+
+id: Device not found
+msg: デバイスがありません。
+
+id: Malformed URI after device
+msg: デバイス以降のURIが無効です。
+
+id: Malformed URI after service
+msg: サービス以降のURIが無効です。
+
+id: Service not found
+msg: サービスがありません。
+
+#
+# ./src/video/video_settings.c
+#
+id: Always
+msg: 有効
+
+id: Ask
+msg: 再生時に確認
+
+id: Automatically play next video in list
+msg: リスト連続再生を有効化する
+
+id: Count video as played when reaching
+msg: 再生済みをカウントする位置
+
+id: Enable VDPAU
+msg: VDPAUを有効にする
+
+id: Hardware accelerated decoding
+msg: ハードウェアアクセラレーションを有効化
+
+id: Maximum resolution for deinterlacer
+msg: デインターレース時の最大解像度
+
+id: Never
+msg: 無効
+
+id: No limit
+msg: 無制限
+
+id: Per-file volume
+msg: Per-fileボリューム
+
+id: Preferred VDPAU deinterlacer method
+msg: VDPAUデインターレース方式設定
+
+id: Resume video playback
+msg: リジューム再生設定
+
+id: Show clock during playback
+msg: 再生中にクロックを表示
+
+id: Step when seeking backward
+msg: 巻き戻しシーク
+
+id: Step when seeking forward
+msg: 早送りシーク
+
+id: Temporal
+msg: 時間解像度
+
+id: Temporal/Spatial
+msg: 時間解像度 / 空間解像度
+
+id: Up / Down during video playback controls
+msg: ビデオ再生中の音量調整
+
+id: Video acceleration and display behaviour
+msg: アクセラレーションとディスプレイ表示の設定をします。
+
+id: Video buffer size
+# Missing translation
+msg: 
+

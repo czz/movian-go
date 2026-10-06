@@ -1,0 +1,14 @@
+prefix=/tmp/movian-go/ffmpeg/windows/386
+exec_prefix=${prefix}
+libdir=/tmp/movian-go/ffmpeg/windows/386/lib
+includedir=/tmp/movian-go/ffmpeg/windows/386/include
+
+Name: libavutil
+Description: FFmpeg utility library
+Version: 61.1.101
+Requires: 
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavutil -lm -lz -luser32 -lbcrypt -latomic
+Libs.private: 
+Cflags: -I${includedir}

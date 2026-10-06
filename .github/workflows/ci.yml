@@ -1,0 +1,451 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+# A new push on the same ref cancels the still-running previous run —
+# avoids paying CI minutes for superseded commits.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # FFmpeg 9 is vendored under ffmpeg/ (tracked) — no system
+      # libavcodec-dev needed. The static archives still reference
+      # host X11/va/vulkan/asound libs, so those -dev packages
+      # are required, plus pkg-config deps: glfw3, freetype2,
+      # wayland-client.
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglfw3-dev libgl1-mesa-dev libegl-dev \
+            libfreetype-dev libwayland-dev libasound2-dev \
+            libva-dev libvulkan-dev libx11-dev libdrm-dev \
+            zlib1g-dev libbz2-dev liblzma-dev \
+            cmake unzip wayland-protocols libwayland-bin libxkbcommon-dev \
+            libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
+            libglib2.0-dev
+
+      # Ubuntu ships glfw 3.3 (X11-only, no glfwGetPlatform) — build the
+      # vendored static 3.4 and shadow-install under /usr/local so every
+      # pkg-config/go/vet/lint invocation sees it without env plumbing.
+      - name: Cache vendored GLFW 3.4
+        uses: actions/cache@v4
+        with:
+          path: third_party/glfw/linux
+          key: glfw-linux-${{ hashFiles('scripts/build_glfw_linux.sh', 'scripts/deps.env') }}
+
+      - name: Build + install vendored GLFW 3.4
+        run: |
+          ./scripts/build_glfw_linux.sh
+          sudo mkdir -p /usr/local/lib/pkgconfig /usr/local/include
+          sudo cp -a third_party/glfw/linux/include/GLFW /usr/local/include/
+          sudo cp third_party/glfw/linux/lib/libglfw3.a /usr/local/lib/
+          sudo cp third_party/glfw/linux/lib/pkgconfig/glfw3.pc /usr/local/lib/pkgconfig/
+
+      # ffmpeg/lib/*.a are no longer tracked — rebuild from the
+      # verified tarball (deps.env SHA-256), cached across runs.
+      - name: Cache vendored FFmpeg build
+        uses: actions/cache@v4
+        with:
+          path: ffmpeg/lib
+          key: ffmpeg-${{ runner.os }}-${{ hashFiles('scripts/deps.env', 'scripts/build_ffmpeg.sh', 'ffmpeg/patches') }}
+
+      - name: Build vendored FFmpeg
+        run: |
+          sudo apt-get install -y nasm
+          ./scripts/build_ffmpeg.sh
+
+      - name: Build
+        run: go build -tags glfw -v ./cmd/movian-go
+
+      - name: Build all packages
+        run: go build -tags glfw -v ./...
+
+      # CEF binary dists (official CDN, SHA-1 verified) → cef.pc per
+      # platform so '#cgo pkg-config: cef' resolves. No CEF builds
+      # exist for android or linux-armv6 — webpopup is a stub there.
+      - name: Cache CEF distributions
+        uses: actions/cache@v4
+        with:
+          path: |
+            third_party/cef
+            .deps
+          key: cef-${{ hashFiles('scripts/fetch_cef.sh') }}
+
+      - name: Fetch CEF (linux64 + windows64 + windows32)
+        run: |
+          ./scripts/fetch_cef.sh linux64
+          ./scripts/fetch_cef.sh windows64
+          ./scripts/fetch_cef.sh windows32
+
+      # Windows zlib/glfw/libxml2 + FFmpeg cross-libs (regenerable,
+      # cached — headers are tracked, the .a libs are not).
+      - name: Cache Windows third-party deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            third_party/zlib/windows
+            third_party/glfw/windows
+            third_party/libxml2/windows
+            ffmpeg/windows/amd64/lib
+            ffmpeg/windows/386/lib
+          key: windeps-${{ hashFiles('scripts/build_windows_deps.sh', 'scripts/build_ffmpeg_windows.sh', 'ffmpeg/patches') }}
+
+      # Compile every build-tag-gated variant — plain 'go build ./...'
+      # skips glfw/windows/android files (CPtr() seams regressed once).
+      # PKG_CONFIG_PATH=linux64 cef dist → CEF=cef → the linux
+      # x11/wayland x cef x cec matrix compiles against real CEF
+      # headers. ANDROID_NDK preinstalled on the ubuntu image.
+      - name: Check all build-tag variants
+        run: |
+          sudo apt-get install -y gcc-mingw-w64-x86-64 gcc-mingw-w64-i686
+          [ -f third_party/zlib/windows/amd64/lib/libz.a ] || ./scripts/build_windows_deps.sh amd64
+          [ -f third_party/zlib/windows/386/lib/libz.a ] || ./scripts/build_windows_deps.sh 386
+          [ -f ffmpeg/windows/amd64/lib/libavcodec.a ] || ./scripts/build_ffmpeg_windows.sh amd64
+          [ -f ffmpeg/windows/386/lib/libavcodec.a ] || ./scripts/build_ffmpeg_windows.sh 386
+          PKG_CONFIG_PATH=$PWD/third_party/cef/linux64 \
+          ANDROID_NDK=$ANDROID_NDK_HOME \
+            make check-all-tags
+
+      # Real Windows exes — 64-bit and 32-bit, webpopup+cef via the
+      # matching-arch CEF dist (libcef.lib resolves -lcef in mingw).
+      - name: Build windows amd64 (webpopup+cef)
+        run: PKG_CONFIG_PATH=$PWD/third_party/cef/windows64 make windows
+
+      - name: Build windows 386 (webpopup+cef)
+        run: PKG_CONFIG_PATH=$PWD/third_party/cef/windows32 make windows32
+
+  cgo-drift:
+    name: Cgo directive drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      # The generated cgo directive files are tracked and must match
+      # their generators byte-for-byte. A clean checkout must compile
+      # without relying on ignored local files.
+      - name: Check generated cgo directives
+        run: make check-cgo-drift
+
+  # NOTE: *_test.go files are not tracked (local-only per .gitignore),
+  # so there is no CI test job — tests run in the local working tree.
+
+  android:
+    name: Android (armv7 + arm64)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # Vendored FFmpeg/libxml2 for android — regenerable via the
+      # scripts, cached (they take ~10 min to cross-compile).
+      - name: Cache Android native libs
+        uses: actions/cache@v4
+        with:
+          path: |
+            ffmpeg/android/arm/lib
+            ffmpeg/android/arm64/lib
+            third_party/libxml2/android
+          key: android-libs-${{ hashFiles('scripts/build_ffmpeg_android.sh', 'scripts/build_libxml2_android.sh', 'ffmpeg/patches') }}
+
+      # The scripts are idempotent: they no-op when the cache restored
+      # the .a outputs, otherwise they cross-compile (~10 min).
+      - name: Build vendored FFmpeg + libxml2 (arm + arm64)
+        run: |
+          export ANDROID_NDK="$ANDROID_NDK_HOME"
+          ./scripts/build_libxml2_android.sh
+          ./scripts/build_ffmpeg_android.sh
+
+      # NDK + SDK are preinstalled on the ubuntu image; make android
+      # builds libcore for BOTH ABIs (arm64 .so + armv7 .so via the
+      # seccomp32 overlay toolchain) — the webpopup stub is compiled
+      # in (no CEF exists for android).
+      - name: Build libcore (arm64 + armv7)
+        run: ANDROID_NDK="$ANDROID_NDK_HOME" make android
+
+      - name: Assemble APK
+        run: ANDROID_NDK="$ANDROID_NDK_HOME" make apk
+
+  rpi:
+    name: Raspberry Pi (armv6, mgos+cec)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install cross toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+
+      # RPi sysroot + FFmpeg armv6 — auto-fetched/built by
+      # build_ffmpeg_rpi.sh on first 'make rpi', cached after.
+      - name: Cache RPi sysroot + FFmpeg
+        uses: actions/cache@v4
+        with:
+          path: |
+            third_party/rpi/sysroot
+            ffmpeg/rpi
+          key: rpi-libs-${{ hashFiles('scripts/build_ffmpeg_rpi.sh', 'ffmpeg/patches') }}
+
+      # rpi + mgos (dispmanx/EGL) + webpopup (stub — no CEF for
+      # armv6 exists) + libcec (pure-Go /dev/cec* backend).
+      - name: Build movian-go-rpi
+        run: make rpi RPI_TAGS="rpi connman mgos webpopup libcec"
+
+  # macOS runners bill at 10x on private repos — keep darwin compile
+  # coverage but only on manual dispatch; releases still cover macOS.
+  macos:
+    name: macOS (webpopup+cef)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - { os: macos-13, cefplat: macosx64 }      # Intel amd64
+          - { os: macos-latest, cefplat: macosarm64 } # Apple Silicon arm64
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install brew deps
+        run: brew install glfw nasm
+
+      # Vendored FFmpeg for darwin — regenerable, cached.
+      - name: Cache FFmpeg darwin build
+        uses: actions/cache@v4
+        with:
+          path: ffmpeg/darwin
+          key: ffmpeg-darwin-${{ matrix.cefplat }}-${{ hashFiles('scripts/build_ffmpeg_darwin.sh', 'ffmpeg/patches') }}
+
+      - name: Build vendored FFmpeg
+        run: ./scripts/build_ffmpeg_darwin.sh
+
+      - name: Fetch CEF ${{ matrix.cefplat }}
+        run: ./scripts/fetch_cef.sh ${{ matrix.cefplat }}
+
+      # Real macOS link — GLFW + webpopup + CEF; libcec has no darwin
+      # backend (pure-Go backend is linux /dev/cec*) so it is not
+      # included.
+      - name: Build movian-go (webpopup+cef)
+        run: |
+          PKG_CONFIG_PATH=$PWD/third_party/cef/${{ matrix.cefplat }} \
+            go build -tags "glfw webpopup cef" ./internal/... ./cmd/movian-go
+
+      - name: Build movian-go (webpopup stub)
+        run: go build -tags "glfw webpopup" -o movian-go-macos ./cmd/movian-go
+
+  vet:
+    name: Vet
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglfw3-dev libgl1-mesa-dev libegl-dev \
+            libfreetype-dev libwayland-dev libasound2-dev \
+            libva-dev libvulkan-dev libx11-dev libdrm-dev \
+            zlib1g-dev libbz2-dev liblzma-dev \
+            cmake unzip wayland-protocols libwayland-bin libxkbcommon-dev \
+            libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+
+      # Ubuntu ships glfw 3.3 (X11-only, no glfwGetPlatform) — build the
+      # vendored static 3.4 and shadow-install under /usr/local so every
+      # pkg-config/go/vet/lint invocation sees it without env plumbing.
+      - name: Cache vendored GLFW 3.4
+        uses: actions/cache@v4
+        with:
+          path: third_party/glfw/linux
+          key: glfw-linux-${{ hashFiles('scripts/build_glfw_linux.sh', 'scripts/deps.env') }}
+
+      - name: Build + install vendored GLFW 3.4
+        run: |
+          ./scripts/build_glfw_linux.sh
+          sudo mkdir -p /usr/local/lib/pkgconfig /usr/local/include
+          sudo cp -a third_party/glfw/linux/include/GLFW /usr/local/include/
+          sudo cp third_party/glfw/linux/lib/libglfw3.a /usr/local/lib/
+          sudo cp third_party/glfw/linux/lib/pkgconfig/glfw3.pc /usr/local/lib/pkgconfig/
+
+      - name: Go vet
+        run: go vet -tags glfw ./...
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglfw3-dev libgl1-mesa-dev libegl-dev \
+            libfreetype-dev libwayland-dev libasound2-dev \
+            libva-dev libvulkan-dev libx11-dev libdrm-dev \
+            zlib1g-dev libbz2-dev liblzma-dev \
+            cmake unzip wayland-protocols libwayland-bin libxkbcommon-dev \
+            libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+
+      # Ubuntu ships glfw 3.3 (X11-only, no glfwGetPlatform) — build the
+      # vendored static 3.4 and shadow-install under /usr/local so every
+      # pkg-config/go/vet/lint invocation sees it without env plumbing.
+      - name: Cache vendored GLFW 3.4
+        uses: actions/cache@v4
+        with:
+          path: third_party/glfw/linux
+          key: glfw-linux-${{ hashFiles('scripts/build_glfw_linux.sh', 'scripts/deps.env') }}
+
+      - name: Build + install vendored GLFW 3.4
+        run: |
+          ./scripts/build_glfw_linux.sh
+          sudo mkdir -p /usr/local/lib/pkgconfig /usr/local/include
+          sudo cp -a third_party/glfw/linux/include/GLFW /usr/local/include/
+          sudo cp third_party/glfw/linux/lib/libglfw3.a /usr/local/lib/
+          sudo cp third_party/glfw/linux/lib/pkgconfig/glfw3.pc /usr/local/lib/pkgconfig/
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          # pinned: v1.x does not support go1.26
+          version: v2.13.2
+          args: --timeout 5m
+
+  fmt:
+    name: Format check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Check formatting
+        run: |
+          unformatted=$(gofmt -l internal/ cmd/)
+          if [ -n "$unformatted" ]; then
+            echo "The following files are not formatted:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+  vulncheck:
+    name: Vulnerability check
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglfw3-dev libgl1-mesa-dev libegl-dev \
+            libfreetype-dev libwayland-dev libasound2-dev \
+            libva-dev libvulkan-dev libx11-dev libdrm-dev \
+            zlib1g-dev libbz2-dev liblzma-dev \
+            cmake unzip wayland-protocols libwayland-bin libxkbcommon-dev \
+            libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+
+      # Ubuntu ships glfw 3.3 (X11-only, no glfwGetPlatform) — build the
+      # vendored static 3.4 and shadow-install under /usr/local so every
+      # pkg-config/go/vet/lint invocation sees it without env plumbing.
+      - name: Cache vendored GLFW 3.4
+        uses: actions/cache@v4
+        with:
+          path: third_party/glfw/linux
+          key: glfw-linux-${{ hashFiles('scripts/build_glfw_linux.sh', 'scripts/deps.env') }}
+
+      - name: Build + install vendored GLFW 3.4
+        run: |
+          ./scripts/build_glfw_linux.sh
+          sudo mkdir -p /usr/local/lib/pkgconfig /usr/local/include
+          sudo cp -a third_party/glfw/linux/include/GLFW /usr/local/include/
+          sudo cp third_party/glfw/linux/lib/libglfw3.a /usr/local/lib/
+          sudo cp third_party/glfw/linux/lib/pkgconfig/glfw3.pc /usr/local/lib/pkgconfig/
+
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@v1.1.4
+
+      - name: Run govulncheck
+        run: govulncheck ./...

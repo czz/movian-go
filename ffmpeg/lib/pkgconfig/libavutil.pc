@@ -1,0 +1,14 @@
+prefix=/tmp/movian-go/ffmpeg
+exec_prefix=${prefix}
+libdir=/tmp/movian-go/ffmpeg/lib
+includedir=/tmp/movian-go/ffmpeg/include
+
+Name: libavutil
+Description: FFmpeg utility library
+Version: 61.1.101
+Requires: 
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavutil -L/tmp/movian-go/third_party/libva/usr/lib/x86_64-linux-gnu -lva-drm -lva -lm -lz -ldrm -L/tmp/movian-go/third_party/libva/usr/lib/x86_64-linux-gnu -lva -latomic -pthread
+Libs.private: 
+Cflags: -I${includedir}

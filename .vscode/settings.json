@@ -1,0 +1,15 @@
+{
+  "go.toolsEnvVars": {
+    "GOOS": "linux",
+    "GOARCH": "amd64",
+    "CGO_ENABLED": "1"
+  },
+  "gopls": {
+    "build.buildFlags": ["-tags=glfw"],
+    "build.env": {
+      "GOOS": "linux",
+      "GOARCH": "amd64",
+      "CGO_ENABLED": "1"
+    }
+  }
+}

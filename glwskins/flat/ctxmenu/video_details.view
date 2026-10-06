@@ -1,0 +1,177 @@
+#import "skin://theme.view"
+#import "skin://styles/style_list.view"
+
+/*
+ * This is a workaround for subscriptions in event blocks when used
+ * with proxy properties. When the block is evaluated it will subscribe
+ * and thus when the events are fired it will still wait for the update
+ * from remote side which just takes a while.
+ * Some better fix is needed but this will work for now.
+ */
+$view.url = $args.url;
+$view.pageurl = $self.url;
+
+#define ITEM(CAPTION, EVENT, ICON=void, HIDDEN=false) {
+  widget(container_z, {
+    hidden: HIDDEN;
+    height: 2em;
+    ListItemBevel();
+    ListItemHighlight();
+    focusable: true;
+    onEvent(activate, EVENT);
+
+    widget(container_x, {
+      style: "ListItem";
+
+      widget(icon, {
+        style: "ListItemIcon";
+        source: ICON;
+      });
+
+      widget(label, {
+        caption: CAPTION;
+        style: "ActionLabel";
+      });
+    });
+  });
+}
+
+
+widget(container_z, {
+  widget(list_y, {
+
+    widget(label, {
+      height: 3em;
+      align: center;
+      caption: $args.metadata.title;
+      size: 1.5em;
+    });
+
+    widget(container_x, {
+      style: "ListItem";
+
+      height: 14em;
+      widget(image, {
+        align: top;
+        width: 7em;
+        source: $args.metadata.icon;
+      });
+
+      widget(container_y, {
+        filterConstraintX: true;
+        widget(label, {
+          autohide: true;
+          size: 1.5em;
+          caption: $args.metadata.tagline;
+          padding: [0,0,0,1em];
+        });
+
+
+        widget(label, {
+          autohide: true;
+          maxlines: 5;
+          caption: $args.metadata.description;
+          padding: [0,0,0,1em];
+        });
+
+
+        cloner($args.metadata.videostreams, container_x, {
+          spacing: 0.5em;
+          widget(icon, {
+            source: "skin://icons/ic_videocam_48px.svg";
+          });
+
+          widget(label, {
+            filterConstraintX: true;
+            caption: $self.longformat;
+          });
+        });
+
+        cloner($args.metadata.audiostreams, container_x, {
+          spacing: 0.5em;
+          widget(icon, {
+            source: "skin://icons/ic_speaker_48px.svg";
+          });
+
+          widget(label, {
+            filterConstraintX: true;
+            caption: $self.longformat;
+          });
+        });
+      });
+    });
+
+
+    ITEM(_("Play from beginning"),  {
+      fireEvent(navOpen($view.url, void, $args, $self.model, "beginning", $view.pageurl));
+      $clone.itemMenu = void;
+    }, "skin://icons/ic_play_arrow_48px.svg");
+
+    ITEM(fmt(_("Continue from %s"), value2duration($args.restartpos)),  {
+      fireEvent(navOpen($view.url, void, $args, $self.model, "resume", $view.pageurl));
+      $clone.itemMenu = void;
+    }, "skin://icons/ic_play_arrow_48px.svg");
+
+
+    ITEM(_("Play until end of list"), {
+      fireEvent(navOpen($view.url, void, $args, $self.model, "continuous", $view.pageurl));
+      $clone.itemMenu = void;
+    }, "skin://icons/ic_play_arrow_48px.svg");
+
+
+    ITEM(_("Delete"), {
+      delete($args);
+      $clone.itemMenu = void;
+    }, "skin://icons/ic_delete_48px.svg",
+         !($self.model.canDelete || $args.canDelete));
+
+    ITEM(_("Mark as unseen"), {
+      $args.playcount = false;
+      $clone.itemMenu = void;
+    }, void, !($args.playcount > 0));
+
+    ITEM(_("Mark as seen"), {
+      $args.playcount = true;
+      $clone.itemMenu = void;
+    }, void, !($args.playcount < 1));
+
+    cloner($core.itemhooks, container_z, {
+      hidden: !($self.itemtype == $args.type || $self.itemtype == void);
+      ITEM($self.metadata.title, {
+        fireEvent(deliverRef($self.eventSink, $args));
+        $view.close = true;
+      }, $self.metadata.icon);
+    });
+
+    cloner($args.options, loader, {
+      time: 0.1;
+      noInitialTransform: true;
+      effect: blend;
+      source: "skin://items/list/" + $self.type + ".view";
+      hidden: !$self.enabled;
+      onEvent("item.*", deliverEvent($args));
+    });
+
+    widget(label, {
+      hidden: count($args.metadata.cast) < 1;
+      height: 3em;
+      filterConstraintX: true;
+      caption: _("Video Cast");
+      style: "ListItemSeparatorLabel";
+    });
+
+    cloner($args.metadata.cast, loader, {
+      noInitialTransform: true;
+      source: "skin://items/list/person.view";
+    });
+  });
+
+  widget(container_y, {
+    align: top;
+    widget(container_x, {
+      height: 3em;
+      BackButton();
+    });
+  });
+
+});

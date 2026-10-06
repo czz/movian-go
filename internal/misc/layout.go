@@ -1,0 +1,30 @@
+package misc
+
+// Canonical port of src/misc/layout.h constants.
+
+// Based on JPEG/EXIF orientations
+const (
+	LAYOUT_ORIENTATION_NONE       = 0
+	LAYOUT_ORIENTATION_NORMAL     = 1
+	LAYOUT_ORIENTATION_MIRROR_X   = 2
+	LAYOUT_ORIENTATION_ROT_180    = 3
+	LAYOUT_ORIENTATION_MIRROR_Y   = 4
+	LAYOUT_ORIENTATION_TRANSPOSE  = 5
+	LAYOUT_ORIENTATION_ROT_90     = 6
+	LAYOUT_ORIENTATION_TRANSVERSE = 7
+	LAYOUT_ORIENTATION_ROT_270    = 8
+)
+
+// "numpad" style layout. Also used by SSA rendering, so don't change
+const (
+	LAYOUT_ALIGN_BOTTOM_LEFT  = 1
+	LAYOUT_ALIGN_BOTTOM       = 2
+	LAYOUT_ALIGN_BOTTOM_RIGHT = 3
+	LAYOUT_ALIGN_LEFT         = 4
+	LAYOUT_ALIGN_CENTER       = 5
+	LAYOUT_ALIGN_RIGHT        = 6
+	LAYOUT_ALIGN_TOP_LEFT     = 7
+	LAYOUT_ALIGN_TOP          = 8
+	LAYOUT_ALIGN_TOP_RIGHT    = 9
+	LAYOUT_ALIGN_JUSTIFIED    = 10 // special
+)

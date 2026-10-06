@@ -1,0 +1,51 @@
+#import "skin://playdecks/playdeck_include.view"
+style(playdeckButtonContainer, {
+  width: 2em;
+});
+
+
+widget(container_z, {
+
+  widget(quad, {
+    color: 0;
+    alpha: 0.2;
+  });
+
+  widget(container_x, {
+    height: 2em;
+    padding: [0.5em, 0, 2em, 1];
+
+    PLAYDECK_BUTTONS();
+
+
+    widget(dummy, {
+      width: 0.5em;
+    });
+
+    widget(label, {
+      clickable: true;
+      focusOnClick: false;
+      onEvent(activate, {
+        $ui.showAllPlaydeckButtons = 0;
+      });
+
+      caption: join(" • ",
+		    $core.media.current.metadata.title,
+		    $core.media.current.radioinfo),
+      style: "playdeckText";
+    });
+
+
+    space(1);
+
+    widget(container_x, {
+      width: 5em;
+      padding: [0, -4em, 0, 0];
+      widget(image, {
+        zoffset: 100;
+        source: $core.media.current.metadata.album_art;
+      });
+    });
+
+  });
+});

@@ -1,0 +1,60 @@
+#import "skin://theme.view"
+
+
+widget(container_y, {
+  id: "osd_qualities";
+
+  widget(label, {
+    style: "osdsettingtitle";
+    height: 3em;
+    align: center;
+    caption: _("Video quality");
+    size: 1.5em;
+  });
+
+  onEvent(back, {
+    $clone.osdpage = 0;
+    focus("quality-btn");
+  }, $clone.osdpage);
+
+
+  widget(container_x, {
+    widget(list_y, {
+      id: "list";
+
+      cloner($self.media.metadata.qualities, container_z, {
+
+        height: 2.5em;
+        ListItemHighlight();
+        ListItemBevel();
+
+        focusable: true;
+        onEvent(activate, {
+          fireEvent(navOpen($self.url));
+          $clone.osdpage = 0;
+          $clone.showPlaydeck = 0;
+        });
+
+        widget(container_x, {
+          padding: [0.5em, 0];
+
+          widget(label, {
+            padding: [0.5em, 0, 0, 0];
+            filterConstraintX: true;
+            caption: $self.title;
+            style: "NavSelectedText";
+          });
+        });
+      });
+    });
+    widget(slider_y, {
+      bind("list");
+      width: 4;
+      focusable: canScroll();
+      alpha: iir(canScroll(), 16);
+      widget(quad, {
+	alpha: 1;
+      });
+    });
+  });
+});

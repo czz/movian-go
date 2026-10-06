@@ -1,0 +1,45 @@
+#import "skin://theme.view"
+
+vbox({
+
+  onEvent(activate, eventWithProp(pluginInfo, $self));
+  focusable: true;
+
+  zbox({
+
+    widget(quad, {
+      hidden: !$clone.primaryColor;
+      color: $clone.primaryColor;
+    });
+
+    widget(image, {
+      margin: [1em, 0];
+      source: $self.metadata.icon;
+      $clone.primaryColor = RGBToString(primaryColor() * 0.3);
+      filterConstraintY: true;
+    });
+
+    widget(border, {
+      style: "GridBorder";
+    });
+
+    hbox({
+      hidden: !$self.status.installed;
+      margin: [0.1em, 0];
+      space(1);
+      vbox({
+        space(1);
+        widget(image, {
+          height: 1.5em;
+          source: "skin://icons/ic_check_48px.svg";
+        });
+      });
+    });
+  });
+
+  widget(label, {
+    style: "GridLabel";
+    caption: $self.metadata.title;
+  });
+
+});

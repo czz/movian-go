@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Movian Go
+Comment=Media Player
+Exec=movian-go
+Icon=movian-go
+Terminal=false
+Categories=AudioVideo;Video;Player;
+StartupWMClass=movian-go

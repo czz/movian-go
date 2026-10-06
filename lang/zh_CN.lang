@@ -1,0 +1,1854 @@
+﻿language: Simplified Chinese
+native: 简体中文
+maintainer: Rural Hunter<ruralhunter@gmail.com>
+#
+# ./glwskins/flat/ctxmenu/default_details.view
+#
+id: Bookmark
+msg: 收藏夹
+
+id: Bookmarked
+msg: 已收藏
+
+id: Copy to clipboard
+msg: 复制到剪贴板
+
+id: Copy to location...
+msg: 复制到...
+
+id: Delete
+msg: 删除
+
+id: Queue
+msg: 队列
+
+#
+# ./glwskins/flat/ctxmenu/plugin_details.view
+#
+id: Author:
+msg: 作者：
+
+id: Available version:
+msg: 可用版本
+
+id: Changelog
+msg: 变更日志
+
+id: Install
+msg: 安装
+
+id: Installed version:
+msg: 已安装版本
+
+id: Status:
+msg: 状态
+
+id: Uninstall
+msg: 卸载
+
+id: Upgrade
+msg: 升级
+
+#
+# ./glwskins/flat/ctxmenu/video_details.view
+#
+id: Continue from %s
+msg: 从'%s'继续
+
+id: Mark as seen
+msg: 标记为已播放
+
+id: Mark as unseen
+msg: 标记为未播放
+
+id: Play from beginning
+msg: 从头播放
+
+id: Play until end of list
+msg: 播放至列表末尾
+
+id: Video Cast
+msg: 视频广播
+
+#
+# ./glwskins/flat/items/details/video.view
+#
+id: Season %d - Episode %d
+msg: 第%d季 - 第%d集
+
+id: Seen %d times, %s
+# Missing plural translation for 'Seen %d times, %s' and 'Seen %d time, %s'
+msg[0]: 已观看%d次，%s
+msg[1]: 已观看%d次，%s
+
+#
+# ./glwskins/flat/items/list/add.view
+#
+id: Add new entry
+msg: 新增
+
+#
+# ./glwskins/flat/items/list/bool.view
+#
+id: Off
+msg: 关闭
+
+id: On
+msg: 启用
+
+#
+# ./glwskins/flat/items/list/font.view
+#
+id: Condensed
+msg: 紧凑
+
+id: Subtitles
+msg: 字幕
+
+id: User interface
+msg: 用户界面
+
+#
+# ./glwskins/flat/items/list/tvepisode.view
+#
+id: Episode %d - %s
+msg: 第%d集 - %s
+
+#
+# ./glwskins/flat/loading.view
+#
+id: %d kb/s
+msg: %d kb/s
+
+id: Bitrate:
+msg: 码率
+
+#
+# ./glwskins/flat/log.view
+#
+id: System log
+msg: 系统日志
+
+#
+# ./glwskins/flat/mediainfo.view
+#
+id: A/V diff
+msg: A/V时差
+
+id: Audio bitrate
+msg: 音频码率
+
+id: Audio codec
+msg: 音频编码
+
+id: Audio packets
+msg: 音频数据包
+
+id: Buffer usage
+msg: 缓存使用量
+
+id: No media loaded
+msg: 未载入媒体
+
+id: Remaining buffer
+msg: 剩余缓存
+
+id: Source
+msg: 源
+
+id: Video bitrate
+msg: 视频码率
+
+id: Video codec
+msg: 视频编码
+
+id: Video framerate
+msg: 视频帧率
+
+id: Video packets
+msg: 视频数据包
+
+#
+# ./glwskins/flat/menu/sidebar.view
+#
+id: Bookmark page
+msg: 收藏夹页面
+
+id: Page settings
+msg: 页面设置
+
+id: Paste
+msg: 粘贴
+
+id: Reload page
+msg: 刷新页面
+
+id: Remove bookmark
+msg: 移除书签
+
+id: Settings
+msg: 设置
+
+#
+# ./glwskins/flat/menu/sidebar_common.view
+#
+id: Activate sleep timer
+msg: 启用定时关机
+
+id: Disable sleep timer
+msg: 禁用定时关机
+
+id: Exit %s
+msg: 退出%s
+
+id: Hide media info
+msg: 隐藏媒体信息
+
+id: Hide system info
+msg: 隐藏系统信息
+
+id: Master volume
+msg: 主音量
+
+id: Show media info
+msg: 显示媒体信息
+
+id: Show system info
+msg: 显示系统信息
+
+id: Suspend
+msg: 关机
+
+id: Time until sleep
+msg: 直到关机
+
+id: View log
+msg: 查看日志
+
+id: dB
+msg: dB
+
+id: min
+msg: 最小
+
+#
+# ./glwskins/flat/osd/osd_audio.view
+#
+id: Audio
+msg: 音频
+
+#
+# ./glwskins/flat/osd/osd_main.view
+#
+id: Audio settings
+msg: 音频设置
+
+id: Subtitle settings
+msg: 字幕设置
+
+id: Video settings
+msg: 视频设置
+
+#
+# ./glwskins/flat/osk.view
+#
+id: Default
+msg: 默认
+
+id: Keyboard layout:
+msg: 键盘布局：
+
+#
+# ./glwskins/flat/pages/directory.view
+#
+id: Album
+msg: 专辑
+
+id: Artist
+msg: 艺术家
+
+id: Custom
+msg: 定制
+
+id: Grid
+msg: 网格
+
+id: List
+msg: 列表
+
+id: Page layout
+msg: 页面布局
+
+id: Search results
+msg: 搜索结果
+
+id: TV Season
+msg: 电视剧集
+
+#
+# ./glwskins/flat/pages/empty.view
+#
+id: No contents
+msg: 无内容
+
+#
+# ./glwskins/flat/pages/home.view
+#
+id: Dismiss
+msg: 删除
+
+id: Home
+msg: 主页
+
+#
+# ./glwskins/flat/pages/openerror.view
+#
+id: Unable to open resource
+msg: 无法打开资源
+
+#
+# ./glwskins/flat/pages/playqueue.view
+#
+id: Playqueue
+msg: 播放队列
+
+#
+# ./glwskins/flat/pages/searchresults.view
+#
+id: Show more
+msg: 显示更多
+
+id: %d hits
+msg[0]: %d次点击
+msg[1]: %d次点击
+
+#
+# ./glwskins/flat/pages/slideshow.view
+#
+id: Interval: %ds
+msg: 间隔：%d秒
+
+id: Play/Pause
+msg: 播放/暂停
+
+id: Stop
+msg: 停止
+
+#
+# ./glwskins/flat/pages/stpp.view
+#
+id: Remote control - %s
+msg: 遥控 - %s
+
+id: Remote controlling %s
+msg: 正在遥控%s
+
+#
+# ./glwskins/flat/pages/stppstpp.view
+#
+id: Nested remote controll is not supported
+msg: 不支持内嵌遥控
+
+id: Remote control
+msg: 遥控
+
+#
+# ./glwskins/flat/pages/stppvideo.view
+#
+id: Audio tracks
+msg: 音轨
+
+id: Audio volume adjustment: %d dB
+msg: 音量调整：%d dB
+
+id: CPU is too slow to decode this video
+msg: 当前视频CPU解码过慢
+
+id: Next
+msg: 下一个
+
+id: Previous
+msg: 上一个
+
+#
+# ./glwskins/flat/pages/tvseason.view
+#
+id: Season %d
+msg: 第%d季
+
+#
+# ./glwskins/flat/pages/upgrade.view
+#
+id: %s is up to date
+msg: %s已是最新
+
+id: An error occured during download
+msg: 下载失败
+
+id: Changelog for %s releases
+msg: 版本%s更新记录
+
+id: Check for updates now
+msg: 立刻检查更新
+
+id: Checking for updates
+msg: 检查更新
+
+id: Current version:
+msg: 当前版本：
+
+id: Download and install
+msg: 下载并安装
+
+id: Downloading %s
+msg: 正在下载%s
+
+id: New version %s is available for download
+msg: 新版本%s可用
+
+id: No upgrade available
+msg: 无可用更新
+
+id: Retry
+msg: 重试
+
+id: Stable
+msg: 稳定版
+
+id: Testing
+msg: 测试版
+
+id: Unable to query for new version
+msg: 无法检查最新版
+
+#
+# ./glwskins/flat/popups/auth.view
+#
+id: Domain
+msg: 域
+
+id: Password
+msg: 密码
+
+id: Remember me
+msg: 记住用户
+
+id: Username
+msg: 用户名
+
+#
+# ./glwskins/flat/popups/common.view
+#
+id: Cancel
+msg: 取消
+
+id: Ok
+msg: 确定
+
+#
+# ./glwskins/flat/popups/filepicker.view
+#
+id: Back
+msg: 返回
+
+id: Close
+msg: 关闭
+
+id: Folder select mode, press right to open subfolder
+msg: 文件夹选择模式，按向右键打开子文件夹
+
+#
+# ./glwskins/flat/popups/resume.view
+#
+id: No, Start over
+msg: 不，从头开始
+
+id: Resume from %s
+msg: 从%s继续
+
+id: Yes
+msg: 是
+
+#
+# ./glwskins/flat/popups/textDialog.view
+#
+id: OK
+msg: 确定
+
+#
+# ./glwskins/flat/sysinfo.view
+#
+id: CPU Temp
+msg: CPU温度
+
+id: Connected
+msg: 已连接
+
+id: Fragmentation
+msg: 碎片
+
+id: Framerate
+msg: 帧率
+
+id: GPU Temp
+msg: GPU温度
+
+id: HDD Avail
+msg: 硬盘可用
+
+id: IP Address
+msg: IP地址
+
+id: Inactive memory
+msg: 非活动内存
+
+id: Memory usage
+msg: 内存占用
+
+id: Network
+msg: 网络
+
+id: Not available
+msg: 不可用
+
+id: System Free
+msg: 系统剩余
+
+id: System Total
+msg: 系统总数
+
+id: VM Page In/Out
+msg: 虚拟内存页换入/换出
+
+id: Version
+msg: 版本
+
+#
+# ./glwskins/flat/universe.view
+#
+id: Audio muted
+msg: 已静音
+
+id: Copying %d files
+msg: 正在复制%d个文件
+
+id: Master volume: %d dB
+msg: 主音量: %d dB
+
+id: Overscan adjustment\nPosition border at screen edges
+msg: 过扫描调整\n屏幕边缘的位置边框
+
+#
+# ./src/api/stpp.c
+#
+id: Allow remote control
+msg: 允许遥控
+
+id: Device not available
+msg: 设备不可用
+
+id: Movians for remote control
+msg: 可遥控的Movian
+
+#
+# ./src/api/tmdb.c
+#
+id: Language (ISO 639-1 code)
+msg: 语言（ISO 639-1 代码）
+
+id: Use original title
+msg: 使用原标题
+
+#
+# ./src/arch/android/android.c
+#
+id: Android Storage
+msg: Android存储
+
+#
+# ./src/arch/linux/pulseaudio.c
+#
+id: Unable to initialize audio system %s -- %s
+msg: 无法初始化音频系统%s -- %s
+
+#
+# ./src/arch/ps3/ps3_main.c
+#
+id: System is low on memory (%d kB RAM available)
+msg: 系统内存偏少(%d kB RAM可用)
+
+#
+# ./src/arch/ps3/ps3_vdec.c
+#
+id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
+msg: Cell-h264: PS3硬件解压不兼容引用帧数为%d的%d。硬件加速将被禁用
+
+id: Cell-h264: Broken headers, Disabling acceleration
+msg: Cell-h264: 头信息破损，将禁用硬件加速。
+
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: 强制级别%d.%d的内容为级别4.2。可能会影响播放。
+
+id: Unable to accelerate %s, library not loaded.
+msg: 无法加速%s，未载入类库。
+
+id: Unable to open Cell codec. Error 0x%x
+msg: 无法启用Cell解码器，错误码0x%x
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: 无法启用Cell解码器，不能分配%d字节的内存。
+
+id: Unable to query Cell codec. Error 0x%x
+msg: 无法查询Cell解码器，错误码0x%x
+
+#
+# ./src/arch/rpi/rpi_audio.c
+#
+id: 8 Channel PCM
+msg: 8声道PCM
+
+id: AC3 Pass-Through
+msg: AC3直通
+
+id: Analog
+msg: 模拟
+
+id: Audio output port
+msg: 音频输出端口
+
+id: Autodetect
+msg: 自动检测
+
+id: DTS Pass-Through
+msg: DTS直通
+
+id: HDMI
+msg: HDMI
+
+#
+# ./src/arch/rpi/rpi_tv.c
+#
+id: Match display and content framerate
+msg: 同步显示和内容帧速
+
+#
+# ./src/audio2/audio.c
+#
+id: Audio delay
+msg: 音频延迟
+
+id: Audio gain
+msg: 音频增益
+
+id: Setup audio output
+msg: 设置音频输出
+
+id: Video playback
+msg: 视频播放
+
+#
+# ./src/audio2/audio_test.c
+#
+id: 440Hz sinewave -12dB
+msg: 440Hz正弦波 -12dB
+
+id: Audio test
+msg: 音频测试
+
+id: Center
+msg: 居中
+
+id: Front Left
+msg: 左前
+
+id: Front Right
+msg: 右前
+
+id: LFE
+msg: 低音炮
+
+id: Pink noise
+msg: 粉红噪声
+
+id: Play test signal
+msg: 播放测试信号
+
+id: Rear Left
+msg: 左后环绕
+
+id: Rear Right
+msg: 右后环绕
+
+id: Speaker position
+msg: 音箱位置
+
+id: Surround Left
+msg: 左环绕
+
+id: Surround Right
+msg: 右环绕
+
+id: Test signal type
+msg: 测试信号类型
+
+#
+# ./src/backend/bittorrent/bt_backend.c
+#
+id: No files in torrent
+msg: 种子中无文件
+
+id: Unable to open torrent: %s
+msg: 无法打开种子：%s
+
+#
+# ./src/backend/bittorrent/diskio.c
+#
+id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
+msg: 种子缓存已使用%d MB，最大允许使用%d MB。总可用空间：%d MB
+
+#
+# ./src/backend/bittorrent/fa_torrent.c
+#
+id: Connected peers
+msg: 已连接用户
+
+id: Known peers
+msg: 已知用户
+
+id: Receiving from
+msg: 正接收
+
+id: Torrent leechers
+msg: Torrent下载者
+
+id: Torrent seeders
+msg: Torrent做种者
+
+#
+# ./src/backend/bittorrent/torrent_settings.c
+#
+id: BitTorrent
+msg: BitTorrent
+
+id: Clear cache
+msg: 清除缓存
+
+id: Enable bittorrent
+msg: 启用bittorrent
+
+id: Max upload speed
+msg: 最大上传速度
+
+id: Max usage of free space for caching torrents
+msg: 种子缓存最大空间使用率：
+
+id: Status
+msg: 状态
+
+id: Torrent cache path
+msg: 种子缓存路径
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+msg: DVD
+
+id: DVD read error, restarting disc
+msg: DVD读取错误，重新开始读取光盘
+
+#
+# ./src/backend/hls/hls.c
+#
+id: Primary
+msg: 主
+
+id: Supplementary
+msg: 补充
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Channels
+msg: 频道
+
+id: Invalid HTSP URL
+msg: 非法的HTSP URL
+
+id: No such channel
+msg: 无此频道
+
+id: Recorded shows
+msg: 录制的表演
+
+id: Recorder
+msg: 录像机
+
+#
+# ./src/backend/playlist.c
+#
+id: Unable to open playlist
+msg: 无法打开播放列表
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: 搜索
+
+id: Search result for: %s
+msg: "%s"的查询结果
+
+#
+# ./src/backend/slideshow/slideshow.c
+#
+id: 3 seconds
+msg: 3秒
+
+id: 5 seconds
+msg: 5秒
+
+id: 7 seconds
+msg: 7秒
+
+id: Slideshow speed
+msg: 幻灯片播放速度
+
+#
+# ./src/blobcache_file.c
+#
+id: Cache cleared
+msg: 缓存已清空
+
+id: Clear cached files
+msg: 清空缓存文件
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: 无法处理内容类型%d
+
+id: Checking file contents
+msg: 正在检查文件内容
+
+id: Invalid URL from redirect
+msg: 无效的重定向URL
+
+id: Unable to open file: %s
+msg: 无法打开文件%s
+
+#
+# ./src/fileaccess/fa_filepicker.c
+#
+id: Select a file
+msg: 选择文件
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: 使用Unix locatedb搜索
+
+#
+# ./src/fileaccess/fa_scanner.c
+#
+id: Deleted %s
+msg: 删除%s
+
+id: Filename
+msg: 文件名
+
+id: Include in library
+msg: 包含入库
+
+id: Newest first
+msg: 最新优先
+
+id: Oldest first
+msg: 最老优先
+
+id: Show only supported files
+msg: 只显示支持的文件
+
+id: Sort folders first
+msg: 排序时文件夹优先
+
+id: Sort on
+msg: 排序
+
+id: Unable to delete %s\n%s
+msg: 无法删除%s\n%s
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: 使用spotlight搜索
+
+#
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+msg: 是否确定要删除：
+
+id: Browse archives as folders
+msg: 使用文件夹方式浏览归档文件
+
+id: Enable file deletion from item menu
+msg: 启用文件删除功能
+
+id: Show filename extensions
+msg: 显示文件扩展名
+
+id: Store per-file settings in filesystem
+msg: 保存单文件设置到文件系统
+
+id: %d archive parts
+msg[0]: %d个分卷
+msg[1]: %d个分卷
+
+id: %d directories
+msg[0]: %d个文件夹
+msg[1]: %d个文件夹
+
+id: %d files
+msg[0]: %d个文件
+msg[1]: %d个文件
+
+#
+# ./src/fileaccess/smb/fa_nativesmb.c
+#
+id: Access denied
+msg: 访问被拒绝
+
+id: Account restricted
+msg: 帐号受限
+
+id: Bad network share name
+msg: 网络共享名不正确
+
+id: Logon failure
+msg: 登录失败
+
+id: Object name not found
+msg: 对象名不存在
+
+#
+# ./src/i18n.c
+#
+id: 12 Hour
+msg: 12小时
+
+id: 24 Hour
+msg: 24小时
+
+id: Default character set
+msg: 默认字符集
+
+id: Ignore 'The' at beginning of words when sorting
+msg: 排序时忽略开头的'The'
+
+id: Language
+msg: 语言
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: 请使用三个字母的ISO代码设置语言代码，例如: eng, swe, fra
+
+id: Languages
+msg: 语言
+
+id: Preferred languages
+msg: 语言偏好
+
+id: Primary audio language code
+msg: 音频首选语言代码
+
+id: Primary subtitle language code
+msg: 字幕首选语言代码
+
+id: Secondary audio language code
+msg: 音频次选语言代码
+
+id: Secondary subtitle language code
+msg: 字幕次选语言代码
+
+id: System default
+msg: 系统默认
+
+id: Tertiary audio language code
+msg: 音频第三语言代码
+
+id: Tertiary subtitle language code
+msg: 字幕第三语言代码
+
+id: Time format
+msg: 时间格式
+
+id: Timezone
+msg: 时区
+
+#
+# ./src/ipc/libcec.c
+#
+id: Longpress SELECT for item menu
+msg: 长按SELECT显示项目菜单
+
+id: Switch TV input source
+msg: 切换电视输入源
+
+id: Use STOP key for combo input
+msg: 组合输入使用STOP键
+
+#
+# ./src/keyring.c
+#
+id: Forget remembered passwords
+msg: 清除已保存密码
+
+id: Rembered passwords erased
+msg: 记住已删除密码
+
+#
+# ./src/media/media_settings.c
+#
+id: Align on video frame
+msg: 对齐视频帧
+
+id: Audio volume
+msg: 音量
+
+id: Delay
+msg: 延迟
+
+id: Go to standby after video ends
+msg: 视频播放结束后自动关机
+
+id: Horizontal pan
+msg: 水平位移
+
+id: Horizontal position
+msg: 水平位置
+
+id: Horizontal scale
+msg: 水平方向缩放比例
+
+id: Reset defaults for folder '%s'
+msg: 恢复文件夹'%s'的默认设置
+
+id: Save as defaults for folder '%s'
+msg: 保存为文件夹'%s'的默认设置
+
+id: Save as global default
+msg: 保存为全局默认设置
+
+id: Scaling
+msg: 等比例缩放
+
+id: Stretch video to fullscreen
+msg: 拉升视频至全屏
+
+id: Stretch video to widescreen
+msg: 拉伸视频至宽屏
+
+id: Vertical pan
+msg: 垂直位移
+
+id: Vertical position
+msg: 垂直位置
+
+id: Vertical scale
+msg: 垂直方向缩放比例
+
+id: Video frame interpolation
+msg: 视频帧插值
+
+id: Video zoom
+msg: 视频缩放
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+msg: 正在索引
+
+#
+# ./src/metadata/decoration.c
+#
+id: Automatic
+msg: 自动
+
+id: Erase all playback info
+msg: 清除所有播放信息
+
+id: Manual
+msg: 手动
+
+id: Mark all as seen
+msg: 标记所有为已播放
+
+id: Mark all as unseen
+msg: 标记所有为未播放
+
+id: Metadata mode
+msg: 元数据模式
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+msg: 文件内置
+
+id: Track %d
+msg: 轨道%d
+
+#
+# ./src/metadata/metadata_sources.c
+#
+id: Enabled
+msg: 启用
+
+id: Metadata
+msg: 元信息
+
+id: Metadata configuration and provider settings
+msg: 元信息及元信息源设置
+
+id: Providers for Music
+msg: 音乐源
+
+id: Providers for Video
+msg: 视频源
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: 已删除%d条
+
+id: Clear all metadata
+msg: 清除所有元信息
+
+id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
+msg: 清理所有元数据意味着失去所有从外部源例如themoviedb.org等缓存的<b>所有</b>元数据\n\n播放位置、播放次数等信息不受影响.\n确定要继续?
+
+#
+# ./src/metadata/mlp.c
+#
+id: Custom search query
+msg: 设置搜索条件
+
+id: Custom title
+msg: 自定义标题
+
+id: IMDb ID
+msg: IMDb ID
+
+id: Metadata loaded from <b>%s</b> based on %s
+msg: 从<b>%s</b>载入元数据，基于%s
+
+id: Metadata source
+msg: 元数据信息源
+
+id: Movie
+msg: 影片
+
+id: Movie title
+msg: 片名
+
+id: No data found
+msg: 未找到数据
+
+id: None
+msg: 无
+
+id: Refresh metadata
+msg: 更新元信息
+
+id: Title, Season, Episode
+msg: 片名，季，集
+
+id: custom IMDb ID
+msg: 设置IMDb ID
+
+id: custom query
+msg: 高级查询
+
+id: filename
+msg: 文件名
+
+id: filename as TV episode
+msg: 电视剧集文件名
+
+id: folder name
+msg: 目录名
+
+#
+# ./src/navigator.c
+#
+id: Add and remove items on homepage
+msg: 在首页添加或删除图标
+
+id: Added %s to home page
+msg: %s已加入首页
+
+id: Added new bookmark: %s
+msg: 添加新书签：%s
+
+id: Bookmarks
+msg: 收藏夹
+
+id: Icon
+msg: 图标
+
+id: Music
+msg: 音乐
+
+id: No handler for URL
+msg: 无法处理URL
+
+id: Other
+msg: 其它
+
+id: Photos
+msg: 照片
+
+id: Removed %s from homepage
+msg: %s已从首页移除
+
+id: Removed bookmark: %s
+msg: 删除书签: %s
+
+id: TV
+msg: 电视
+
+id: Title
+msg: 标题
+
+id: Type
+msg: 类型
+
+id: URL
+msg: URL
+
+id: Video
+msg: 视频
+
+#
+# ./src/networking/connman.c
+#
+id: Enable Wi-Fi
+msg: 启用Wi-Fi
+
+id: Network connections
+msg: 网络连接
+
+#
+# ./src/networking/ftp_server.c
+#
+id: Enable FTP server
+msg: 启用FTP服务器
+
+id: FTP server
+msg: FTP服务器
+
+id: Server TCP port
+msg: 服务器TCP端口
+
+#
+# ./src/networking/http_server.c
+#
+id: Power Off
+msg: 关机
+
+id: Rebooting
+msg: 正在重启
+
+id: Restarting
+msg: 正在重启
+
+id: Standby
+msg: 关机
+
+#
+# ./src/notifications.c
+#
+id: Show news on home screen
+msg: 主页显示新闻
+
+#
+# ./src/plugins.c
+#
+id: Alternate plugin Repository URL
+msg: 更改插件库URL
+
+id: Audio decoders
+msg: 音频解码器
+
+id: Auto install plugins on demand
+msg: 自动安装所需插件
+
+id: Auto installed plugin %s (Version %s)
+msg: 已自动安装插件%s（版本%s）
+
+id: Automatically upgrade plugins
+msg: 自动更新插件
+
+id: Available plugins
+msg: 可用插件
+
+id: Background
+msg: 背景
+
+id: Beta testing passwords
+msg: Beta测试用密码
+
+id: Browse available plugins
+msg: 浏览可用插件
+
+id: Browsing
+msg: 浏览
+
+id: Cloud services
+msg: 云服务
+
+id: Corrupt plugin bundle
+msg: 损坏的插件包
+
+id: Custom backgrounds can now be set in Settings -> Look and Feel
+msg: 现在可以从设置->外观中自定义设置背景图片
+
+id: Disk write error
+msg: 磁盘写入错误
+
+id: Downloading
+msg: 正在下载
+
+id: File open error
+msg: 打开文件错误
+
+id: Home page
+msg: 首页
+
+id: Images
+msg: 图像
+
+id: Installed
+msg: 已安装
+
+id: Installed plugins
+msg: 已安装插件
+
+id: Installed version higher than available
+msg: 安装版本比可用版本高
+
+id: Installing
+msg: 正在安装
+
+id: List of albums
+msg: 专辑列表
+
+id: Loading screen
+msg: 载入屏幕显示
+
+id: Movies
+msg: 电影
+
+id: Music streaming
+msg: 音乐流
+
+id: Not installable
+msg: 不可安装
+
+id: Not installed
+msg: 未安装
+
+id: Not upgradable
+msg: 不可升级
+
+id: On Screen Keyboards
+msg: 屏幕（软）键盘
+
+id: Online TV
+msg: 在线电视
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+msg: 由于可能引起问题，插件%s %s已被卸载。\n您可以尝试手工安装此插件的其它版本。
+
+id: Plugin %s has been uninstalled - %s
+msg: 插件%s已经卸载 - %s
+
+id: Plugin categories
+msg: 插件类别
+
+id: Plugins
+msg: 插件
+
+id: Preferred views from plugins
+msg: 插件默认视图
+
+id: Screen saver
+msg: 屏幕保护
+
+id: TV channels
+msg: 电视频道
+
+id: Unable to load plugin.json: %s
+msg: 无法载入plugin.json: %s
+
+id: Unable to load plugin.json: Malformed JSON
+msg: 无法载入plugin.json: JSON格式不正确
+
+id: Uncategorized
+msg: 未分类
+
+id: Up to date
+msg: 最新
+
+id: Upgradable
+msg: 可更新
+
+id: Upgraded plugin %s to version %s
+msg: 插件%s已更新到版本%s
+
+id: User interface extensions
+msg: 用户界面扩展
+
+id: Version %s is no longer compatible with Movian
+msg: 版本%s已经和Movian不兼容
+
+id: Video streaming
+msg: 视频流
+
+#
+# ./src/prop/prop_proxy.c
+#
+id: Remote exited
+msg: 远程已退出
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: 自动关机
+
+id: Enable SSH server
+msg: 启用SSH服务器
+
+id: Logout
+msg: 注销
+
+id: Open shell
+msg: 打开Shell
+
+id: Power off system
+msg: 关机
+
+id: Quit
+msg: 退出
+
+id: SSH server
+msg: SSH服务器
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled on home screen
+msg: 已在首页启用
+
+id: Name
+msg: 名称
+
+#
+# ./src/service.c
+#
+id: Local network
+msg: 本地网络
+
+id: Remove from homepage
+msg: 从首页移除
+
+#
+# ./src/settings.c
+#
+id: About
+msg: 关于
+
+id: Applications and installed plugins
+msg: 程序和已安装的插件
+
+id: Configure communications with your TV
+msg: 配置和电视的通讯
+
+id: Developer settings
+msg: 开发者设置
+
+id: Discovered media sources
+msg: 已检测到的媒体资源
+
+id: File browsing
+msg: 文件浏览
+
+id: Fonts and user interface styling
+msg: 字体和用户界面类型
+
+id: General
+msg: 常规
+
+id: Global settings
+msg: 全局设置
+
+id: Look and feel
+msg: 外观
+
+id: Network services, etc
+msg: 网络服务等
+
+id: Network settings
+msg: 网络设置
+
+id: Reset
+msg: 重置
+
+id: Settings useful for developers
+msg: 供开发者使用的设置
+
+id: Software upgrade
+msg: 软件更新
+
+id: Starting and stopping
+msg: 启动和关闭
+
+id: System name
+msg: 系统名称
+
+id: System related settings
+msg: 系统相关设置
+
+id: TV Control
+msg: 电视控制
+
+#
+# ./src/subtitles/subtitles.c
+#
+id: Any subtitle in central folder
+msg: 主文件夹的所有字幕
+
+id: Any subtitle in same folder as video
+msg: 视频相同文件夹下的所有字幕
+
+id: Auto
+msg: 自动
+
+id: Automatically select from this source
+msg: 自动选择
+
+id: Central subtitle folder
+msg: 字幕主文件夹
+
+id: Color
+msg: 颜色
+
+id: External file
+msg: 外部文件
+
+id: Force subtitles to reside on video frame
+msg: 强制字幕在视频帧内显示
+
+id: Generic settings for video subtitles
+msg: 视频字幕通用设置
+
+id: Ignore embedded styling
+msg: 忽略嵌入样式
+
+id: Left
+msg: 靠左
+
+id: Outline color
+msg: 边框颜色
+
+id: Outline size
+msg: 边框大小
+
+id: Path to central folder
+msg: 主文件夹路径
+
+id: Providers for Subtitles
+msg: 字幕源
+
+id: Right
+msg: 靠右
+
+id: Shadow color
+msg: 阴影颜色
+
+id: Shadow offset
+msg: 阴影偏移
+
+id: Subtitle horizontal displacement
+msg: 字幕水平移位
+
+id: Subtitle position
+msg: 字幕位置
+
+id: Subtitle size
+msg: 字幕大小
+
+id: Subtitle size and positioning
+msg: 字幕大小和位置
+
+id: Subtitle vertical displacement
+msg: 字幕垂直移位
+
+id: Subtitles embedded in video file
+msg: 视频内嵌字幕
+
+id: Subtitles with matching filename in central folder
+msg: 主文件夹中文件名匹配的字幕
+
+id: Subtitles with matching filename in same folder as video
+msg: 视频所在文件夹中文件名匹配的字幕
+
+#
+# ./src/text/fontstash.c
+#
+id: Defaults
+msg: 默认
+
+id: Fonts
+msg: 字体
+
+id: Installed fonts
+msg: 已安装字体
+
+id: Narrow text
+msg: 窄体字
+
+id: Reset main font to default
+msg: 重置主字体
+
+id: Reset narrow font to default
+msg: 重置窄字体
+
+id: Reset subtitle font to default
+msg: 重置字幕字体
+
+id: Unable to install font: %s
+msg: 无法安装字体：%s
+
+id: Use font %s for
+msg: 使用字体%s
+
+#
+# ./src/ui/clipboard.c
+#
+id: Copy failed: %s
+msg: 复制失败：%s
+
+id: Target folder
+msg: 目标文件夹
+
+#
+# ./src/ui/glw/glw_ps3.c
+#
+id: Dual-Shock Remote
+msg: Dual-Shock遥控器
+
+id: No
+msg: 否
+
+id: Seek using L2 and R2 button
+msg: 使用L2/R2快速进退
+
+id: Yes with Select button
+msg: 使用Select按键确认
+
+#
+# ./src/ui/glw/glw_settings.c
+#
+id: Custom background image
+msg: 自定义背景图片
+
+id: Emulate Up/Down buttons with mouse wheel
+msg: 鼠标滚轮模拟上下键
+
+id: Folder for screensaver images
+msg: 屏幕保护图片目录
+
+id: Font and icon size
+msg: 字体和图标大小
+
+id: Interface horizontal shrink
+msg: 界面水平收缩
+
+id: Interface vertical shrink
+msg: 界面垂直收缩
+
+id: Screensaver
+msg: 屏幕保护
+
+id: Screensaver delay
+msg: 屏幕保护启动延迟时间
+
+id: Seconds per image
+msg: 秒/图片
+
+id: Use Bing images of the day
+msg: 使用Bing的当日图片
+
+id: Wrap when reaching beginning/end of lists
+msg: 列表浏览开始结尾循环
+
+#
+# ./src/ui/glw/glw_view_eval.c
+#
+id: %d days ago
+msg: %d天前
+
+id: %d hours ago
+msg: %d小时前
+
+id: %d minutes ago
+msg: %d分钟前
+
+id: %d months ago
+msg: %d个月前
+
+id: %d weeks ago
+msg: %d个星期前
+
+id: %d years ago
+msg: %d年前
+
+id: Just now
+msg: 刚刚
+
+id: One day ago
+msg: 1天前
+
+id: One hour ago
+msg: 1小时前
+
+id: One minute ago
+msg: 1分钟前
+
+id: One month ago
+msg: 1个月前
+
+#
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: 自动切换到当前模式
+
+id: DVI-Video color range
+msg: DVI视频颜色范围
+
+id: Switch to this mode now
+msg: 立刻切换到当前模式
+
+id: Video modes
+msg: 视频模式
+
+#
+# ./src/upgrade.c
+#
+id: %s version %s is available
+msg: %s版本%s可更新
+
+id: Notify about upgrades
+msg: 通知版本更新
+
+id: Open download page
+msg: 打开下载页面
+
+id: System
+msg: 系统
+
+id: Upgrade to releases from
+msg: 更新选择
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Date (newest first)
+msg: 日期（新的优先）
+
+id: Date (oldest first)
+msg: 日期（老的优先）
+
+id: Device not found
+msg: 未发现设备
+
+id: Malformed URI after device
+msg: 设备后的URI格式不正确
+
+id: Malformed URI after service
+msg: 服务后的URI格式不正确
+
+id: Service not found
+msg: 未发现服务
+
+#
+# ./src/video/video_settings.c
+#
+id: Always
+msg: 每次
+
+id: Ask
+msg: 询问
+
+id: Automatically play next video in list
+msg: 文件播放结束时自动播放列表中的下一个文件
+
+id: Count video as played when reaching
+msg: 将视频视为已播放当播放进度达到
+
+id: Enable VDPAU
+msg: 启用VDPAU
+
+id: Hardware accelerated decoding
+msg: 硬件加速解码
+
+id: Maximum resolution for deinterlacer
+msg: 去隔行化使用最大可能的分辨率
+
+id: Never
+msg: 从不
+
+id: No limit
+msg: 无限制
+
+id: Per-file volume
+msg: 单文件音量
+
+id: Preferred VDPAU deinterlacer method
+msg: 优先使用VDPAU去隔行化方式
+
+id: Resume video playback
+msg: 从上次结束位置开始播放
+
+id: Show clock during playback
+msg: 播放时显示时钟
+
+id: Step when seeking backward
+msg: 快退步速
+
+id: Step when seeking forward
+msg: 快进步速
+
+id: Temporal
+msg: 临时的
+
+id: Temporal/Spatial
+msg: 临时的/固定的
+
+id: Up / Down during video playback controls
+msg: 视频播放时上/下键控制
+
+id: Video acceleration and display behaviour
+msg: 视频加速及显示方式
+
+id: Video buffer size
+msg: 视频缓存大小
+

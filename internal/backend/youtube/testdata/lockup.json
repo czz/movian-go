@@ -1,0 +1,354 @@
+{
+ "contentImage": {
+  "thumbnailViewModel": {
+   "image": {
+    "sources": [
+     {
+      "url": "https://i.ytimg.com/vi/Xe4O_JbQ7-M/hqdefault.jpg?sqp=-oaymwEiCKgBEF5IWvKriqkDFQgBFQAAAAAYASUAAMhCPQCAokN4AQ==&rs=AOn4CLCRJxO-QrHE3x35avuDE49ZPNnVWw",
+      "width": 168,
+      "height": 94
+     },
+     {
+      "url": "https://i.ytimg.com/vi/Xe4O_JbQ7-M/hqdefault.jpg?sqp=-oaymwEjCNACELwBSFryq4qpAxUIARUAAAAAGAElAADIQj0AgKJDeAE=&rs=AOn4CLCWO1IoXaXz-Ghd9u_u-On1_BFfLQ",
+      "width": 336,
+      "height": 188
+     }
+    ]
+   },
+   "overlays": [
+    {
+     "thumbnailBottomOverlayViewModel": {
+      "badges": [
+       {
+        "thumbnailBadgeViewModel": {
+         "icon": {
+          "sources": [
+           {
+            "clientResource": {
+             "imageName": "MUSIC"
+            }
+           }
+          ]
+         },
+         "text": "2:13:12",
+         "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+         "animationActivationTargetId": "Xe4O_JbQ7-M",
+         "animationActivationEntityKey": "Eh8veW91dHViZS9hcHAvd2F0Y2gvcGxheWVyX3N0YXRlIMMCKAE%3D",
+         "lottieData": {
+          "url": "https://www.gstatic.com/youtube/img/lottie/audio_indicator/audio_indicator_v2.json",
+          "settings": {
+           "loop": true,
+           "autoplay": true
+          }
+         },
+         "animatedText": "Now playing",
+         "animationActivationEntitySelectorType": "THUMBNAIL_BADGE_ANIMATION_ENTITY_SELECTOR_TYPE_PLAYER_STATE",
+         "rendererContext": {
+          "accessibilityContext": {
+           "label": "2 hours, 13 minutes, 12 seconds"
+          }
+         }
+        }
+       }
+      ]
+     }
+    }
+   ]
+  }
+ },
+ "metadata": {
+  "lockupMetadataViewModel": {
+   "title": {
+    "content": "2 HOURS OF 80s MUSIC \ud83d\udcfc The Ultimate Night Drive | 80s Hits & Road Trip Classics"
+   },
+   "image": {
+    "decoratedAvatarViewModel": {
+     "avatar": {
+      "avatarViewModel": {
+       "image": {
+        "sources": [
+         {
+          "url": "https://yt3.ggpht.com/siBpGVtGpH75L5rnXqsgMG8W_bF9R1i8Zi55F01ze9lJ33k0ziugdpHyCbskscQDNk6ORSuJ=s68-c-k-c0x00ffffff-no-rj",
+          "width": 68,
+          "height": 68
+         }
+        ]
+       },
+       "avatarImageSize": "AVATAR_SIZE_M"
+      }
+     },
+     "a11yLabel": "Go to channel FRIDAY NIGHT \u201987",
+     "rendererContext": {
+      "commandContext": {
+       "onTap": {
+        "innertubeCommand": {
+         "clickTrackingParams": "CKQBENTEDBgAIhMI_7Lz38-KlwMVWR9jAR1bqjQgygEEyehw2w==",
+         "commandMetadata": {
+          "webCommandMetadata": {
+           "url": "/@FRIDAYNIGHT87",
+           "webPageType": "WEB_PAGE_TYPE_CHANNEL",
+           "rootVe": 3611,
+           "apiUrl": "/youtubei/v1/browse"
+          }
+         },
+         "browseEndpoint": {
+          "browseId": "UCzPtlzRHDOsuUmpKymHjXZw",
+          "canonicalBaseUrl": "/@FRIDAYNIGHT87"
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "metadata": {
+    "contentMetadataViewModel": {
+     "metadataRows": [
+      {
+       "metadataParts": [
+        {
+         "text": {
+          "content": "FRIDAY NIGHT \u201987"
+         }
+        }
+       ]
+      },
+      {
+       "metadataParts": [
+        {
+         "text": {
+          "content": "136K"
+         },
+         "accessibilityLabel": "136 thousand views"
+        },
+        {
+         "text": {
+          "content": "3w ago"
+         },
+         "accessibilityLabel": "3 weeks ago"
+        }
+       ]
+      }
+     ],
+     "delimiter": " "
+    }
+   },
+   "menuButton": {
+    "buttonViewModel": {
+     "iconName": "MORE_VERT",
+     "onTap": {
+      "innertubeCommand": {
+       "clickTrackingParams": "CKUBEPBbIhMI_7Lz38-KlwMVWR9jAR1bqjQgygEEyehw2w==",
+       "showSheetCommand": {
+        "panelLoadingStrategy": {
+         "inlineContent": {
+          "sheetViewModel": {
+           "content": {
+            "listViewModel": {
+             "listItems": [
+              {
+               "listItemViewModel": {
+                "title": {
+                 "content": "Add to queue"
+                },
+                "leadingImage": {
+                 "sources": [
+                  {
+                   "clientResource": {
+                    "imageName": "ADD_TO_QUEUE_TAIL"
+                   }
+                  }
+                 ]
+                },
+                "rendererContext": {
+                 "loggingContext": {
+                  "loggingDirectives": {
+                   "trackingParams": "CKcBEP6YBBgAIhMI_7Lz38-KlwMVWR9jAR1bqjQg",
+                   "visibility": {
+                    "types": "12"
+                   }
+                  }
+                 },
+                 "commandContext": {
+                  "onTap": {
+                   "innertubeCommand": {
+                    "clickTrackingParams": "CKcBEP6YBBgAIhMI_7Lz38-KlwMVWR9jAR1bqjQgygEEyehw2w==",
+                    "commandMetadata": {
+                     "webCommandMetadata": {
+                      "sendPost": true
+                     }
+                    },
+                    "signalServiceEndpoint": {
+                     "signal": "CLIENT_SIGNAL",
+                     "actions": [
+                      {
+                       "clickTrackingParams": "CKcBEP6YBBgAIhMI_7Lz38-KlwMVWR9jAR1bqjQgygEEyehw2w==",
+                       "addToPlaylistCommand": {
+                        "openMiniplayer": true,
+                        "videoId": "Xe4O_JbQ7-M",
+                        "listType": "PLAYLIST_EDIT_LIST_TYPE_QUEUE",
+                        "onCreateListCommand": {
+                         "clickTrackingParams": "CKcBEP6YBBgAIhMI_7Lz38-KlwMVWR9jAR1bqjQgygEEyehw2w==",
+                         "commandMetadata": {
+                          "webCommandMetadata": {
+                           "sendPost": true,
+                           "apiUrl": "/youtubei/v1/playlist/create"
+                          }
+                         },
+                         "createPlaylistServiceEndpoint": {
+                          "videoIds": [
+                           "Xe4O_JbQ7-M"
+                          ],
+                          "params": "CAQ%3D"
+                         }
+                        },
+                        "videoIds": [
+                         "Xe4O_JbQ7-M"
+                        ],
+                        "videoCommand": {
+                         "clickTrackingParams": "CKcBEP6YBBgAIhMI_7Lz38-KlwMVWR9jAR1bqjQgygEEyehw2w==",
+                         "commandMetadata": {
+                          "webCommandMetadata": {
+                           "url": "/watch?v=Xe4O_JbQ7-M",
+                           "webPageType": "WEB_PAGE_TYPE_WATCH",
+                           "rootVe": 3832
+                          }
+                         },
+                         "watchEndpoint": {
+                          "videoId": "Xe4O_JbQ7-M",
+                          "watchEndpointSupportedOnesieConfig": {
+                           "html5PlaybackOnesieConfig": {
+                            "commonConfig": {
+                             "url": "https://rr3---sn-uxaxpu5ap5-ca9l.googlevideo.com/initplayback?source=youtube&oeis=1&c=WEB&oad=3200&ovd=3200&oaad=11000&oavd=11000&ocs=700&oewis=1&oputc=1&msp=1&odepv=1&id=5dee0efc96d0efe3&ip=95.234.110.230&initcwndbps=1911125&mt=1790369348&oweuc="
+                            }
+                           }
+                          }
+                         }
+                        }
+                       }
+                      }
+                     ]
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              },
+              {
+               "listItemViewModel": {
+                "title": {
+                 "content": "Share"
+                },
+                "leadingImage": {
+                 "sources": [
+                  {
+                   "clientResource": {
+                    "imageName": "SHARE"
+                   }
+                  }
+                 ]
+                },
+                "rendererContext": {
+                 "commandContext": {
+                  "onTap": {
+                   "innertubeCommand": {
+                    "clickTrackingParams": "CKUBEPBbIhMI_7Lz38-KlwMVWR9jAR1bqjQgygEEyehw2w==",
+                    "commandMetadata": {
+                     "webCommandMetadata": {
+                      "sendPost": true,
+                      "apiUrl": "/youtubei/v1/share/get_share_panel"
+                     }
+                    },
+                    "shareEntityServiceEndpoint": {
+                     "serializedShareEntity": "CgtYZTRPX0piUTctTQ%3D%3D",
+                     "commands": [
+                      {
+                       "clickTrackingParams": "CKUBEPBbIhMI_7Lz38-KlwMVWR9jAR1bqjQgygEEyehw2w==",
+                       "openPopupAction": {
+                        "popup": {
+                         "unifiedSharePanelRenderer": {
+                          "trackingParams": "CKYBEI5iIhMI_7Lz38-KlwMVWR9jAR1bqjQg",
+                          "showLoadingSpinner": true
+                         }
+                        },
+                        "popupType": "DIALOG",
+                        "beReused": true
+                       }
+                      }
+                     ]
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             ]
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "accessibilityText": "More actions",
+     "style": "BUTTON_VIEW_MODEL_STYLE_MONO",
+     "trackingParams": "CKUBEPBbIhMI_7Lz38-KlwMVWR9jAR1bqjQg",
+     "type": "BUTTON_VIEW_MODEL_TYPE_TEXT",
+     "buttonSize": "BUTTON_VIEW_MODEL_SIZE_DEFAULT",
+     "state": "BUTTON_VIEW_MODEL_STATE_ACTIVE"
+    }
+   }
+  }
+ },
+ "contentId": "Xe4O_JbQ7-M",
+ "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+ "rendererContext": {
+  "loggingContext": {
+   "loggingDirectives": {
+    "trackingParams": "CKQBENTEDBgAIhMI_7Lz38-KlwMVWR9jAR1bqjQg",
+    "visibility": {
+     "types": "12"
+    }
+   }
+  },
+  "accessibilityContext": {
+   "label": "2 HOURS OF 80s MUSIC \ud83d\udcfc The Ultimate Night Drive | 80s Hits & Road Trip Classics 2 hours, 13 minutes"
+  },
+  "commandContext": {
+   "onTap": {
+    "innertubeCommand": {
+     "clickTrackingParams": "CKQBENTEDBgAIhMI_7Lz38-KlwMVWR9jAR1bqjQgMgdyZWxhdGVkSMS7ga29mI6GdZoBBQgBEPgdygEEyehw2w==",
+     "commandMetadata": {
+      "webCommandMetadata": {
+       "url": "/watch?v=Xe4O_JbQ7-M&list=RDXe4O_JbQ7-M&start_radio=1&pp=oAcB",
+       "webPageType": "WEB_PAGE_TYPE_WATCH",
+       "rootVe": 3832
+      }
+     },
+     "watchEndpoint": {
+      "videoId": "Xe4O_JbQ7-M",
+      "playlistId": "RDXe4O_JbQ7-M",
+      "params": "wAEBuAUB8gUCCgA%3D",
+      "playerParams": "oAcB",
+      "nofollow": true,
+      "loggingContext": {
+       "vssLoggingContext": {
+        "serializedContextData": "Gg1SRFhlNE9fSmJRNy1N"
+       }
+      },
+      "watchEndpointSupportedOnesieConfig": {
+       "html5PlaybackOnesieConfig": {
+        "commonConfig": {
+         "url": "https://rr3---sn-uxaxpu5ap5-ca9l.googlevideo.com/initplayback?source=youtube&oeis=1&c=WEB&oad=3200&ovd=3200&oaad=11000&oavd=11000&ocs=700&oewis=1&oputc=1&msp=1&odepv=1&id=5dee0efc96d0efe3&ip=95.234.110.230&initcwndbps=1911125&mt=1790369348&oweuc="
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}

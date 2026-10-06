@@ -1,0 +1,117 @@
+#include "skin://theme.view"
+
+$view.page = 0;
+
+
+widget(container_z, {
+
+  ListItemBevel();
+
+  onEvent(LostFocus, {
+    $view.page = 0;
+  });
+
+  widget(deck, {
+    time: 0;
+    // First page, when item is not expanded
+
+    widget(container_z, {
+      ListItemHighlight();
+      focusable: true;
+      style: "ListItemOuter";
+
+      onEvent(activate, {
+        $view.page = 1;
+      });
+
+      widget(container_x, {
+        style: "ListItem";
+        widget(icon, {
+          style: "ListItemIcon";
+        });
+        widget(label, {
+          caption: $self.metadata.title + ":";
+          style: ["ListItemLabel", "ListItemLabelContainer"];
+        });
+
+        widget(container_x, {
+          style: "MultioptSelection";
+          filterConstraintX: true;
+          widget(label, {
+            filterConstraintX: true;
+            align: left;
+            caption: $self.current.title;
+            style: "ListItemValue";
+          });
+
+          widget(icon, {
+            style: "MultioptIcon";
+          });
+        });
+      });
+    });
+
+    // Second page, when item is expanded
+
+    widget(container_x, {
+      style: ["ListItem", "ListMultioptContainer"];
+      onEvent(cancel, { $view.page = 0; });
+      onEvent(back,   { $view.page = 0; });
+
+      widget(icon, {
+        style: "ListItemIcon";
+      });
+
+      widget(container_y, {
+        style: "ListItemLabelContainer";
+        widget(label, {
+          height: 2em;
+
+          caption: $self.metadata.title + ":";
+          style: "ListItemLabel";
+        });
+      });
+
+      widget(container_z, {
+        style: "MultioptSelection";
+
+        widget(quad, {
+          zoffset: -400;
+          color: 0;
+          alpha: 0.4;
+        });
+
+        widget(list_y, {
+          id: "options";
+          navWrap: true;
+          cloner($self.options, container_z, {
+            focusable: true;
+            ListItemHighlight();
+            style: "MultioptItem";
+
+            onEvent(activate, {
+              propSelect($self);
+              $view.page = 0;
+            });
+
+            widget(container_x, {
+              widget(icon, {
+                style: select(propName($self) == $parent.value,
+                              "MultioptItemIconSelected",
+                              "MultioptItemIconUnselected");
+              });
+
+              widget(label, {
+                caption: $self.title;
+                style: "MultioptItemLabel";
+              });
+            });
+          });
+        });
+        ScrollBar("options");
+      });
+    });
+
+    page: $view.page;
+  });
+});

@@ -1,0 +1,14 @@
+prefix=/tmp/movian-go/ffmpeg/windows/amd64
+exec_prefix=${prefix}
+libdir=/tmp/movian-go/ffmpeg/windows/amd64/lib
+includedir=/tmp/movian-go/ffmpeg/windows/amd64/include
+
+Name: libavformat
+Description: FFmpeg container format library
+Version: 63.1.101
+Requires: libavcodec >= 63.1.101, libswresample >= 7.1.101, libavutil >= 61.1.101
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavformat -lm -latomic -L/tmp/movian-go/third_party/libxml2/windows/amd64/lib -lxml2 -lm -lz -lsecur32 -lncrypt -lcrypt32 -lws2_32
+Libs.private: 
+Cflags: -I${includedir}

@@ -1,0 +1,78 @@
+#import "info_include.view"
+
+
+
+widget(container_x, {
+  widget(container_z, {
+    widget(quad, {
+      alpha: 0.9;
+      color: 0;
+    });
+    widget(container_y, {
+      padding: 1em;
+      widget(label, {
+        hidden: !isVoid($core.media.current.url);
+        caption: _("No media loaded");
+      });
+
+      widget(table, {
+
+        hidden: isVoid($core.media.current.url);
+
+        widget(container_y, {
+          InfoLine(_("Source"),
+                   $core.media.current.metadata.format ?? $core.media.current.format);
+
+          InfoLine(_("Video codec"),
+                   $core.media.current.video.codec,
+                   isVoid($core.media.current.video.codec));
+
+          InfoLine(_("Video framerate"),
+                   fmt("%2.2f", $core.media.current.fps),
+                   isVoid($core.media.current.fps));
+
+          InfoLine(_("Video bitrate"),
+                   fmt("%d kb/s", $core.media.current.video.bitrate),
+                   isVoid($core.media.current.video.codec));
+
+          InfoLine(_("Audio codec"),
+                   $core.media.current.audio.codec);
+
+          InfoLine(_("Audio bitrate"),
+                   fmt("%d kb/s", $core.media.current.audio.bitrate));
+
+          InfoLine(_("A/V diff"),
+                   translate($core.media.current.avdiffError,
+		             fmt("%d ms", $core.media.current.avdiff * 1000),
+		             1, "Huge diff",
+		             2, "Epoch mismatch",
+		             3, fmt("%d ms holding",
+			            $core.media.current.avdiff * 1000),
+		             4, fmt("%d ms catching up",
+			            $core.media.current.avdiff * 1000)
+		            ),
+                   isVoid($core.media.current.avdiffError));
+
+          InfoBar(_("Buffer usage"),
+                  $core.media.current.buffer.current /
+                  $core.media.current.buffer.limit);
+
+          InfoLine(_("Remaining buffer"),
+                   fmt("%ds", $core.media.current.buffer.delay));
+
+          InfoLine(_("Video packets"),
+                   $core.media.current.video.dqlen,
+                   isVoid($core.media.current.video.codec));
+
+          InfoLine(_("Audio packets"),
+                   $core.media.current.audio.dqlen);
+
+          cloner($core.media.current.io.infoNodes, container_z, {
+            InfoLine($self.title, $self.info);
+          });
+
+        });
+      });
+    });
+  });
+});

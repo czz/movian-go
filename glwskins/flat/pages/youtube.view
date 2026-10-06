@@ -1,0 +1,108 @@
+#import "skin://theme.view"
+#import "skin://styles/style_grid.view"
+
+widget(container_z, {
+
+  widget(list_y, {
+    id: "scrollable";
+
+    $view.width = getWidth();
+
+    clipOffsetTop: 3em;
+    scrollThresholdTop: 5em;
+
+    scrollThresholdBottom: $ui.universeBottomHeight + 2em;
+    clipOffsetBottom: $ui.universeBottomHeight;
+    clipAlpha: 0.2;
+    clipBlur: 1;
+    spacing: 0.5em;
+
+    SearchBar("youtube:search:", _("Search YouTube"));
+
+    cloner($self.model.nodes, container_y, {
+
+      // Top-bar category strip (tabbar sections only) — APK-style
+      // chips: compact focusable labels that navOpen tab URLs.
+      widget(container_x, {
+        hidden: $self.type != "tabbar";
+        spacing: 0.5em;
+        padding: [0.5em, 0, 1em, 0];
+
+        cloner($self.nodes, container_z, {
+          focusable: true;
+          GridItemBevel();
+          GridItemHighlight();
+          onEvent(activate, navOpen($self.url));
+
+          widget(container_y, {
+            padding: [0.7em, 0.3em];
+            widget(label, {
+              caption: $self.metadata.title;
+              size: 1em;
+              align: center;
+            });
+          });
+        });
+      });
+
+      // Regular shelf: section label + horizontal poster row.
+      widget(label, {
+        hidden: $self.type == "tabbar";
+        padding: [0.8em, 0];
+        caption: $self.metadata.title;
+        size: 1.4em;
+      });
+
+      widget(container_x, {
+        hidden: $self.type == "tabbar";
+        padding: [0.5em, 0, 1.5em, 0];
+        spacing: $view.width / 60;
+
+        cloner(propWindow($self.nodes, 0, 4), loader, {
+          width: $view.width / 5;
+          alt: "skin://items/rect/youtubeitem.view";
+          source: "skin://items/rect/youtubeitem.view";
+        });
+
+        widget(container_z, {
+          hidden: $self.entries < 5;
+          width: $view.width / 5;
+          GridItemBevel();
+          GridItemHighlight();
+
+          focusable: true;
+          onEvent(activate, navOpen($self.url));
+
+          widget(container_y, {
+            align: bottom;
+
+            widget(container_z, {
+
+              widget(quad, {
+                color: 0;
+                alpha: 0.5;
+              });
+
+              widget(container_y, {
+                padding: [0.25em, 0.25em];
+                widget(label, {
+                  caption: _("Show more");
+                  align: center;
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+
+  ScrollBar("scrollable", 3em, $ui.universeBottomHeight);
+
+
+  widget(container_y, {
+    align: top;
+    PageHeader($self.model.metadata.title);
+  });
+
+});

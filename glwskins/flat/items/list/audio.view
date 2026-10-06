@@ -1,0 +1,67 @@
+#import "skin://theme.view"
+
+widget(container_z, {
+  height: 2em;
+  ListItemBevel();
+  ListItemHighlight();
+  onEvent(activate, playTrackFromSource($self, $parent.model));
+  onEvent(itemMenu, eventWithProp(defaultInfo, $self));
+
+  focusable: true;
+
+  widget(container_x, {
+    style: "ListItem";
+
+    widget(container_x, {
+      width: 3.5em;
+      align: center;
+
+      widget(container_z, {
+
+        widget(throbber, {
+          alpha: iir($self.media.loading, 8);
+        });
+
+        widget(icon, {
+          size: 1.5em;
+          source: translate($self.media.playstatus,
+                            "",
+                            "play", "skin://icons/ic_play_arrow_48px.svg",
+                            "pause", "skin://icons/ic_pause_48px.svg");
+          hidden: ($self.media.playstatus != "pause" &&
+                   $self.media.playstatus != "play") || $self.media.loading;
+        });
+
+      });
+
+      widget(icon, {
+        hidden: isVoid($self.metadata.icon);
+        source: $self.metadata.icon;
+        width: 2.5em;
+        size: 1.5em;
+        align: right;
+        margin: [0,1,1em,1];
+      });
+    });
+
+    widget(label, {
+      filterConstraintX: true;
+      caption: $self.metadata.title;
+      style: "ListItemLabel";
+    });
+
+    widget(label, {
+      weight: 0.6;
+      filterConstraintX: true;
+      caption: $self.metadata.artist;
+      style: "ListItemLabel";
+    });
+
+    widget(label, {
+      width: 5em;
+      margin: [0,0,1em,0];
+      align: right;
+      caption: value2duration($self.metadata.duration);
+    });
+  });
+});

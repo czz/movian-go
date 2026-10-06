@@ -1,0 +1,32 @@
+style(GridItemSeparatorLabel, {
+  font: "skin://fonts/RobotoCondensed-Light.ttf";
+  size: 1.5em;
+  alpha: 0.3;
+});
+
+style(GridItemIcon, {
+  size: 4em;
+});
+
+style(GridContainer, {
+  padding: [0, 0.2em, 0, 0.2em];
+  spacing: 0.2em;
+});
+
+style(GridBackdrop, {
+  color: 0.8 + iir(isNavFocused() + isHovered(), 4) * 0.4;
+  aspectConstraint: true;
+});
+
+style(GridBorder, {
+  border: 0.1em;
+  color: iir(isNavFocused() + isHovered(), 4);
+  alpha: 0.8;
+});
+
+style(GridLabel, {
+  padding: [0.15, 0.15em];
+  align: center;
+  autohide: true;
+  color: 0.5 + iir(isNavFocused() + isHovered(), 4) * 0.5;
+});

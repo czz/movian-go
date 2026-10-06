@@ -1,0 +1,91 @@
+#import "skin://theme.view"
+
+#define PopupBackdrop() {
+  widget(container_x, {
+    filterConstraintX: true;
+    filterConstraintY: true;
+
+
+    widget(quad, {
+      width: 0.2em;
+      color: 0;
+    });
+
+    widget(container_y, {
+      widget(quad, {
+        height: 0.2em;
+        color: 0;
+      });
+      widget(backdrop, {
+        source: "pixmap:gradient:40,40,40:60,60,60";
+        alpha 0.5;
+      });
+      widget(quad, {
+        height: 0.2em;
+        color: 0;
+      });
+    });
+
+    widget(quad, {
+      width: 0.2em;
+      color: 0;
+    });
+  });
+}
+
+
+style(popupRow, {
+  padding: [0.5em, 0.25em];
+  spacing: 1em;
+});
+
+style(textBackdrop, {
+  color: 0;
+  padding: [-0.1em, -0.1em];
+});
+
+
+#define popupGroup(BODY) {
+  widget(container_z, {
+    widget(quad, {
+      color: 0;
+      alpha: 0.9;
+    });
+    widget(container_x, {
+      padding: 1em;
+      BODY;
+    });
+  });
+}
+
+
+
+#define popupButton(EVENT, ENABLED, HIDDEN, CAPTION) {
+
+  widget(container_z, {
+    height: 2em;
+    GridItemBevel();
+    GridItemHighlight();
+
+    hidden: HIDDEN;
+    focusable: ENABLED;
+    onEvent(activate, EVENT);
+
+    widget(label, {
+      padding: [0.5em, 0];
+      align: center;
+      caption: CAPTION;
+      color: !isNavFocused();
+    });
+  });
+}
+
+
+#define popupButtonOK(EVENT, ENABLED, HIDDEN) {
+  popupButton(EVENT, ENABLED, HIDDEN, _("Ok"));
+}
+
+#define popupButtonCancel(EVENT, ENABLED, HIDDEN) {
+  popupButton(EVENT, ENABLED, HIDDEN, _("Cancel"));
+}
+

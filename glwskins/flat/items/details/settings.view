@@ -1,0 +1,28 @@
+#import "skin://theme.view"
+
+widget(container_y, {
+  padding: [2em, 2em];
+  align: top;
+
+  widget(label, {
+    caption: $self.metadata.title;
+    size: 2em;
+    padding: [0, 0, 1em, 0];
+  });
+
+  widget(label, {
+    caption: $self.metadata.shortdesc ?? "";
+    size: 1em;
+    alpha: 0.6;
+    padding: [0, 0, 1em, 0];
+  });
+
+  widget(container_z, {
+    hidden: !$self.model.nodes;
+
+    cloner($self.model.nodes, loader, {
+      source: "skin://items/list/" + $self.type + ".view";
+      alt: "skin://items/list/default.view";
+    });
+  });
+});

@@ -1,0 +1,14 @@
+prefix=/tmp/movian-go/ffmpeg
+exec_prefix=${prefix}
+libdir=/tmp/movian-go/ffmpeg/lib
+includedir=/tmp/movian-go/ffmpeg/include
+
+Name: libavfilter
+Description: FFmpeg audio/video filtering library
+Version: 12.1.101
+Requires: libswscale >= 10.1.101, libavformat >= 63.1.101, libavcodec >= 63.1.101, libswresample >= 7.1.101, libavutil >= 61.1.101
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavfilter -pthread -lm -latomic -lz -L/tmp/movian-go/third_party/libva/usr/lib/x86_64-linux-gnu -lva
+Libs.private: 
+Cflags: -I${includedir}

@@ -1,0 +1,31 @@
+#import "skin://theme.view"
+
+vbox({
+
+  focusable: true;
+  onEvent(activate, navOpen($self.url, void, $self, $parent.model, void, $parent.url));
+  onEvent(itemMenu, eventWithProp(videoInfo, $self));
+
+  zbox({
+
+    widget(quad, {
+      hidden: !$clone.primaryColor;
+      color: $clone.primaryColor;
+    });
+
+    widget(image, {
+      source: $self.metadata.icon ?? ($self.url + "#cover");
+      style: "GridBackdrop";
+    });
+
+    widget(border, {
+      style: "GridBorder";
+    });
+  });
+
+  widget(label, {
+    style: "GridLabel";
+    caption: $self.metadata.title;
+  });
+
+});

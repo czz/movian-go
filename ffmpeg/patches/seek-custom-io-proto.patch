@@ -1,0 +1,28 @@
+diff --git a/libavformat/seek.c b/libavformat/seek.c
+index c0d9437..095921b 100644
+--- a/libavformat/seek.c
++++ b/libavformat/seek.c
+@@ -178,8 +178,23 @@ void ff_configure_buffers_for_index(AVFormatContext *s, int64_t time_tolerance)
+     int64_t skip = 0;
+     //We could use URLProtocol flags here but as many user applications do not use URLProtocols this would be unreliable
+     const char *proto = avio_find_protocol_name(s->url);
++    char scheme_buf[64];
+     FFIOContext *ctx;
+ 
++    /* with custom io the scheme may have no registered URLProtocol
++       (e.g. an external TLS stack) — derive it from the URL so the
++       local-vs-network decision below still works */
++    if (!proto && (s->flags & AVFMT_FLAG_CUSTOM_IO) && s->url) {
++        const char *colon = strchr(s->url, ':');
++        if (!colon || colon == s->url) {
++            proto = "file"; /* bare path — same default as url_find_protocol */
++        } else if (colon - s->url < (int)sizeof(scheme_buf)) {
++            memcpy(scheme_buf, s->url, colon - s->url);
++            scheme_buf[colon - s->url] = '\0';
++            proto = scheme_buf;
++        }
++    }
++
+     av_assert0(time_tolerance >= 0);
+ 
+     if (!proto) {

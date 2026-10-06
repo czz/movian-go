@@ -1,0 +1,35 @@
+diff --git a/libavformat/dashdec.c b/libavformat/dashdec.c
+index 3d5519b70..1653d380f 100644
+--- a/libavformat/dashdec.c
++++ b/libavformat/dashdec.c
+@@ -418,6 +418,7 @@ static int open_url(AVFormatContext *s, AVIOContext **pb, const char *url,
+     DASHContext *c = s->priv_data;
+     AVDictionary *tmp = NULL;
+     const char *proto_name = NULL;
++    char scheme_buf[16];
+     int proto_name_len;
+     int ret;
+ 
+@@ -429,8 +430,20 @@ static int open_url(AVFormatContext *s, AVIOContext **pb, const char *url,
+     if (!proto_name)
+         proto_name = avio_find_protocol_name(url);
+ 
+-    if (!proto_name)
+-        return AVERROR_INVALIDDATA;
++    if (!proto_name) {
++        /* a custom io_open can handle schemes with no registered
++           URLProtocol (e.g. an external TLS stack) — derive the scheme
++           from the URL for the whitelist checks below */
++        const char *colon;
++        if (!(s->flags & AVFMT_FLAG_CUSTOM_IO))
++            return AVERROR_INVALIDDATA;
++        colon = strchr(url, ':');
++        if (!colon || colon == url || colon - url >= (int)sizeof(scheme_buf))
++            return AVERROR_INVALIDDATA;
++        memcpy(scheme_buf, url, colon - url);
++        scheme_buf[colon - url] = '\0';
++        proto_name = scheme_buf;
++    }
+ 
+     proto_name_len = strlen(proto_name);
+     // only http(s) & file are allowed

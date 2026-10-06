@@ -1,0 +1,14 @@
+prefix=/tmp/movian-go/third_party/libva/usr
+includedir=${prefix}/include
+libdir=${prefix}/lib/x86_64-linux-gnu
+
+libva_version=2.22.0
+va_api_version=1.22.0
+display=drm
+
+Name: va-drm
+Description: Userspace Video Acceleration (VA) DRM interface
+Version: 1.22.0
+Requires: libva
+Libs: -L${libdir} -lva-drm
+Cflags: -I${includedir}

@@ -1,0 +1,97 @@
+
+#import "skin://theme.view"
+
+widget(container_z, {
+
+  height: 2em;
+  ListItemBevel();
+  ListItemHighlight();
+
+  focusable: true;
+
+   onEvent(activate, deliverEvent($self, "connect"));
+
+  widget(container_x, {
+    style: "ListItem";
+
+    widget(icon, {
+      color: select(isNavFocused(), 1.0, 0.6);
+      source: translate($self.metadata.type,
+			"dataroot://res/svg/Settings.svg",
+			"wifi", "dataroot://res/svg/Wifi.svg",
+			"ethernet", "skin://icons/ic_settings_ethernet_48px.svg"
+		 );
+      style: "ListItemIcon";
+    });
+
+    widget(deck, {
+      space(1);
+      width: 3em;
+      widget(container_y, {
+        padding: [0, 0.25em];
+        widget(throbber, {
+          color: select(isNavFocused(), 1.0, 0.6);
+        });
+      });
+
+      widget(icon, {
+        color: select(isNavFocused(), 1.0, 0.6);
+        source: "skin://icons/ic_check_48px.svg";
+      });
+
+      widget(icon, {
+        color: select(isNavFocused(), 1.0, 0.6);
+        source: "skin://icons/ic_check_box_48px.svg";
+      });
+
+      widget(icon, {
+        color: select(isNavFocused(), 1.0, 0.6);
+        source: "skin://icons/ic_error_48px.svg";
+      });
+
+      page: translate($self.metadata.state,
+                      0,
+		      "failure",       4,
+		      "association",   1,
+		      "configuration", 1,
+		      "ready",         2,
+		      "disconnect",    4,
+		      "online",        3
+		     );
+    });
+
+    widget(label, {
+      filterConstraintX: true;
+      color: select(isNavFocused(), 1.0, 0.6);
+      caption: $self.metadata.title;
+      sizeScale: 1.2;
+    });
+
+    widget(label, {
+      filterConstraintX: true;
+      color: select(isNavFocused(), 1.0, 0.6);
+      caption: select($self.metadata.state == "failure",
+		      $self.metadata.error,
+		      $self.metadata.ipv4.address);
+    });
+
+
+    widget(icon, {
+      color: select(isNavFocused(), 1.0, 0.6);
+      source: select(isVoid($self.metadata.security),
+		     "",
+		     "dataroot://res/svg/Lock.svg"
+		    );
+      size: 2em;
+    });
+
+    widget(icon, {
+      color: select(isNavFocused(), 1.0, 0.6);
+      source: select($self.metadata.favorite,
+		     "dataroot://res/svg/Favorite.svg",
+		     "");
+      size: 2em;
+    });
+  });
+});
+

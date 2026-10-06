@@ -1,0 +1,66 @@
+#import "skin://theme.view"
+
+vbox({
+
+  focusable: true;
+  onEvent(activate, navOpen($self.url, void, $self, $parent.model, void, $parent.url));
+  onEvent(itemMenu, eventWithProp(videoInfo, $self));
+
+  zbox({
+
+    widget(quad, {
+      hidden: !$clone.primaryColor;
+      color: $clone.primaryColor;
+    });
+
+    widget(image, {
+      source: $self.metadata.icon ?? ($self.url + "#cover");
+      style: "GridBackdrop";
+    });
+
+    widget(container_y, {
+      hidden: !$self.metadata.badge;
+      margin: 0.3em;
+
+      widget(container_x, {
+        widget(container_z, {
+          widget(quad, {
+            color: 0.0;
+            alpha: 0.8;
+          });
+
+          widget(label, {
+            caption: $self.metadata.badge;
+            size: 0.65em;
+            margin: [0.15em, 0.4em];
+          });
+        });
+
+        widget(container_x, {
+          weight: 1;
+        });
+      });
+
+      widget(container_y, {
+        weight: 1;
+      });
+    });
+
+    widget(border, {
+      style: "GridBorder";
+    });
+  });
+
+  widget(label, {
+    style: "GridLabel";
+    caption: $self.metadata.title;
+  });
+
+  widget(label, {
+    caption: $self.metadata.description;
+    size: 0.75em;
+    color: 0.8;
+    maxlines: 1;
+  });
+
+});

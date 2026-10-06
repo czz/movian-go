@@ -1,0 +1,238 @@
+
+#define ListItemBevel() {
+  widget(container_y, {
+
+    filterConstraintY: true;
+    filterConstraintX: true;
+    widget(quad, {
+      height: 1;
+      alpha: 0.15;
+    });
+    space(1);
+    widget(quad, {
+      height: 1;
+      color: 0;
+      alpha: 0.15;
+    });
+  });
+}
+
+
+#define GridItemBevel() {
+  widget(container_y, {
+
+    filterConstraintY: true;
+    widget(quad, {
+      height: 1;
+      alpha: 0.15;
+    });
+    space(1);
+    widget(quad, {
+      height: 1;
+      color: 0.6;
+      alpha: 0.15;
+    });
+  });
+  widget(container_x, {
+
+    filterConstraintX: true;
+    widget(quad, {
+      width: 1;
+      alpha: 0.15;
+    });
+    space(1);
+    widget(quad, {
+      width: 1;
+      color: 0.6;
+      alpha: 0.15;
+    });
+  });
+}
+
+
+#define ListItemHighlight() {
+  widget(quad, {
+    fhpSpill: true;
+    additive: true;
+    alpha: 0.1 * isHovered() + 0.2 * isNavFocused();
+  });
+
+}
+
+#define GridItemHighlight() {
+  widget(quad, {
+    fhpSpill: true;
+    additive: true;
+    alpha: 0.1 * isHovered() + 0.2 * iir(isNavFocused(), 4, true);
+  });
+}
+
+
+#define GridItemHighlight2() {
+  widget(quad, {
+    fhpSpill: true;
+    additive: true;
+    alpha: 0.1 * isHovered() + 0.2 * isNavFocused();
+  });
+  widget(container_x, {
+    filterConstraintX: true;
+    fhpSpill: true;
+    alpha: isHovered() * 0.5;
+    widget(quad, {
+      width: 1;
+      color: 0;
+    });
+    space(1);
+    widget(quad, {
+      width: 1;
+      color: 0;
+    });
+  });
+}
+
+
+#define ScrollBar(TARGET, TOP_PAD = 0, BOTTOM_PAD = 0) {
+
+  widget(container_x, {
+    filterConstraintX: true;
+    filterConstraintY: true;
+    padding: [0,TOP_PAD,0,BOTTOM_PAD];
+
+    space(1);
+    widget(slider_y, {
+      id: "scrollbar";
+      bind(TARGET);
+      width: 0.6em;
+      focusable: canScroll();
+      alpha: iir(canScroll(), 16);
+      widget(container_x, {
+        padding: [0.2em,0,0.2em, 0];
+        widget(quad, {
+	  alpha: 0.6 + isHovered();
+        });
+      });
+    });
+  });
+}
+
+
+#define BackButton(ENABLED=true, EVENT=event("back")) {
+  widget(container_y, {
+    align: center;
+    width: 4em;
+    clickable: $ui.pointerVisible || ($ui.touch && ENABLED);
+    alpha: iir($ui.pointerVisible || ($ui.touch && ENABLED), 4);
+    onEvent(activate, EVENT);
+    navFocusable: false;
+    widget(icon, {
+      color: 0.5 + iir(isHovered(), 4);
+      size: 2em;
+      source: "skin://icons/ic_chevron_left_48px.svg";
+    });
+  });
+}
+
+#define PageHeader0(CONTENTS) {
+  widget(container_z, {
+    height: 3em;
+    zoffset: 10;
+    widget(quad, {
+      color: 0;
+      alpha: 0.2;
+    });
+    CONTENTS;
+
+    widget(container_x, {
+      hidden: !$nav.canGoBack;
+      BackButton();
+      space(1);
+    });
+  });
+}
+
+
+#define PageHeader(TITLE) {
+  widget(container_z, {
+    height: 3em;
+    zoffset: 10;
+    widget(quad, {
+      color: 0;
+      alpha: 0.2;
+    });
+
+    hbox({
+      padding: [4em, 0.5em];
+      image({
+        align: left;
+        source: $self.model.metadata.icon;
+      });
+    });
+
+    widget(label, {
+      padding: [3em, 0];
+      align: center;
+      caption: TITLE;
+      size: 1.5em;
+    });
+
+    widget(container_x, {
+      hidden: !$nav.canGoBack;
+      BackButton();
+      space(1);
+    });
+  });
+}
+
+
+#define SearchBar(URLPREFIX, TEXT=void, ICON=void) {
+  widget(container_x, {
+    style: "ListItem";
+    divider: true;
+    widget(container_z, {
+
+      filterConstraintX: true;
+      widget(quad, {
+        color: 0;
+        alpha: 0.55;
+      });
+
+      widget(container_x, {
+        height: 2em;
+        padding: [0.5em, 0];
+        spacing: 0.5em;
+        widget(icon, {
+          fhpSpill: true;
+          size: 1.2em;
+          source: "skin://icons/ic_search_48px.svg";
+          alpha: 0.3 + isNavFocused();
+        });
+
+        zbox({
+          filterConstraintX: true;
+          label({
+            hidden: $view.searchQuery ? true : false;
+            caption: TEXT;
+            size: 1.2em;
+            font: "skin://fonts/RobotoCondensed-Regular.ttf";
+            color: 0.5;
+          });
+
+          widget(text, {
+            filterConstraintX: true;
+            padding: [0, 0.4em];
+            size: 1.2em;
+            font: "skin://fonts/RobotoCondensed-Regular.ttf";
+            focusable: 0.1;
+
+            bind($view.searchQuery);
+            onEvent(enter, navOpen(URLPREFIX + $view.searchQuery),
+	            $view.searchQuery);
+            onEvent(submit, navOpen(URLPREFIX + $view.searchQuery),
+	            $view.searchQuery);
+          });
+        });
+      });
+    });
+  });
+}
+

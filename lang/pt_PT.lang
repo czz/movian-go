@@ -1,0 +1,2003 @@
+language: Portuguese
+native: Português
+maintainer: Bruno Guerreiro
+#
+# ./glwskins/flat/ctxmenu/default_details.view
+#
+id: Bookmark
+# Missing translation
+msg: 
+
+id: Bookmarked
+# Missing translation
+msg: 
+
+id: Copy to clipboard
+# Missing translation
+msg: 
+
+id: Copy to location...
+# Missing translation
+msg: 
+
+id: Delete
+msg: Eliminar
+
+id: Queue
+msg: Lista de espera
+
+#
+# ./glwskins/flat/ctxmenu/plugin_details.view
+#
+id: Author:
+# Missing translation
+msg: 
+
+id: Available version:
+msg: Versão disponível
+
+id: Changelog
+# Missing translation
+msg: 
+
+id: Install
+msg: Instalar
+
+id: Installed version:
+# Missing translation
+msg: 
+
+id: Status:
+# Missing translation
+msg: 
+
+id: Uninstall
+msg: Desinstalar
+
+id: Upgrade
+msg: Atualizar
+
+#
+# ./glwskins/flat/ctxmenu/video_details.view
+#
+id: Continue from %s
+msg: Continuar a partir de %s
+
+id: Mark as seen
+msg: Marcar como visto
+
+id: Mark as unseen
+msg: Marcar como não visto
+
+id: Play from beginning
+msg: Reproduzir do início
+
+id: Play until end of list
+msg: Reproduzir até ao fim da lista
+
+id: Video Cast
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/items/details/video.view
+#
+id: Season %d - Episode %d
+# Missing translation
+msg: 
+
+id: Seen %d times, %s
+# Missing plural translation for 'Seen %d times, %s' and 'Seen %d time, %s'
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwskins/flat/items/list/add.view
+#
+id: Add new entry
+msg: Adicionar nova entrada
+
+#
+# ./glwskins/flat/items/list/bool.view
+#
+id: Off
+msg: Deslig.
+
+id: On
+msg: Ligado 
+
+#
+# ./glwskins/flat/items/list/font.view
+#
+id: Condensed
+msg: Condensado
+
+id: Subtitles
+msg: Legendas
+
+id: User interface
+msg: Interface de utilizador
+
+#
+# ./glwskins/flat/items/list/tvepisode.view
+#
+id: Episode %d - %s
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/loading.view
+#
+id: %d kb/s
+msg: %d kb/s
+
+id: Bitrate:
+msg: Bitrate:
+
+#
+# ./glwskins/flat/log.view
+#
+id: System log
+msg: Log de sistema
+
+#
+# ./glwskins/flat/mediainfo.view
+#
+id: A/V diff
+# Missing translation
+msg: 
+
+id: Audio bitrate
+# Missing translation
+msg: 
+
+id: Audio codec
+# Missing translation
+msg: 
+
+id: Audio packets
+# Missing translation
+msg: 
+
+id: Buffer usage
+# Missing translation
+msg: 
+
+id: No media loaded
+msg: Nenhum media carregado
+
+id: Remaining buffer
+# Missing translation
+msg: 
+
+id: Source
+# Missing translation
+msg: 
+
+id: Video bitrate
+# Missing translation
+msg: 
+
+id: Video codec
+# Missing translation
+msg: 
+
+id: Video framerate
+# Missing translation
+msg: 
+
+id: Video packets
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/menu/sidebar.view
+#
+id: Bookmark page
+# Missing translation
+msg: 
+
+id: Page settings
+# Missing translation
+msg: 
+
+id: Paste
+# Missing translation
+msg: 
+
+id: Reload page
+# Missing translation
+msg: 
+
+id: Remove bookmark
+# Missing translation
+msg: 
+
+id: Settings
+msg: Configurações
+
+#
+# ./glwskins/flat/menu/sidebar_common.view
+#
+id: Activate sleep timer
+msg: Ativar temporização de suspensão
+
+id: Disable sleep timer
+msg: Desativar temporização de suspensão
+
+id: Exit %s
+msg: Sair %
+
+id: Hide media info
+# Missing translation
+msg: 
+
+id: Hide system info
+msg: Ocultar informação de sistema
+
+id: Master volume
+msg: Volume principal
+
+id: Show media info
+# Missing translation
+msg: 
+
+id: Show system info
+msg: Mostrar informação do sistema
+
+id: Suspend
+msg: Suspender
+
+id: Time until sleep
+msg: Tempo até suspensão
+
+id: View log
+# Missing translation
+msg: 
+
+id: dB
+msg: dB
+
+id: min
+msg: min
+
+#
+# ./glwskins/flat/osd/osd_audio.view
+#
+id: Audio
+msg: Áudio 
+
+#
+# ./glwskins/flat/osd/osd_main.view
+#
+id: Audio settings
+msg: Configurações de áudio
+
+id: Subtitle settings
+msg: Configurações de legendas
+
+id: Video settings
+msg: Configurações de vídeo
+
+#
+# ./glwskins/flat/osk.view
+#
+id: Default
+msg: Padrão
+
+id: Keyboard layout:
+msg: Esquema teclado
+
+#
+# ./glwskins/flat/pages/directory.view
+#
+id: Album
+msg: Álbum
+
+id: Artist
+msg: Artista
+
+id: Custom
+msg: Personalizado
+
+id: Grid
+# Missing translation
+msg: 
+
+id: List
+msg: Lista
+
+id: Page layout
+# Missing translation
+msg: 
+
+id: Search results
+# Missing translation
+msg: 
+
+id: TV Season
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/empty.view
+#
+id: No contents
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/home.view
+#
+id: Dismiss
+msg: Anular
+
+id: Home
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/openerror.view
+#
+id: Unable to open resource
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/playqueue.view
+#
+id: Playqueue
+msg: Lista de reprodução
+
+#
+# ./glwskins/flat/pages/searchresults.view
+#
+id: Show more
+# Missing translation
+msg: 
+
+id: %d hits
+# Missing plural translation for '%d hits' and '%d hit'
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwskins/flat/pages/slideshow.view
+#
+id: Interval: %ds
+# Missing translation
+msg: 
+
+id: Play/Pause
+# Missing translation
+msg: 
+
+id: Stop
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/stpp.view
+#
+id: Remote control - %s
+# Missing translation
+msg: 
+
+id: Remote controlling %s
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/stppstpp.view
+#
+id: Nested remote controll is not supported
+# Missing translation
+msg: 
+
+id: Remote control
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/stppvideo.view
+#
+id: Audio tracks
+msg: Faixas de áudio
+
+id: Audio volume adjustment: %d dB
+msg: Ajuste de volume: %d dB
+
+id: CPU is too slow to decode this video
+msg: O CPU é muito lento para descodificar este vídeo
+
+id: Next
+# Missing translation
+msg: 
+
+id: Previous
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/tvseason.view
+#
+id: Season %d
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/upgrade.view
+#
+id: %s is up to date
+msg: %s está atual
+
+id: An error occured during download
+msg: Um erro aconteceu durante o download
+
+id: Changelog for %s releases
+msg: Log de alterações para as releases %s
+
+id: Check for updates now
+msg: Procurar por atualizações agora
+
+id: Checking for updates
+# Missing translation
+msg: 
+
+id: Current version:
+msg: Versão atual:
+
+id: Download and install
+# Missing translation
+msg: 
+
+id: Downloading %s
+msg: A transferir %s
+
+id: New version %s is available for download
+msg: Uma nova versão %s está disponível para transferência
+
+id: No upgrade available
+msg: Não existem atualizações disponíveis
+
+id: Retry
+# Missing translation
+msg: 
+
+id: Stable
+msg: Estável
+
+id: Testing
+msg: Teste
+
+id: Unable to query for new version
+msg: Não foi possível procurar uma nova versão
+
+#
+# ./glwskins/flat/popups/auth.view
+#
+id: Domain
+msg: Domínio
+
+id: Password
+msg: Palavra-passe
+
+id: Remember me
+msg: Lembrar-me
+
+id: Username
+msg: Nome do utilizador
+
+#
+# ./glwskins/flat/popups/common.view
+#
+id: Cancel
+msg: Cancelar
+
+id: Ok
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/filepicker.view
+#
+id: Back
+# Missing translation
+msg: 
+
+id: Close
+# Missing translation
+msg: 
+
+id: Folder select mode, press right to open subfolder
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/resume.view
+#
+id: No, Start over
+msg: Não, Recomeçar 
+
+id: Resume from %s
+# Missing translation
+msg: 
+
+id: Yes
+msg: Sim
+
+#
+# ./glwskins/flat/popups/textDialog.view
+#
+id: OK
+msg: OK
+
+#
+# ./glwskins/flat/sysinfo.view
+#
+id: CPU Temp
+msg: Temp. CPU
+
+id: Connected
+# Missing translation
+msg: 
+
+id: Fragmentation
+msg: Fragmentação: 
+
+id: Framerate
+# Missing translation
+msg: 
+
+id: GPU Temp
+msg: Temp. GPU
+
+id: HDD Avail
+msg: HDD Dispon. 
+
+id: IP Address
+# Missing translation
+msg: 
+
+id: Inactive memory
+# Missing translation
+msg: 
+
+id: Memory usage
+msg: Memória usada
+
+id: Network
+# Missing translation
+msg: 
+
+id: Not available
+# Missing translation
+msg: 
+
+id: System Free
+msg: Sistema dispon.
+
+id: System Total
+msg: Total Sist. 
+
+id: VM Page In/Out
+# Missing translation
+msg: 
+
+id: Version
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/universe.view
+#
+id: Audio muted
+msg: Sem áudio
+
+id: Copying %d files
+# Missing translation
+msg: 
+
+id: Master volume: %d dB
+msg: Volume principal: %d dB
+
+id: Overscan adjustment\nPosition border at screen edges
+# Missing translation
+msg: 
+
+#
+# ./src/api/stpp.c
+#
+id: Allow remote control
+# Missing translation
+msg: 
+
+id: Device not available
+# Missing translation
+msg: 
+
+id: Movians for remote control
+# Missing translation
+msg: 
+
+#
+# ./src/api/tmdb.c
+#
+id: Language (ISO 639-1 code)
+msg: Idioma (código ISO 639-1)
+
+id: Use original title
+msg: Usar título original
+
+#
+# ./src/arch/android/android.c
+#
+id: Android Storage
+# Missing translation
+msg: 
+
+#
+# ./src/arch/linux/pulseaudio.c
+#
+id: Unable to initialize audio system %s -- %s
+msg: Impossivel inicializar sistema áudio %s -- %s
+
+#
+# ./src/arch/ps3/ps3_main.c
+#
+id: System is low on memory (%d kB RAM available)
+msg: O sistema está com pouca memória (%d kB RAM disponível)
+
+#
+# ./src/arch/ps3/ps3_vdec.c
+#
+id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
+msg: Cell-h264 %d frames de referência para %d é incompatível com descodificador HW PS3. Aceleração desactivada.
+
+id: Cell-h264: Broken headers, Disabling acceleration
+msg: Cell-h264: Cabeçalhos inválidos, Aceleração desactivada
+
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: A forçar nível 4.2 para conteúdo no nível %d.%d. Isto pode quebrar a reprodução de vídeo.
+
+id: Unable to accelerate %s, library not loaded.
+msg: Não foi possível acelerar %s, a biblioteca não foi carregada.
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Não foi possível abrir o codificador Cell. Erro 0x%x
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Não foi possível abrir o codificador Cell. Não foi possível alocar %d bytes de RAM
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Não foi possível pesquisar no codificador Cell. Erro 0x%x
+
+#
+# ./src/arch/rpi/rpi_audio.c
+#
+id: 8 Channel PCM
+msg: 8 canais PCM
+
+id: AC3 Pass-Through
+msg: AC3 directo
+
+id: Analog
+msg: Analógico
+
+id: Audio output port
+msg: Porta de saída áudio
+
+id: Autodetect
+msg: Detectar automaticamente 
+
+id: DTS Pass-Through
+msg: DTS directo 
+
+id: HDMI
+msg: HDMI
+
+#
+# ./src/arch/rpi/rpi_tv.c
+#
+id: Match display and content framerate
+# Missing translation
+msg: 
+
+#
+# ./src/audio2/audio.c
+#
+id: Audio delay
+msg: Atraso de áudio
+
+id: Audio gain
+# Missing translation
+msg: 
+
+id: Setup audio output
+msg: Configurar saída áudio
+
+id: Video playback
+msg: Reprodução de vídeo
+
+#
+# ./src/audio2/audio_test.c
+#
+id: 440Hz sinewave -12dB
+msg: Onda sinusoidal 440 Hz -12 dB
+
+id: Audio test
+msg: Teste áudio
+
+id: Center
+msg: Centro
+
+id: Front Left
+msg: Esquerda frente
+
+id: Front Right
+msg: Direita frente 
+
+id: LFE
+msg: LFE
+
+id: Pink noise
+msg: Pink noise 
+
+id: Play test signal
+msg: Tocar som de teste
+
+id: Rear Left
+msg: Esquerda atrás 
+
+id: Rear Right
+msg: Direita atrás 
+
+id: Speaker position
+msg: Posição das colunas 
+
+id: Surround Left
+msg: Esquerda surround 
+
+id: Surround Right
+msg: Direita surround 
+
+id: Test signal type
+msg: Tipo de som de teste 
+
+#
+# ./src/backend/bittorrent/bt_backend.c
+#
+id: No files in torrent
+msg: Torrent sem ficheiros
+
+id: Unable to open torrent: %s
+msg: Impossivel abrir torrent: %s
+
+#
+# ./src/backend/bittorrent/diskio.c
+#
+id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
+msg: Torrents em cache a usar %d MB do máximo de %d MB. Espaço total disponivel: %d MB 
+
+#
+# ./src/backend/bittorrent/fa_torrent.c
+#
+id: Connected peers
+msg: Pares ligados 
+
+id: Known peers
+msg: Pares conhecidos
+
+id: Receiving from
+msg: A receber de 
+
+id: Torrent leechers
+msg: Torrent leechers
+
+id: Torrent seeders
+msg: Torrent seeders
+
+#
+# ./src/backend/bittorrent/torrent_settings.c
+#
+id: BitTorrent
+msg: BitTorrent
+
+id: Clear cache
+msg: Limpar cache
+
+id: Enable bittorrent
+msg: Activar bittorrent
+
+id: Max upload speed
+# Missing translation
+msg: 
+
+id: Max usage of free space for caching torrents
+msg: Utilização máxima de espaço livre para cache de torrents
+
+id: Status
+msg: Estado
+
+id: Torrent cache path
+msg: Caminho para cache de torrents
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+msg: DVD
+
+id: DVD read error, restarting disc
+msg: Erro na leitura do DVD, a reiniciar disco
+
+#
+# ./src/backend/hls/hls.c
+#
+id: Primary
+msg: Principal
+
+id: Supplementary
+msg: Suplementar 
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Channels
+# Missing translation
+msg: 
+
+id: Invalid HTSP URL
+msg: URL de HTSP inválido
+
+id: No such channel
+# Missing translation
+msg: 
+
+id: Recorded shows
+# Missing translation
+msg: 
+
+id: Recorder
+# Missing translation
+msg: 
+
+#
+# ./src/backend/playlist.c
+#
+id: Unable to open playlist
+# Missing translation
+msg: 
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Procurar
+
+id: Search result for: %s
+msg: Resultado da pesquisa por: %s
+
+#
+# ./src/backend/slideshow/slideshow.c
+#
+id: 3 seconds
+# Missing translation
+msg: 
+
+id: 5 seconds
+# Missing translation
+msg: 
+
+id: 7 seconds
+# Missing translation
+msg: 
+
+id: Slideshow speed
+# Missing translation
+msg: 
+
+#
+# ./src/blobcache_file.c
+#
+id: Cache cleared
+msg: Cache limpa
+
+id: Clear cached files
+msg: Limpar ficheiros de cache
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: Não foi possível abrir o tipo de conteúdo: %d
+
+id: Checking file contents
+msg: A verificar conteudo do ficheiro
+
+id: Invalid URL from redirect
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+msg: Não foi possível abrir o ficheiro: %s
+
+#
+# ./src/fileaccess/fa_filepicker.c
+#
+id: Select a file
+# Missing translation
+msg: 
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Procurar utilizando o locatedb do Unix
+
+#
+# ./src/fileaccess/fa_scanner.c
+#
+id: Deleted %s
+msg: %s eliminado
+
+id: Filename
+msg: Nome de ficheiro
+
+id: Include in library
+# Missing translation
+msg: 
+
+id: Newest first
+# Missing translation
+msg: 
+
+id: Oldest first
+# Missing translation
+msg: 
+
+id: Show only supported files
+msg: Mostrar apenas ficheiros suportados
+
+id: Sort folders first
+msg: Ordenar pastas primeiro
+
+id: Sort on
+msg: Ordenar por
+
+id: Unable to delete %s\n%s
+msg: Não foi possível eliminar %s\n%s
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: Procurar utilizando o spotlight
+
+#
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+msg: Tem a certeza que pretende eliminar:
+
+id: Browse archives as folders
+msg: Navegar arquivos como pastas
+
+id: Enable file deletion from item menu
+msg: Ativar eliminação de ficheiros através do item de menu
+
+id: Show filename extensions
+msg: Mostrar extensões dos ficheiros 
+
+id: Store per-file settings in filesystem
+msg: Armazenar definições por ficheiro no sistema de ficheiros
+
+id: %d archive parts
+msg[0]: %d partes de arquivo 
+msg[1]: 
+
+id: %d directories
+msg[0]: %d diretórios
+msg[1]: %d diretório
+
+id: %d files
+msg[0]: %d ficheiros
+msg[1]: %d ficheiro
+
+#
+# ./src/fileaccess/smb/fa_nativesmb.c
+#
+id: Access denied
+msg: Acesso não permitido
+
+id: Account restricted
+msg: Conta restringida
+
+id: Bad network share name
+msg: Problemas no nome da partilha de rede
+
+id: Logon failure
+msg: Falha no login
+
+id: Object name not found
+msg: Objecto não encontrado
+
+#
+# ./src/i18n.c
+#
+id: 12 Hour
+# Missing translation
+msg: 
+
+id: 24 Hour
+# Missing translation
+msg: 
+
+id: Default character set
+msg: Character set padrão
+
+id: Ignore 'The' at beginning of words when sorting
+msg: Na ordenação, ignorar 'The' no ínicio das palavras
+
+id: Language
+msg: Idioma
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: Os códigos de idioma devem ser configurados com códigos ISO de 3 caracteres (ex: eng, fra, por)
+
+id: Languages
+msg: Idiomas
+
+id: Preferred languages
+msg: Idiomas preferidos
+
+id: Primary audio language code
+msg: Código do idioma de áudio primário
+
+id: Primary subtitle language code
+msg: Código do idioma de legendas primário
+
+id: Secondary audio language code
+msg: Código do idioma de áudio secundário
+
+id: Secondary subtitle language code
+msg: Código do idioma de legendas secundário
+
+id: System default
+# Missing translation
+msg: 
+
+id: Tertiary audio language code
+msg: Código do idioma de áudio terciário
+
+id: Tertiary subtitle language code
+msg: Código do idioma de legendas terciário
+
+id: Time format
+# Missing translation
+msg: 
+
+id: Timezone
+# Missing translation
+msg: 
+
+#
+# ./src/ipc/libcec.c
+#
+id: Longpress SELECT for item menu
+# Missing translation
+msg: 
+
+id: Switch TV input source
+# Missing translation
+msg: 
+
+id: Use STOP key for combo input
+# Missing translation
+msg: 
+
+#
+# ./src/keyring.c
+#
+id: Forget remembered passwords
+msg: Esquecer passwords guardadas
+
+id: Rembered passwords erased
+msg: Passwords guardadas apagadas
+
+#
+# ./src/media/media_settings.c
+#
+id: Align on video frame
+# Missing translation
+msg: 
+
+id: Audio volume
+msg: Volume áudio
+
+id: Delay
+# Missing translation
+msg: 
+
+id: Go to standby after video ends
+msg: Desligar após final do video
+
+id: Horizontal pan
+msg: Alinhamento horizontal
+
+id: Horizontal position
+# Missing translation
+msg: 
+
+id: Horizontal scale
+# Missing translation
+msg: 
+
+id: Reset defaults for folder '%s'
+msg: Reiniciar padrões para a pasta '%s' 
+
+id: Save as defaults for folder '%s'
+msg: Gravar como padrão para a pasta '%s'
+
+id: Save as global default
+msg: Gravar como padrão global
+
+id: Scaling
+# Missing translation
+msg: 
+
+id: Stretch video to fullscreen
+msg: Esticar vídeo para fullscreen
+
+id: Stretch video to widescreen
+msg: Esticar vídeo para widescreen
+
+id: Vertical pan
+msg: Alinhamento vertical
+
+id: Vertical position
+# Missing translation
+msg: 
+
+id: Vertical scale
+# Missing translation
+msg: 
+
+id: Video frame interpolation
+msg: Interpolação de frames video
+
+id: Video zoom
+msg: Zoom de vídeo
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+msg: A indexar
+
+#
+# ./src/metadata/decoration.c
+#
+id: Automatic
+msg: Automático
+
+id: Erase all playback info
+msg: Eliminar toda a informação de reprodução
+
+id: Manual
+msg: Manual
+
+id: Mark all as seen
+msg: Marcar todos como visto
+
+id: Mark all as unseen
+msg: Marcar todos como não visto 
+
+id: Metadata mode
+msg: Modo metadata
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+msg: Embebido no ficheiro
+
+id: Track %d
+msg: Faixa %d
+
+#
+# ./src/metadata/metadata_sources.c
+#
+id: Enabled
+msg: Ativo
+
+id: Metadata
+msg: Metadados
+
+id: Metadata configuration and provider settings
+msg: Configuração de metadados e de fornecedores de dados
+
+id: Providers for Music
+msg: Fornecedores de dados de Música
+
+id: Providers for Video
+msg: Fornecedores de vídeo
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: %d items apagado(s)
+
+id: Clear all metadata
+msg: Limpar todos os metadados
+
+id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
+msg: Limpar todos os metadados significa perder <b>todos</b> os metadados guardados de fontes externas como themoviedb.org, etc\n\nInformação sobre pontos de reinicio, número de visualizações, etc será mantida..\nDeseja continuar?
+
+#
+# ./src/metadata/mlp.c
+#
+id: Custom search query
+msg: Chave de pesquisa personalizada
+
+id: Custom title
+msg: Título personalizado
+
+id: IMDb ID
+msg: ID do IMDb
+
+id: Metadata loaded from <b>%s</b> based on %s
+# Missing translation
+msg: 
+
+id: Metadata source
+msg: Fonte dos metadados
+
+id: Movie
+msg: Filme
+
+id: Movie title
+msg: Título do filme
+
+id: No data found
+msg: Não foram encontrados dados
+
+id: None
+msg: Nenhum
+
+id: Refresh metadata
+msg: Atualizar metadados
+
+id: Title, Season, Episode
+msg: Título, Temporada, Episódio
+
+id: custom IMDb ID
+msg: ID do IMDb personalizado
+
+id: custom query
+msg: pesquisa personalizada
+
+id: filename
+msg: nome de ficheiro
+
+id: filename as TV episode
+msg: nome do ficheiro como um episódio de TV
+
+id: folder name
+msg: nome de pasta
+
+#
+# ./src/navigator.c
+#
+id: Add and remove items on homepage
+msg: Adicionar e remover items na página inicial
+
+id: Added %s to home page
+# Missing translation
+msg: 
+
+id: Added new bookmark: %s
+msg: Adicionar novo favorito: %s
+
+id: Bookmarks
+msg: Favoritos
+
+id: Icon
+# Missing translation
+msg: 
+
+id: Music
+msg: Música
+
+id: No handler for URL
+msg: Nenhum handler para o URL
+
+id: Other
+msg: Outro
+
+id: Photos
+msg: Fotografias
+
+id: Removed %s from homepage
+# Missing translation
+msg: 
+
+id: Removed bookmark: %s
+msg: Favorito removido: %s
+
+id: TV
+msg: TV
+
+id: Title
+msg: Título
+
+id: Type
+msg: Tipo
+
+id: URL
+msg: Endereço
+
+id: Video
+msg: Vídeo
+
+#
+# ./src/networking/connman.c
+#
+id: Enable Wi-Fi
+msg: Activar Wi-Fi
+
+id: Network connections
+msg: Ligações de rede
+
+#
+# ./src/networking/ftp_server.c
+#
+id: Enable FTP server
+msg: Activar servidor FTP
+
+id: FTP server
+msg: Servidor FTP
+
+id: Server TCP port
+msg: Porta TCP do servidor
+
+#
+# ./src/networking/http_server.c
+#
+id: Power Off
+# Missing translation
+msg: 
+
+id: Rebooting
+# Missing translation
+msg: 
+
+id: Restarting
+# Missing translation
+msg: 
+
+id: Standby
+msg: Standby
+
+#
+# ./src/notifications.c
+#
+id: Show news on home screen
+# Missing translation
+msg: 
+
+#
+# ./src/plugins.c
+#
+id: Alternate plugin Repository URL
+msg: Repositório de plugins alternativo
+
+id: Audio decoders
+# Missing translation
+msg: 
+
+id: Auto install plugins on demand
+# Missing translation
+msg: 
+
+id: Auto installed plugin %s (Version %s)
+# Missing translation
+msg: 
+
+id: Automatically upgrade plugins
+msg: Atualizar automaticamente os plugins
+
+id: Available plugins
+msg: Plugins disponiveis
+
+id: Background
+msg: Fundo
+
+id: Beta testing passwords
+msg: Palavras-passe de testes beta
+
+id: Browse available plugins
+msg: Navegar pleos plugins disponiveis
+
+id: Browsing
+msg: Navegando
+
+id: Cloud services
+msg: Serviços em cloud
+
+id: Corrupt plugin bundle
+msg: Bundle de plugin corrupto
+
+id: Custom backgrounds can now be set in Settings -> Look and Feel
+# Missing translation
+msg: 
+
+id: Disk write error
+msg: Erro de escrita em disco
+
+id: Downloading
+msg: A efetuar download
+
+id: File open error
+msg: Erro ao abrir o ficheiro
+
+id: Home page
+msg: Página inicial
+
+id: Images
+msg: Imagens
+
+id: Installed
+# Missing translation
+msg: 
+
+id: Installed plugins
+msg: Plugins instalados
+
+id: Installed version higher than available
+msg: Está instalada uma versão mais atual que a disponível
+
+id: Installing
+msg: A instalar
+
+id: List of albums
+msg: Lista de álbuns
+
+id: Loading screen
+msg: Ecrã a carregar 
+
+id: Movies
+msg: Filmes
+
+id: Music streaming
+msg: Streaming de música
+
+id: Not installable
+msg: Não instalável
+
+id: Not installed
+msg: Não instalado
+
+id: Not upgradable
+msg: Não atualizável
+
+id: On Screen Keyboards
+msg: Teclado On-Screen
+
+id: Online TV
+msg: TV online
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+msg: O plugin %s %s foi desinstalado porque poderia causar problemas.\nPode tentar reinstalar manualmente uma versão diferente.
+
+id: Plugin %s has been uninstalled - %s
+# Missing translation
+msg: 
+
+id: Plugin categories
+# Missing translation
+msg: 
+
+id: Plugins
+msg: Plugins
+
+id: Preferred views from plugins
+msg: Vistas de plugins preferidas
+
+id: Screen saver
+msg: Protetor de ecrã
+
+id: TV channels
+msg: Canais de TV
+
+id: Unable to load plugin.json: %s
+msg: Não foi possível carregar o plugin.json: %s
+
+id: Unable to load plugin.json: Malformed JSON
+msg: Não foi possível carregar o plugin.json: sintaxe de JSON incorreta
+
+id: Uncategorized
+msg: Não categorizado
+
+id: Up to date
+msg: Atualizado
+
+id: Upgradable
+msg: Pode ser atualizado
+
+id: Upgraded plugin %s to version %s
+msg: Plugin %s atualizado para a versão %s
+
+id: User interface extensions
+msg: Extensões de interface de utilizador
+
+id: Version %s is no longer compatible with Movian
+# Missing translation
+msg: 
+
+id: Video streaming
+msg: Streaming de vídeo
+
+#
+# ./src/prop/prop_proxy.c
+#
+id: Remote exited
+# Missing translation
+msg: 
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Modo de espera automático
+
+id: Enable SSH server
+msg: Activar servidor SSH
+
+id: Logout
+msg: Logout
+
+id: Open shell
+msg: Abrir shell
+
+id: Power off system
+msg: Desligar o sistema
+
+id: Quit
+msg: Sair
+
+id: SSH server
+msg: Servidor SSH
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled on home screen
+msg: Ativo na página inicial
+
+id: Name
+msg: Nome
+
+#
+# ./src/service.c
+#
+id: Local network
+msg: Rede local
+
+id: Remove from homepage
+# Missing translation
+msg: 
+
+#
+# ./src/settings.c
+#
+id: About
+# Missing translation
+msg: 
+
+id: Applications and installed plugins
+msg: Aplicações e plugins instalados
+
+id: Configure communications with your TV
+msg: Configure as ligações à TV
+
+id: Developer settings
+msg: Configurações de programador
+
+id: Discovered media sources
+msg: Fontes de media descobertos
+
+id: File browsing
+msg: Navegação de arquivos 
+
+id: Fonts and user interface styling
+msg: Estilos de fontes e interface de utilizador
+
+id: General
+msg: Geral
+
+id: Global settings
+msg: Definições globais
+
+id: Look and feel
+msg: Olhar e sentir
+
+id: Network services, etc
+msg: Serviços de rede, etc
+
+id: Network settings
+msg: Configuração de rede
+
+id: Reset
+# Missing translation
+msg: 
+
+id: Settings useful for developers
+msg: Configurações úteis para programadores
+
+id: Software upgrade
+msg: Atualização de software
+
+id: Starting and stopping
+msg: Arranque e paragem
+
+id: System name
+msg: Nome do sistema
+
+id: System related settings
+msg: Configurações relacionadas com o sistema
+
+id: TV Control
+# Missing translation
+msg: 
+
+#
+# ./src/subtitles/subtitles.c
+#
+id: Any subtitle in central folder
+msg: Qualquer legenda numa pasta central
+
+id: Any subtitle in same folder as video
+msg: Qualquer legenda na mesma pasta do vídeo
+
+id: Auto
+msg: Automático
+
+id: Automatically select from this source
+msg: Selecionar automaticamente a partir desta fonte
+
+id: Central subtitle folder
+msg: Pasta de lengendas central
+
+id: Color
+msg: Cor
+
+id: External file
+msg: Ficheiro externo
+
+id: Force subtitles to reside on video frame
+msg: Forçar as legendas a residerem no quadro de vídeo
+
+id: Generic settings for video subtitles
+msg: Definições genéricas para legendas de vídeo
+
+id: Ignore embedded styling
+msg: Ignorar estilos embutidos
+
+id: Left
+msg: Esquerda
+
+id: Outline color
+msg: Cor do contorno
+
+id: Outline size
+msg: Tamanho do contorno
+
+id: Path to central folder
+msg: Caminho para a pasta central
+
+id: Providers for Subtitles
+msg: Fornecedores de legendas
+
+id: Right
+msg: Direita
+
+id: Shadow color
+msg: Cor da sombra
+
+id: Shadow offset
+msg: Deslocamento da sombra
+
+id: Subtitle horizontal displacement
+msg: Deslocamento horizontal de legendas
+
+id: Subtitle position
+msg: Posicionamento das legendas
+
+id: Subtitle size
+msg: Tamanho das legendas
+
+id: Subtitle size and positioning
+msg: Tamanho e posição das legendas
+
+id: Subtitle vertical displacement
+msg: Deslocamento vertical de legendas
+
+id: Subtitles embedded in video file
+msg: Legendas incorporadas no ficheiro de vídeo
+
+id: Subtitles with matching filename in central folder
+msg: Legendas com um nome idêntico na pasta central
+
+id: Subtitles with matching filename in same folder as video
+msg: Legendas com um nome idêntico na pasta do vídeo
+
+#
+# ./src/text/fontstash.c
+#
+id: Defaults
+msg: Padrões
+
+id: Fonts
+msg: Tipos de letra
+
+id: Installed fonts
+msg: Tipos de letra instalados
+
+id: Narrow text
+msg: Texto estreito
+
+id: Reset main font to default
+msg: Repor tipo de letra principal por omissão
+
+id: Reset narrow font to default
+msg: Repor tipo de letra estreito por omissão
+
+id: Reset subtitle font to default
+msg: Repor tipo de letra de legenda por omissão
+
+id: Unable to install font: %s
+msg: Impossivel instalar fonte: %s
+
+id: Use font %s for
+msg: Usar a fonte %s para
+
+#
+# ./src/ui/clipboard.c
+#
+id: Copy failed: %s
+# Missing translation
+msg: 
+
+id: Target folder
+# Missing translation
+msg: 
+
+#
+# ./src/ui/glw/glw_ps3.c
+#
+id: Dual-Shock Remote
+# Missing translation
+msg: 
+
+id: No
+msg: Não
+
+id: Seek using L2 and R2 button
+msg: Procurar usando os botões L2 e R2
+
+id: Yes with Select button
+msg: Sim com o botão Select
+
+#
+# ./src/ui/glw/glw_settings.c
+#
+id: Custom background image
+# Missing translation
+msg: 
+
+id: Emulate Up/Down buttons with mouse wheel
+# Missing translation
+msg: 
+
+id: Folder for screensaver images
+# Missing translation
+msg: 
+
+id: Font and icon size
+msg: Tamnho de fonte e icons
+
+id: Interface horizontal shrink
+# Missing translation
+msg: 
+
+id: Interface vertical shrink
+# Missing translation
+msg: 
+
+id: Screensaver
+# Missing translation
+msg: 
+
+id: Screensaver delay
+msg: Atraso da proteção de ecrã
+
+id: Seconds per image
+# Missing translation
+msg: 
+
+id: Use Bing images of the day
+# Missing translation
+msg: 
+
+id: Wrap when reaching beginning/end of lists
+msg: Wrap ao chegar ao principio/fim das listas
+
+#
+# ./src/ui/glw/glw_view_eval.c
+#
+id: %d days ago
+# Missing translation
+msg: 
+
+id: %d hours ago
+# Missing translation
+msg: 
+
+id: %d minutes ago
+# Missing translation
+msg: 
+
+id: %d months ago
+# Missing translation
+msg: 
+
+id: %d weeks ago
+# Missing translation
+msg: 
+
+id: %d years ago
+# Missing translation
+msg: 
+
+id: Just now
+# Missing translation
+msg: 
+
+id: One day ago
+# Missing translation
+msg: 
+
+id: One hour ago
+# Missing translation
+msg: 
+
+id: One minute ago
+# Missing translation
+msg: 
+
+id: One month ago
+# Missing translation
+msg: 
+
+#
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Alterar automaticamente para este modo
+
+id: DVI-Video color range
+msg: Intervalo de cores DVI-Video
+
+id: Switch to this mode now
+msg: Alterar para este modo agora
+
+id: Video modes
+msg: Modos de vídeo
+
+#
+# ./src/upgrade.c
+#
+id: %s version %s is available
+msg: %s versão %s disponivel
+
+id: Notify about upgrades
+msg: Notificar por atualizações
+
+id: Open download page
+msg: Abrir página de download
+
+id: System
+msg: Sistema
+
+id: Upgrade to releases from
+msg: Atualizar para releases desde
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Date (newest first)
+msg: Data (mais recentes primeiro)
+
+id: Date (oldest first)
+msg: Data (mais antigos primeiro)
+
+id: Device not found
+msg: O dispositivo não foi encontrado
+
+id: Malformed URI after device
+msg: Sintaxe de URI incorreta depois do dispositivo
+
+id: Malformed URI after service
+msg: Sintaxe de URI incorreta depois do serviço
+
+id: Service not found
+msg: O serviço não foi encontrado
+
+#
+# ./src/video/video_settings.c
+#
+id: Always
+msg: Sempre
+
+id: Ask
+msg: Perguntar
+
+id: Automatically play next video in list
+msg: Reproduzir automaticamente o próximo vídeo da lista
+
+id: Count video as played when reaching
+msg: Marcar vídeo como reproduzido quando chegar a
+
+id: Enable VDPAU
+msg: Ativar VDPAU
+
+id: Hardware accelerated decoding
+# Missing translation
+msg: 
+
+id: Maximum resolution for deinterlacer
+msg: Resolução máxima para o deinterlacer
+
+id: Never
+msg: Nunca
+
+id: No limit
+msg: Sem limite
+
+id: Per-file volume
+msg: Volume por ficheiro
+
+id: Preferred VDPAU deinterlacer method
+msg: Método preferido de VDPAU deinterlacer
+
+id: Resume video playback
+msg: Retomar a reprodução de vídeo
+
+id: Show clock during playback
+# Missing translation
+msg: 
+
+id: Step when seeking backward
+msg: Saltos ao procurar para trás
+
+id: Step when seeking forward
+msg: Saltos ao procurar para a frente
+
+id: Temporal
+msg: Temporal
+
+id: Temporal/Spatial
+msg: Temporal/Espacial
+
+id: Up / Down during video playback controls
+msg: Controlos Cima / Baixo durante reprodução de video
+
+id: Video acceleration and display behaviour
+msg: Acelaração de vídeo e comportamento da visualização
+
+id: Video buffer size
+# Missing translation
+msg: 
+

@@ -1,0 +1,116 @@
+#import "skin://osk/common.view"
+#import "skin://popups/common.view"
+
+// On screen keyboard
+
+$ui.osk.shift = 0;
+$ui.osk.caps = 0;
+
+$ui.osk.shifted = $ui.osk.shift ^^ $ui.osk.caps;
+
+multiopt($view.path,
+         $view.selopt,
+         void,
+         $core.glw.osk.userKeyboard,
+         vectorize($core.glw.views.standard.osk),
+         makeUri(_("Default"), "skin://osk/default.view")
+         );
+
+widget(popup, {
+
+  clickable: true;
+  onEvent(click, deliverEvent($ui.osk.eventSink, "Cancel"), true, true, true);
+
+  widget(container_z, {
+    clickable: true;
+    PopupBackdrop();
+    width: 30em;
+
+    widget(container_y, {
+      onEvent(cancel, deliverEvent($ui.osk.eventSink, "Cancel"));
+      onEvent(back,   deliverEvent($ui.osk.eventSink, "Cancel"));
+      navPositional: true;
+
+      padding: 1em;
+      spacing: 0.1em;
+
+      widget(label, {
+	sizeScale: 1.5;
+	caption: $ui.osk.title;
+	shadow: true;
+      });
+
+      widget(container_x, {
+	spacing: 0.1em;
+	height: 2em;
+
+        widget(container_z, {
+	  weight: 10;
+	  filterConstraintX: true;
+	  filterConstraintY: true;
+          widget(quad, {
+            color: 0;
+          });
+	  widget(text, {
+	    password: $ui.osk.password;
+	    oskPassword: true;
+	    padding: [1em, 0];
+	    bind($ui.osk.text);
+	    sizeScale: 1.5;
+	    permanentCursor: true;
+	    id: "input";
+	  });
+        });
+	ACTION_ICON("skin://icons/ic_chevron_left_48px.svg",
+                    targetedEvent("input", Left));
+
+	ACTION_ICON("skin://icons/ic_chevron_right_48px.svg",
+                    targetedEvent("input", Right));
+	ACTION_ICON("skin://icons/ic_skip_previous_48px.svg", {
+	  $ui.osk.text = void;
+	}, 1.5);
+	ACTION_ICON("skin://icons/ic_cancel_48px.svg",
+                    deliverEvent($ui.osk.eventSink, "Cancel"), 1.5);
+	ACTION_ICON("skin://icons/ic_check_48px.svg",
+                    deliverEvent($ui.osk.eventSink, "Ok"), 1.5);
+      });
+
+      widget(loader, {
+        source: $view.path;
+        time: 0;
+      });
+
+      widget(container_x, {
+        height: 2em;
+        spacing: 1em;
+
+        space(6);
+
+	ACTION("←", targetedEvent("opt", Decrease), 1, false, $view.canLayoutPrev);
+	ACTION("→", targetedEvent("opt", Increase), 1, false, $view.canLayoutNext);
+
+
+        widget(container_x, {
+          weight: 6;
+          filterConstraintX: true;
+          widget(label, {
+            caption: _("Keyboard layout:");
+          });
+
+          widget(deck, {
+            $view.canLayoutPrev = canSelectPrevious();
+            $view.canLayoutNext = canSelectNext();
+
+            id: "opt";
+            effect: blend;
+            time: 0.1;
+
+            cloner($view.selopt.options, label, {
+	      caption: $self.title;
+            });
+          });
+        });
+      });
+    });
+  });
+});

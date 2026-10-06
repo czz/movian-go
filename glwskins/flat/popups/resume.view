@@ -1,0 +1,41 @@
+#import "common.view"
+
+onEvent(cancel, deliverEvent($self.eventSink));
+onEvent(back,   deliverEvent($self.eventSink, "cancel"));
+
+
+widget(popup, {
+
+  widget(container_z, {
+
+    PopupBackdrop();
+
+    widget(container_y, {
+      padding: 1em;
+      spacing: 1.5em;
+
+      widget(label, {
+        align: center;
+        caption: $self.title;
+        size: 1.5em;
+      });
+
+      widget(label, {
+        align: center;
+        caption: fmt(_("Resume from %s"),
+                     value2duration($self.position));
+      });
+
+      widget(container_x, {
+        align: center;
+        spacing: 2em;
+        homogenous: true;
+
+        popupButton(deliverEvent($self.eventSink, "OK"), 1.0, false, _("Yes"));
+        popupButton(deliverEvent($self.eventSink, "cancel"), 0.5, false,
+                    _("No, Start over"));
+      });
+    });
+  });
+});
+

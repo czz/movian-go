@@ -1,0 +1,13 @@
+prefix=/tmp/movian-go/third_party/libva/usr
+includedir=${prefix}/include
+libdir=${prefix}/lib/x86_64-linux-gnu
+
+libva_version=2.22.0
+va_api_version=1.22.0
+driverdir=/usr/lib/x86_64-linux-gnu/dri
+
+Name: va
+Description: Userspace Video Acceleration (VA) core interface
+Version: 1.22.0
+Libs: -L${libdir} -lva
+Cflags: -I${includedir}

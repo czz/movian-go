@@ -1,0 +1,30 @@
+#import "skin://theme.view"
+
+widget(container_z, {
+
+  focusable: true;
+
+  onEvent(activate, navOpen("slideshow:" + $self.url, void, $self, $parent.model, void, $parent.url));
+
+  onEvent(itemMenu, eventWithProp(defaultInfo, $self));
+
+  widget(quad, {
+    color: $clone.primaryColor;
+  });
+
+  widget(displacement, {
+    scaling: [1,1,1] + [0.1, 0.1, 0] * $view.loading;
+    widget(image, {
+      $view.loading = iir(isLoading(), 4, true);
+      source: $self.metadata.icon ?? ("thumb://" + $self.url);
+      saturation: $view.loading;
+      alpha: 1 - $view.loading * 0.5;
+      $clone.primaryColor = RGBToString(primaryColor() * 0.3);
+    });
+  });
+
+  widget(border, {
+    style: "GridBorder";
+  });
+
+});

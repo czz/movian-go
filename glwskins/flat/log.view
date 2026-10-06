@@ -1,0 +1,60 @@
+#import "skin://theme.view"
+
+widget(container_z, {
+
+  widget(container_x, {
+    padding: [4,0];
+    widget(list_y, {
+      id: "scrollable";
+      bottomGravity: true;
+      clipOffsetTop: 3em;
+      scrollThresholdTop: 5em;
+      scrollThresholdBottom: $ui.universeBottomHeight + 2em;
+      clipOffsetBottom: $ui.universeBottomHeight;
+      clipAlpha: 0.2;
+      clipBlur: 1;
+
+      cloner($core.logbuffer, label, {
+	caption: $self.prefix + $self.message;
+	ellipsize: true;
+	font: "dataroot://res/fonts/UbuntuMono-Regular.ttf";
+	size: 0.8em;
+
+	color: translate($self.severity, [1,1,1],
+			 "DEBUG", [0.5, 1, 0.5],
+			 "INFO",  [1, 1, 0.5],
+			 "ERROR", [1, 0.5, 0.5]);
+      });
+    });
+  });
+  ScrollBar("scrollable", 3em, $ui.universeBottomHeight);
+
+  widget(container_y, {
+    align: top;
+    widget(container_z, {
+      height: 3em;
+      zoffset: 10;
+      widget(quad, {
+        color: 0;
+        alpha: 0.2;
+      });
+
+      widget(container_x, {
+        BackButton();
+
+        widget(label, {
+          filterConstraintX: true;
+          padding: [4em, 0];
+          align: center;
+          caption: _("System log");
+          size: 1.5em;
+        });
+      });
+
+      widget(dummy, {
+        width: 4em;
+      });
+    });
+  });
+
+});

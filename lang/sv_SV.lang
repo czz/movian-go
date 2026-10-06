@@ -1,0 +1,1853 @@
+language: Swedish
+native: Svenska
+maintainer: Andreas Smas <andreas@lonelycoder.com>
+#
+# ./glwskins/flat/ctxmenu/default_details.view
+#
+id: Bookmark
+msg: Bookmärke
+
+id: Bookmarked
+msg: Sparad som bokmärke
+
+id: Copy to clipboard
+msg: Kopiera till urklipp
+
+id: Copy to location...
+msg: Kopiera till plats...
+
+id: Delete
+msg: Radera
+
+id: Queue
+msg: Köa
+
+#
+# ./glwskins/flat/ctxmenu/plugin_details.view
+#
+id: Author:
+msg: Upphovsman
+
+id: Available version:
+msg: Tillgänglig version:
+
+id: Changelog
+msg: Förändringar
+
+id: Install
+msg: Installera
+
+id: Installed version:
+msg: Installerad version:
+
+id: Status:
+msg: Status:
+
+id: Uninstall
+msg: Avinstallera
+
+id: Upgrade
+msg: Uppgradera
+
+#
+# ./glwskins/flat/ctxmenu/video_details.view
+#
+id: Continue from %s
+msg: Fortsätt från %s
+
+id: Mark as seen
+msg: Markera som seed
+
+id: Mark as unseen
+msg: Markera som ej sedd
+
+id: Play from beginning
+msg: Spela från början
+
+id: Play until end of list
+msg: Spela till slutet av listan
+
+id: Video Cast
+msg: Skådespelare
+
+#
+# ./glwskins/flat/items/details/video.view
+#
+id: Season %d - Episode %d
+msg: Säsong %d - Episod %d
+
+id: Seen %d times, %s
+msg[0]: Sedd %d gånger, %s
+msg[1]: Sedd %d gång, %s
+
+#
+# ./glwskins/flat/items/list/add.view
+#
+id: Add new entry
+msg: Lägg till ny
+
+#
+# ./glwskins/flat/items/list/bool.view
+#
+id: Off
+msg: Av
+
+id: On
+msg: På
+
+#
+# ./glwskins/flat/items/list/font.view
+#
+id: Condensed
+msg: Smal
+
+id: Subtitles
+msg: Undertexter
+
+id: User interface
+msg: Användargränsnitt
+
+#
+# ./glwskins/flat/items/list/tvepisode.view
+#
+id: Episode %d - %s
+msg: Episod %d - %s
+
+#
+# ./glwskins/flat/loading.view
+#
+id: %d kb/s
+msg: %d kb/s
+
+id: Bitrate:
+msg: Bithastighet:
+
+#
+# ./glwskins/flat/log.view
+#
+id: System log
+msg: Systemlog
+
+#
+# ./glwskins/flat/mediainfo.view
+#
+id: A/V diff
+msg: A/V differans
+
+id: Audio bitrate
+msg: Ljudbithastighet
+
+id: Audio codec
+msg: Ljudkodec
+
+id: Audio packets
+msg: Ljudpaket
+
+id: Buffer usage
+msg: Bufferanvänding
+
+id: No media loaded
+msg: Ingen media laddad
+
+id: Remaining buffer
+msg: Kvarvarande buffer
+
+id: Source
+msg: Källa
+
+id: Video bitrate
+msg: Videobithastighet
+
+id: Video codec
+msg: Videokodec
+
+id: Video framerate
+msg: Bildhastighet
+
+id: Video packets
+msg: Videopaket
+
+#
+# ./glwskins/flat/menu/sidebar.view
+#
+id: Bookmark page
+msg: Bokmärk sida
+
+id: Page settings
+msg: Sidinställningar
+
+id: Paste
+msg: Klistra in
+
+id: Reload page
+msg: Ladda om sida
+
+id: Remove bookmark
+msg: Ta bort bokmärke
+
+id: Settings
+msg: Inställningar
+
+#
+# ./glwskins/flat/menu/sidebar_common.view
+#
+id: Activate sleep timer
+msg: Aktivera sov-timer
+
+id: Disable sleep timer
+msg: Avaktivera sov-timer
+
+id: Exit %s
+msg: Avsluta %s
+
+id: Hide media info
+msg: Göm mediainformation
+
+id: Hide system info
+msg: Dölj systeminformation
+
+id: Master volume
+msg: Huvudvolym
+
+id: Show media info
+msg: Visa mediainformation
+
+id: Show system info
+msg: Visa systeminformation
+
+id: Suspend
+msg: Viloläge
+
+id: Time until sleep
+msg: Tid tills sovning
+
+id: View log
+msg: Visa log
+
+id: dB
+msg: dB
+
+id: min
+msg: min
+
+#
+# ./glwskins/flat/osd/osd_audio.view
+#
+id: Audio
+msg: Ljud
+
+#
+# ./glwskins/flat/osd/osd_main.view
+#
+id: Audio settings
+msg: Ljudinställningar
+
+id: Subtitle settings
+msg: Inställningar för undertexter
+
+id: Video settings
+msg: Videoinställningar
+
+#
+# ./glwskins/flat/osk.view
+#
+id: Default
+msg: Standard
+
+id: Keyboard layout:
+msg: Tangentbordsvariant
+
+#
+# ./glwskins/flat/pages/directory.view
+#
+id: Album
+msg: Album
+
+id: Artist
+msg: Artist
+
+id: Custom
+msg: Speciell
+
+id: Grid
+msg: Rutnät
+
+id: List
+msg: Lista
+
+id: Page layout
+msg: Sidlayout
+
+id: Search results
+msg: Sökresultat
+
+id: TV Season
+msg: TV-Säsong
+
+#
+# ./glwskins/flat/pages/empty.view
+#
+id: No contents
+msg: Inget innehåll
+
+#
+# ./glwskins/flat/pages/home.view
+#
+id: Dismiss
+msg: Ta bort
+
+id: Home
+msg: Hem
+
+#
+# ./glwskins/flat/pages/openerror.view
+#
+id: Unable to open resource
+msg: Kan ej öppna resurs
+
+#
+# ./glwskins/flat/pages/playqueue.view
+#
+id: Playqueue
+msg: Spelkö
+
+#
+# ./glwskins/flat/pages/searchresults.view
+#
+id: Show more
+msg: Visa mer
+
+id: %d hits
+msg[0]: %d träff
+msg[1]: %d träffar
+
+#
+# ./glwskins/flat/pages/slideshow.view
+#
+id: Interval: %ds
+msg: Inverval: %ds
+
+id: Play/Pause
+msg: Play/Pause
+
+id: Stop
+msg: Stop
+
+#
+# ./glwskins/flat/pages/stpp.view
+#
+id: Remote control - %s
+msg: Fjärrstyrning - %s
+
+id: Remote controlling %s
+msg: Fjärrstyr %s
+
+#
+# ./glwskins/flat/pages/stppstpp.view
+#
+id: Nested remote controll is not supported
+msg: Fjärrstyra en fjärrstyrande enhet går ej
+
+id: Remote control
+msg: Fjärrstyrning
+
+#
+# ./glwskins/flat/pages/stppvideo.view
+#
+id: Audio tracks
+msg: Ljudspår
+
+id: Audio volume adjustment: %d dB
+msg: Ljudvolumjustering: %d dB
+
+id: CPU is too slow to decode this video
+msg: CPUn är för långsam för att spela upp videon
+
+id: Next
+msg: Nästa
+
+id: Previous
+msg: Föregående
+
+#
+# ./glwskins/flat/pages/tvseason.view
+#
+id: Season %d
+msg: Säsong %d
+
+#
+# ./glwskins/flat/pages/upgrade.view
+#
+id: %s is up to date
+msg: %s är uppdaterad
+
+id: An error occured during download
+msg: Ett fel inträffade under nerladdning
+
+id: Changelog for %s releases
+msg: Ändringar för %s
+
+id: Check for updates now
+msg: Leta efter uppgraderingar nu
+
+id: Checking for updates
+msg: Kontrollera efter uppdateringar
+
+id: Current version:
+msg: Nuvarande version:
+
+id: Download and install
+msg: Ladda ner och installera
+
+id: Downloading %s
+msg: Laddar ner %s
+
+id: New version %s is available for download
+msg: Ny version %s är tillgänglig för nerladdning
+
+id: No upgrade available
+msg: Ingen uppgradering tillgänglig
+
+id: Retry
+msg: Försök igen
+
+id: Stable
+msg: Stabil
+
+id: Testing
+msg: Test
+
+id: Unable to query for new version
+msg: Kan ej fråga efter ny version
+
+#
+# ./glwskins/flat/popups/auth.view
+#
+id: Domain
+msg: Domän
+
+id: Password
+msg: Lösenord
+
+id: Remember me
+msg: Kom ihåg mig
+
+id: Username
+msg: Användarnamn
+
+#
+# ./glwskins/flat/popups/common.view
+#
+id: Cancel
+msg: Avbryt
+
+id: Ok
+msg: Ok
+
+#
+# ./glwskins/flat/popups/filepicker.view
+#
+id: Back
+msg: Bakåt
+
+id: Close
+msg: Stäng
+
+id: Folder select mode, press right to open subfolder
+msg: Väljer kataloge, tryck höger för att öppna underkatalog
+
+#
+# ./glwskins/flat/popups/resume.view
+#
+id: No, Start over
+msg: Nej, Starta om
+
+id: Resume from %s
+msg: Återuppta från %s
+
+id: Yes
+msg: Ja
+
+#
+# ./glwskins/flat/popups/textDialog.view
+#
+id: OK
+msg: OK
+
+#
+# ./glwskins/flat/sysinfo.view
+#
+id: CPU Temp
+msg: CPU Temp
+
+id: Connected
+msg: Ansluten
+
+id: Fragmentation
+msg: Fragmentering
+
+id: Framerate
+msg: Bildhastighet
+
+id: GPU Temp
+msg: GPU Temp
+
+id: HDD Avail
+msg: Hårddisk tillgängligt
+
+id: IP Address
+msg: IP-Adress
+
+id: Inactive memory
+msg: Inaktivt minne
+
+id: Memory usage
+msg: Minnesanvändning
+
+id: Network
+msg: Nätverk
+
+id: Not available
+msg: Inte tillgänglig
+
+id: System Free
+msg: Ledigt system
+
+id: System Total
+msg: System totalt
+
+id: VM Page In/Out
+msg: VM Sidor In/Ut
+
+id: Version
+msg: Version
+
+#
+# ./glwskins/flat/universe.view
+#
+id: Audio muted
+msg: Ljud tyst
+
+id: Copying %d files
+msg: Kopierar %d filer
+
+id: Master volume: %d dB
+msg: Huvudvolym: %d dB
+
+id: Overscan adjustment\nPosition border at screen edges
+msg: Overscanjustering\nPositionera ramen vid skärmens kanter
+
+#
+# ./src/api/stpp.c
+#
+id: Allow remote control
+msg: Tillåt fjärrstyrning
+
+id: Device not available
+msg: Enheten är inte tillgänglig
+
+id: Movians for remote control
+msg: Movians tillgängliga för fjärrstyrning
+
+#
+# ./src/api/tmdb.c
+#
+id: Language (ISO 639-1 code)
+msg: Språk (ISO 639-1 förkortning)
+
+id: Use original title
+msg: Använd orginaltitel
+
+#
+# ./src/arch/android/android.c
+#
+id: Android Storage
+msg: Android Storage
+
+#
+# ./src/arch/linux/pulseaudio.c
+#
+id: Unable to initialize audio system %s -- %s
+msg: Kan inte starta ljudsystem %s -- %s
+
+#
+# ./src/arch/ps3/ps3_main.c
+#
+id: System is low on memory (%d kB RAM available)
+msg: System har lite ledigt minne (%d kB RAM tillgängligt)
+
+#
+# ./src/arch/ps3/ps3_vdec.c
+#
+id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
+msg: Antatel referensbilder är inkompatibelt med PS3 videoavkodare
+
+id: Cell-h264: Broken headers, Disabling acceleration
+msg: Trasig videoinformation. Slår av acceleration.
+
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: Tvingar level 4.2 för media i  level %d.%d. Detta kan förstöra video uppspelningen.
+
+id: Unable to accelerate %s, library not loaded.
+msg: Kan ej accelerera %s, biblioteket är ej laddat.
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Kan ej öppna Cell codec. Fel 0x%x
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Kan ej öppna Cell codec. Kan ej allokera %d bytes RAM.
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Kan ej fråga Cell codec. Fel 0x%x
+
+#
+# ./src/arch/rpi/rpi_audio.c
+#
+id: 8 Channel PCM
+msg: 8 Kanalig PCM
+
+id: AC3 Pass-Through
+msg: AC3 direkt
+
+id: Analog
+msg: Analog
+
+id: Audio output port
+msg: Ljudutgång
+
+id: Autodetect
+msg: Automatisk
+
+id: DTS Pass-Through
+msg: DTS Direkt
+
+id: HDMI
+msg: HDMI
+
+#
+# ./src/arch/rpi/rpi_tv.c
+#
+id: Match display and content framerate
+msg: Justera uppdateringsfrekvens på TVn
+
+#
+# ./src/audio2/audio.c
+#
+id: Audio delay
+msg: Ljuddelay
+
+id: Audio gain
+msg: Ljudvolym
+
+id: Setup audio output
+msg: Ställ in ljudutgång
+
+id: Video playback
+msg: Videouppspelning
+
+#
+# ./src/audio2/audio_test.c
+#
+id: 440Hz sinewave -12dB
+msg: 440Hz sinuskurva -12dB
+
+id: Audio test
+msg: Ljudtest
+
+id: Center
+msg: Centrerad
+
+id: Front Left
+msg: Vänster fram
+
+id: Front Right
+msg: Höger frame
+
+id: LFE
+msg: Subbas
+
+id: Pink noise
+msg: Rosa brus
+
+id: Play test signal
+msg: Spela test signal
+
+id: Rear Left
+msg: Bak vänster
+
+id: Rear Right
+msg: Bak höger
+
+id: Speaker position
+msg: Högtalarposition
+
+id: Surround Left
+msg: Surround vänster
+
+id: Surround Right
+msg: Surround höger
+
+id: Test signal type
+msg: Typ av testsignal
+
+#
+# ./src/backend/bittorrent/bt_backend.c
+#
+id: No files in torrent
+msg: Inga filer i svärmen
+
+id: Unable to open torrent: %s
+msg: Kan ej öppna svärmen: %s
+
+#
+# ./src/backend/bittorrent/diskio.c
+#
+id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
+msg: Sparade svärmar använder %d MB av tillåtna %d MB. Totalt fritt utrymme på volymen: %d MB
+
+#
+# ./src/backend/bittorrent/fa_torrent.c
+#
+id: Connected peers
+msg: Anslutna peer
+
+id: Known peers
+msg: Kända peer
+
+id: Receiving from
+msg: Tar emot från
+
+id: Torrent leechers
+msg: Torrent leechers
+
+id: Torrent seeders
+msg: Torrent seeders
+
+#
+# ./src/backend/bittorrent/torrent_settings.c
+#
+id: BitTorrent
+msg: BitTorrent
+
+id: Clear cache
+msg: Töm cache
+
+id: Enable bittorrent
+msg: Använd svärmar
+
+id: Max upload speed
+msg: Maximal hastighet för uppladdning
+
+id: Max usage of free space for caching torrents
+msg: Maximalt utrymme för att spara svärmar
+
+id: Status
+msg: Status
+
+id: Torrent cache path
+msg: Sökväg för sparade svärmar
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+msg: DVD
+
+id: DVD read error, restarting disc
+msg: Problem att läsa DVD, startar om skivan
+
+#
+# ./src/backend/hls/hls.c
+#
+id: Primary
+msg: Primär
+
+id: Supplementary
+msg: Extra
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Channels
+msg: Kanaler
+
+id: Invalid HTSP URL
+msg: Ogiltligt HTSP URL
+
+id: No such channel
+msg: Ingen sådan kanal
+
+id: Recorded shows
+msg: Inspelade program
+
+id: Recorder
+msg: Inspelare
+
+#
+# ./src/backend/playlist.c
+#
+id: Unable to open playlist
+msg: Kan ej öppna spellista
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Sök
+
+id: Search result for: %s
+msg: Sökresultat för: %s
+
+#
+# ./src/backend/slideshow/slideshow.c
+#
+id: 3 seconds
+msg: 3 sekunder
+
+id: 5 seconds
+msg: 5 sekunder
+
+id: 7 seconds
+msg: 7 sekunder
+
+id: Slideshow speed
+msg: Hastighet
+
+#
+# ./src/blobcache_file.c
+#
+id: Cache cleared
+msg: Cachen är tömd
+
+id: Clear cached files
+msg: Töm cachen
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: Kan inte hantera fil innehåll av typen %d
+
+id: Checking file contents
+msg: Kontrollerar filens innehåll
+
+id: Invalid URL from redirect
+msg: Felaktig URL för omdirigering
+
+id: Unable to open file: %s
+msg: Kan ej öppna fil: %s
+
+#
+# ./src/fileaccess/fa_filepicker.c
+#
+id: Select a file
+msg: Välj en fil
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Sök mha. Unix locatedb
+
+#
+# ./src/fileaccess/fa_scanner.c
+#
+id: Deleted %s
+msg: Tog bort %s
+
+id: Filename
+msg: Filnamn
+
+id: Include in library
+msg: Inkludera i bibliotek
+
+id: Newest first
+msg: Nyast först
+
+id: Oldest first
+msg: Äldst först
+
+id: Show only supported files
+msg: Visa bara spelbara filer
+
+id: Sort folders first
+msg: Sortera kataloger först
+
+id: Sort on
+msg: Sortera på
+
+id: Unable to delete %s\n%s
+msg: Kan ej ta bort %s\n%s
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: Sök med spotlight
+
+#
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+msg: Är du säker att du vill ta bort:
+
+id: Browse archives as folders
+msg: Utforska arkiv som foldrar
+
+id: Enable file deletion from item menu
+msg: Tillåt borttagning av filer från menyn
+
+id: Show filename extensions
+msg: Visa filändelser
+
+id: Store per-file settings in filesystem
+msg: Spara extra information om filer i filsystemet
+
+id: %d archive parts
+msg[0]: %d arkivdelar
+msg[1]: %d arkivdel
+
+id: %d directories
+msg[0]: %d kataloger
+msg[1]: %d katalog
+
+id: %d files
+msg[0]: %d filer
+msg[1]: %d fil
+
+#
+# ./src/fileaccess/smb/fa_nativesmb.c
+#
+id: Access denied
+msg: Tillträde nekat
+
+id: Account restricted
+msg: Kontot är begränsat
+
+id: Bad network share name
+msg: Felaktigt delningsnamn
+
+id: Logon failure
+msg: Login misslyckades
+
+id: Object name not found
+msg: Objektets namn ej funnet
+
+#
+# ./src/i18n.c
+#
+id: 12 Hour
+msg: 12 Timmar
+
+id: 24 Hour
+msg: 24 Timmar
+
+id: Default character set
+msg: Standardteckensätt
+
+id: Ignore 'The' at beginning of words when sorting
+msg: Ignorerar 'The' i början av ord vid sortering
+
+id: Language
+msg: Språk
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: Språkkoder konfigureras som tre teckens ISO koder, till exempel: eng, swe, fra
+
+id: Languages
+msg: Språk
+
+id: Preferred languages
+msg: Föredragna språk
+
+id: Primary audio language code
+msg: Primärt språk för ljud
+
+id: Primary subtitle language code
+msg: Primärt språk för undertexter
+
+id: Secondary audio language code
+msg: Sekundärt språk för ljud
+
+id: Secondary subtitle language code
+msg: Sekundärt språk för undertexter
+
+id: System default
+msg: Systemets standard
+
+id: Tertiary audio language code
+msg: Tertiärt språk för ljud
+
+id: Tertiary subtitle language code
+msg: Tertiärt språk för undertexter
+
+id: Time format
+msg: Tidsformat
+
+id: Timezone
+msg: Tidzon
+
+#
+# ./src/ipc/libcec.c
+#
+id: Longpress SELECT for item menu
+msg: Håll in SELECT för detaljmeny
+
+id: Switch TV input source
+msg: Väl ingångkälla på TVn
+
+id: Use STOP key for combo input
+msg: Håll in STOP för kombinerad inmatning
+
+#
+# ./src/keyring.c
+#
+id: Forget remembered passwords
+msg: Glöm ihågkommna lösenord
+
+id: Rembered passwords erased
+msg: Ihågkommna lösenord bortglömda
+
+#
+# ./src/media/media_settings.c
+#
+id: Align on video frame
+msg: Anpassa på videon
+
+id: Audio volume
+msg: Volym
+
+id: Delay
+msg: Tidsjustering
+
+id: Go to standby after video ends
+msg: Gå till standby efter videon är slut
+
+id: Horizontal pan
+msg: Horisontal justering
+
+id: Horizontal position
+msg: Horisontal position
+
+id: Horizontal scale
+msg: Horisontal skala
+
+id: Reset defaults for folder '%s'
+msg: Återställ standardinställnigar för katalog '%s'
+
+id: Save as defaults for folder '%s'
+msg: Spara som standardinställningar för katalog '%s'
+
+id: Save as global default
+msg: Spara som globala standardinstallningar
+
+id: Scaling
+msg: Skala
+
+id: Stretch video to fullscreen
+msg: Sträck ut videon över hela skärmen
+
+id: Stretch video to widescreen
+msg: Sträck ut videon horisontellt 
+
+id: Vertical pan
+msg: Vertikal justering
+
+id: Vertical position
+msg: Vertical position
+
+id: Vertical scale
+msg: Vertikal skala
+
+id: Video frame interpolation
+msg: Interpolera videobilder
+
+id: Video zoom
+msg: Video zoom
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+msg: Indexerar
+
+#
+# ./src/metadata/decoration.c
+#
+id: Automatic
+msg: Automatisk
+
+id: Erase all playback info
+msg: Ta bort all information om uppspelningar, etc
+
+id: Manual
+msg: Manuell
+
+id: Mark all as seen
+msg: Markera alla som sedda
+
+id: Mark all as unseen
+msg: Markera alla som osedda
+
+id: Metadata mode
+msg: Läge för metadata
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+msg: Inbäddad i fil
+
+id: Track %d
+msg: Spår %d
+
+#
+# ./src/metadata/metadata_sources.c
+#
+id: Enabled
+msg: Påslagen
+
+id: Metadata
+msg: Metadata
+
+id: Metadata configuration and provider settings
+msg: Metadata konfiguration och leverantörsinställningar
+
+id: Providers for Music
+msg: Leverantörer för music
+
+id: Providers for Video
+msg: Videotjänster
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: %d objekt borttagna
+
+id: Clear all metadata
+msg: Ta bort all metadata
+
+id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
+msg: Att ta bort all metadata innebär att du förlorar <b>all</b> sparad metadata från externa källor så som themoviedb.org, etc\n\nInformation om antal spelningar och position för återstart kommer att sparas.\nÄr du säker på att du vill fortsätta?
+
+#
+# ./src/metadata/mlp.c
+#
+id: Custom search query
+msg: Speciell sökfråga
+
+id: Custom title
+msg: Egen titel
+
+id: IMDb ID
+msg: IMDb ID
+
+id: Metadata loaded from <b>%s</b> based on %s
+msg: Metadata laddad från <b>%s</b> med hjälp av %s
+
+id: Metadata source
+msg: Metadatakälla
+
+id: Movie
+msg: Film
+
+id: Movie title
+msg: Filmtitel
+
+id: No data found
+msg: Ingen data funnet
+
+id: None
+msg: Inget
+
+id: Refresh metadata
+msg: Ladda om metadata
+
+id: Title, Season, Episode
+msg: Titel, Säsong, Episod
+
+id: custom IMDb ID
+msg: special IMDb ID
+
+id: custom query
+msg: speciell query
+
+id: filename
+msg: filnamn
+
+id: filename as TV episode
+msg: filnamn som TV-episod
+
+id: folder name
+msg: katalognamn
+
+#
+# ./src/navigator.c
+#
+id: Add and remove items on homepage
+msg: Lägg till och ta bort saker på hemsidan
+
+id: Added %s to home page
+msg: Lägg till %s på hemsidan
+
+id: Added new bookmark: %s
+msg: La till nytt bokmärke: %s
+
+id: Bookmarks
+msg: Bokmärken
+
+id: Icon
+msg: Ikon
+
+id: Music
+msg: Musik
+
+id: No handler for URL
+msg: Ingen hanterare för URLen
+
+id: Other
+msg: Annat
+
+id: Photos
+msg: Foton
+
+id: Removed %s from homepage
+msg: Tog bort %s från hemsidan
+
+id: Removed bookmark: %s
+msg: Tog bort bokmärke: %s
+
+id: TV
+msg: TV
+
+id: Title
+msg: Titel
+
+id: Type
+msg: Typ
+
+id: URL
+msg: URL
+
+id: Video
+msg: Video
+
+#
+# ./src/networking/connman.c
+#
+id: Enable Wi-Fi
+msg: Aktivera Wi-Fi
+
+id: Network connections
+msg: Nätverksanslutningar
+
+#
+# ./src/networking/ftp_server.c
+#
+id: Enable FTP server
+msg: Gör FTP tjänst tillgänglig
+
+id: FTP server
+msg: FTP tjänst
+
+id: Server TCP port
+msg: Servern's TCP port
+
+#
+# ./src/networking/http_server.c
+#
+id: Power Off
+msg: Stäng av
+
+id: Rebooting
+msg: Startar om
+
+id: Restarting
+msg: Startar om
+
+id: Standby
+msg: Viloläge
+
+#
+# ./src/notifications.c
+#
+id: Show news on home screen
+msg: Visa nyheter på hemskärmen
+
+#
+# ./src/plugins.c
+#
+id: Alternate plugin Repository URL
+msg: Alternativ URL för pluginmagasin
+
+id: Audio decoders
+msg: Ljudavkodare
+
+id: Auto install plugins on demand
+msg: Installera tillägg automatiskt vid behov
+
+id: Auto installed plugin %s (Version %s)
+msg: Installerade tillägg %s automatiskt (version %s)
+
+id: Automatically upgrade plugins
+msg: Updatera plugin automatiskt
+
+id: Available plugins
+msg: Tillgängliga plugins
+
+id: Background
+msg: Bakgrund
+
+id: Beta testing passwords
+msg: Betatestlösenord
+
+id: Browse available plugins
+msg: Lista tillgängliga plugins
+
+id: Browsing
+msg: Browsing
+
+id: Cloud services
+msg: Molntjänster
+
+id: Corrupt plugin bundle
+msg: Pluginfilen är korrupt
+
+id: Custom backgrounds can now be set in Settings -> Look and Feel
+msg: Egen bakgrund kan nu ställas in i Instlälningar -> Utseende och stil
+
+id: Disk write error
+msg: Kunde ej skriva till disk
+
+id: Downloading
+msg: Laddar ner
+
+id: File open error
+msg: Kunde ej öppna fil
+
+id: Home page
+msg: Hemsida
+
+id: Images
+msg: Bilder
+
+id: Installed
+msg: Installerad
+
+id: Installed plugins
+msg: Installerade plugins
+
+id: Installed version higher than available
+msg: Installerad version är högre än den som är tillgänglig
+
+id: Installing
+msg: Installerar
+
+id: List of albums
+msg: Lista av album
+
+id: Loading screen
+msg: Laddskärm
+
+id: Movies
+msg: Filmer
+
+id: Music streaming
+msg: Musikstreaming
+
+id: Not installable
+msg: Ej installerbar
+
+id: Not installed
+msg: Inte installerad
+
+id: Not upgradable
+msg: Inte uppgraderingsbar
+
+id: On Screen Keyboards
+msg: Skärmtangentbord
+
+id: Online TV
+msg: OnlineTV
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+msg: Plugin %s %s har blivit avinstallerad eftersom den kan orsaka problem.\nDu kan prova installera en nyare version manuellt.
+
+id: Plugin %s has been uninstalled - %s
+msg: Plugin %s har blivit avinstallerad - %s
+
+id: Plugin categories
+msg: Pluginkategorier
+
+id: Plugins
+msg: Plugin
+
+id: Preferred views from plugins
+msg: Föredragna vyer från plugin
+
+id: Screen saver
+msg: Skärmsläckare
+
+id: TV channels
+msg: TV-kanaler
+
+id: Unable to load plugin.json: %s
+msg: Kan ej ladda plugin.json: %s
+
+id: Unable to load plugin.json: Malformed JSON
+msg: Kan ej ladda plugin.json: Felaktigt formaterad JSON
+
+id: Uncategorized
+msg: Okategoriserat
+
+id: Up to date
+msg: Senaste version
+
+id: Upgradable
+msg: Uppgraderingsbar
+
+id: Upgraded plugin %s to version %s
+msg: Upgraderade plugin %s till version %s
+
+id: User interface extensions
+msg: Användargränsnitt
+
+id: Version %s is no longer compatible with Movian
+msg: Version %s är inte längre möjligt att köra
+
+id: Video streaming
+msg: Videoströmning
+
+#
+# ./src/prop/prop_proxy.c
+#
+id: Remote exited
+msg: Andra enheten avslutade
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Automatisk standby
+
+id: Enable SSH server
+msg: Aktivera SSH server
+
+id: Logout
+msg: Logout
+
+id: Open shell
+msg: Öppna skal
+
+id: Power off system
+msg: Stäng av systemet
+
+id: Quit
+msg: Avlusta
+
+id: SSH server
+msg: SSH server
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled on home screen
+msg: Tillgänglig på hemsidan
+
+id: Name
+msg: Namn
+
+#
+# ./src/service.c
+#
+id: Local network
+msg: Lokala nätverket
+
+id: Remove from homepage
+msg: Ta bort från hemsidan
+
+#
+# ./src/settings.c
+#
+id: About
+msg: Om
+
+id: Applications and installed plugins
+msg: Applikationer och installerade plugins
+
+id: Configure communications with your TV
+msg: Konfigurera kommunikation med din TV
+
+id: Developer settings
+msg: Utvecklarinställningar
+
+id: Discovered media sources
+msg: Upptäckta mediakällor
+
+id: File browsing
+msg: Filutforskare
+
+id: Fonts and user interface styling
+msg: Fonter och användargränsnitt
+
+id: General
+msg: Generella inställningar
+
+id: Global settings
+msg: Globala inställningar
+
+id: Look and feel
+msg: Utseende och stil
+
+id: Network services, etc
+msg: Nätverkstjänster, etc
+
+id: Network settings
+msg: Nätverkstjänster
+
+id: Reset
+msg: Starta om
+
+id: Settings useful for developers
+msg: Inställningar användbara för utvecklare
+
+id: Software upgrade
+msg: Uppgradera mjukvara
+
+id: Starting and stopping
+msg: Starta och stanna
+
+id: System name
+msg: Systemnamn
+
+id: System related settings
+msg: Systemrelaterade inställningar
+
+id: TV Control
+msg: TVkontroll
+
+#
+# ./src/subtitles/subtitles.c
+#
+id: Any subtitle in central folder
+msg: Samtliga undertexter i central katalog
+
+id: Any subtitle in same folder as video
+msg: Samtliga undertexter i samma katalog som videon
+
+id: Auto
+msg: Auto
+
+id: Automatically select from this source
+msg: Välj automatiskt från den här källan
+
+id: Central subtitle folder
+msg: Central katalog för undertexter
+
+id: Color
+msg: Färg
+
+id: External file
+msg: Extern fil
+
+id: Force subtitles to reside on video frame
+msg: Tvinga undertexter att alltid ligga ovanpå videobilden
+
+id: Generic settings for video subtitles
+msg: Generella inställningar för undertexter
+
+id: Ignore embedded styling
+msg: Ignorera inbäddade stilkoder
+
+id: Left
+msg: Vänster
+
+id: Outline color
+msg: Färg på konturer
+
+id: Outline size
+msg: Storlek på konturer
+
+id: Path to central folder
+msg: Sökväg till centrala katalogen
+
+id: Providers for Subtitles
+msg: Sökväg till undertexter
+
+id: Right
+msg: Höger
+
+id: Shadow color
+msg: Färg på skuggor
+
+id: Shadow offset
+msg: Skuggoffset
+
+id: Subtitle horizontal displacement
+msg: Horisontell position för undertexter
+
+id: Subtitle position
+msg: Position på undertexter
+
+id: Subtitle size
+msg: Storlek på undertexter
+
+id: Subtitle size and positioning
+msg: Storlek och position för undertexter
+
+id: Subtitle vertical displacement
+msg: Vertikal positiono för undertexter
+
+id: Subtitles embedded in video file
+msg: Undertexter inbäddade i videofilen
+
+id: Subtitles with matching filename in central folder
+msg: Undertexter med matchande filnamn i centrala katalogen
+
+id: Subtitles with matching filename in same folder as video
+msg: Undertexter med matchande filnamn i samma katalog som videon
+
+#
+# ./src/text/fontstash.c
+#
+id: Defaults
+msg: Standard
+
+id: Fonts
+msg: Typsnitt
+
+id: Installed fonts
+msg: Installerade typsnitt
+
+id: Narrow text
+msg: Smal text
+
+id: Reset main font to default
+msg: Återställ huvudtypsnitt till standard
+
+id: Reset narrow font to default
+msg: Återställ smalt typsnitt till standard
+
+id: Reset subtitle font to default
+msg: Återställ typsnitt för undertexter
+
+id: Unable to install font: %s
+msg: Kan ej installera font: %s
+
+id: Use font %s for
+msg: Använd typsnitt %s till
+
+#
+# ./src/ui/clipboard.c
+#
+id: Copy failed: %s
+msg: Kopiering misslyckades: %s
+
+id: Target folder
+msg: Målkatalog
+
+#
+# ./src/ui/glw/glw_ps3.c
+#
+id: Dual-Shock Remote
+msg: Dual-Shock Kontroller
+
+id: No
+msg: Nej
+
+id: Seek using L2 and R2 button
+msg: Sök med L2 och R2 knapparna
+
+id: Yes with Select button
+msg: Ja, med selectknappen
+
+#
+# ./src/ui/glw/glw_settings.c
+#
+id: Custom background image
+msg: Egen bakgrundsbild
+
+id: Emulate Up/Down buttons with mouse wheel
+msg: Emulera Upp/Ner-knabbar med skrollhjulet
+
+id: Folder for screensaver images
+msg: Mapp för skärmsläckarbilder
+
+id: Font and icon size
+msg: Storlek på font och ikoner
+
+id: Interface horizontal shrink
+msg: Minska gränssnitt horisontellt
+
+id: Interface vertical shrink
+msg: Minska gränssnitt vertikalt
+
+id: Screensaver
+msg: Skärmsläckare
+
+id: Screensaver delay
+msg: Skärmsläckartid
+
+id: Seconds per image
+msg: Sekunder per bild
+
+id: Use Bing images of the day
+msg: Använd dagens Bing-bild
+
+id: Wrap when reaching beginning/end of lists
+msg: Gå runt när man når början/slutet av listor
+
+#
+# ./src/ui/glw/glw_view_eval.c
+#
+id: %d days ago
+msg: %d dagar sedan
+
+id: %d hours ago
+msg: %d timmar sedan
+
+id: %d minutes ago
+msg: %d minuter sedan
+
+id: %d months ago
+msg: %d månader sedan
+
+id: %d weeks ago
+msg: %d veckor sedan
+
+id: %d years ago
+msg: %d år sedan
+
+id: Just now
+msg: Just nu
+
+id: One day ago
+msg: En dag sedan
+
+id: One hour ago
+msg: En timme sedan
+
+id: One minute ago
+msg: En minut sedan
+
+id: One month ago
+msg: En månad sedan
+
+#
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Byt automatiskt till detta läge
+
+id: DVI-Video color range
+msg: DVI-Video färgskala
+
+id: Switch to this mode now
+msg: Byt till detta läge nu
+
+id: Video modes
+msg: Videolägen
+
+#
+# ./src/upgrade.c
+#
+id: %s version %s is available
+msg: %s version %s är tillgänglig
+
+id: Notify about upgrades
+msg: Avisera uppgraderingar
+
+id: Open download page
+msg: Öppna sida för nerladdning
+
+id: System
+msg: System
+
+id: Upgrade to releases from
+msg: Uppgradera till släppta mjukvaror från
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Date (newest first)
+msg: Datum (nyast först)
+
+id: Date (oldest first)
+msg: Datum (äldst först)
+
+id: Device not found
+msg: Kan ej hitta enhet
+
+id: Malformed URI after device
+msg: Ogiltlig del av URI efter enhet
+
+id: Malformed URI after service
+msg: Ogiltlig del av URI efter tjänst
+
+id: Service not found
+msg: Kan ej hitta tjänsten
+
+#
+# ./src/video/video_settings.c
+#
+id: Always
+msg: Alltid
+
+id: Ask
+msg: Fråga
+
+id: Automatically play next video in list
+msg: Spela nästa video i listan automatiskt
+
+id: Count video as played when reaching
+msg: Räkna videon som spelad när den nått
+
+id: Enable VDPAU
+msg: Aktivera VDPAU
+
+id: Hardware accelerated decoding
+msg: Hårdvaruaccelererad avkodning
+
+id: Maximum resolution for deinterlacer
+msg: Maximal upplösning för deinterlacing
+
+id: Never
+msg: Aldrig
+
+id: No limit
+msg: Ingen begränsning
+
+id: Per-file volume
+msg: Volym per fil
+
+id: Preferred VDPAU deinterlacer method
+msg: Föredragen metod för VDPAU deinterlacing
+
+id: Resume video playback
+msg: Återuppta videouppspelning
+
+id: Show clock during playback
+msg: Visa klockan vid videouppspelning
+
+id: Step when seeking backward
+msg: Steg vid sökning bakåt
+
+id: Step when seeking forward
+msg: Steg vid sökning framåt
+
+id: Temporal
+msg: Temporär
+
+id: Temporal/Spatial
+msg: Temporär/Spatiell
+
+id: Up / Down during video playback controls
+msg: Up / Ner när video spelas
+
+id: Video acceleration and display behaviour
+msg: Videoacceleration och inställningar för videopresentation
+
+id: Video buffer size
+msg: Videobufferstorlek
+

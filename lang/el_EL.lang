@@ -1,0 +1,2004 @@
+language: Greek
+native: Ελληνικά
+maintainer: ananias47 & panos kosmo ananias47@hotmail.com & VIRGIN KLM github.com/VIRGINKLM/
+#
+# ./glwskins/flat/ctxmenu/default_details.view
+#
+id: Bookmark
+# Missing translation
+msg: 
+
+id: Bookmarked
+# Missing translation
+msg: 
+
+id: Copy to clipboard
+# Missing translation
+msg: 
+
+id: Copy to location...
+# Missing translation
+msg: 
+
+id: Delete
+msg: Διαγραφή 
+
+id: Queue
+msg: Λίστα
+
+#
+# ./glwskins/flat/ctxmenu/plugin_details.view
+#
+id: Author:
+# Missing translation
+msg: 
+
+id: Available version:
+msg: Διαθέσιμη Έκδοση:
+
+id: Changelog
+# Missing translation
+msg: 
+
+id: Install
+msg: Εγκατάσταση
+
+id: Installed version:
+# Missing translation
+msg: 
+
+id: Status:
+# Missing translation
+msg: 
+
+id: Uninstall
+msg: Απεγκατάσταση
+
+id: Upgrade
+msg: Αναβάθμιση
+
+#
+# ./glwskins/flat/ctxmenu/video_details.view
+#
+id: Continue from %s
+msg: Συνέχεια από %s
+
+id: Mark as seen
+msg: Μαρκάρισμα ότι το έχω δει
+
+id: Mark as unseen
+msg: Μαρκάρισμα ότι δεν το έχω δει
+
+id: Play from beginning
+msg: Αναπαραγωγή από την αρχή
+
+id: Play until end of list
+msg: Αναπαραγωγή μέχρι το τέλος της λίστας
+
+id: Video Cast
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/items/details/video.view
+#
+id: Season %d - Episode %d
+# Missing translation
+msg: 
+
+id: Seen %d times, %s
+# Missing plural translation for 'Seen %d times, %s' and 'Seen %d time, %s'
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwskins/flat/items/list/add.view
+#
+id: Add new entry
+msg: Προθήκη νέας καταχώρησης 
+
+#
+# ./glwskins/flat/items/list/bool.view
+#
+id: Off
+msg: Ανενεργό
+
+id: On
+msg: Ενεργό
+
+#
+# ./glwskins/flat/items/list/font.view
+#
+id: Condensed
+msg: Συνοπτικές
+
+id: Subtitles
+msg: Υπότιτλοι
+
+id: User interface
+msg: Περιβάλλον Χρήστη 
+
+#
+# ./glwskins/flat/items/list/tvepisode.view
+#
+id: Episode %d - %s
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/loading.view
+#
+id: %d kb/s
+msg: %d kb/s
+
+id: Bitrate:
+msg: Ρυθμός μετάδοσης:
+
+#
+# ./glwskins/flat/log.view
+#
+id: System log
+msg: Καταγραφή Συστήματος 
+
+#
+# ./glwskins/flat/mediainfo.view
+#
+id: A/V diff
+# Missing translation
+msg: 
+
+id: Audio bitrate
+# Missing translation
+msg: 
+
+id: Audio codec
+# Missing translation
+msg: 
+
+id: Audio packets
+# Missing translation
+msg: 
+
+id: Buffer usage
+# Missing translation
+msg: 
+
+id: No media loaded
+msg: Δεν φορτώθηκε μέσο
+
+id: Remaining buffer
+# Missing translation
+msg: 
+
+id: Source
+# Missing translation
+msg: 
+
+id: Video bitrate
+# Missing translation
+msg: 
+
+id: Video codec
+# Missing translation
+msg: 
+
+id: Video framerate
+# Missing translation
+msg: 
+
+id: Video packets
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/menu/sidebar.view
+#
+id: Bookmark page
+# Missing translation
+msg: 
+
+id: Page settings
+# Missing translation
+msg: 
+
+id: Paste
+# Missing translation
+msg: 
+
+id: Reload page
+# Missing translation
+msg: 
+
+id: Remove bookmark
+# Missing translation
+msg: 
+
+id: Settings
+msg: Ρυθμίσεις
+
+#
+# ./glwskins/flat/menu/sidebar_common.view
+#
+id: Activate sleep timer
+msg: Ενεργοποίηση χρονοδιακόπτη διακοπής λειτουργίας
+
+id: Disable sleep timer
+msg: Απενεργοποίηση χρονοδιακόπτη διακοπής λειτουργίας
+
+id: Exit %s
+msg: Έξοδος από %s
+
+id: Hide media info
+# Missing translation
+msg: 
+
+id: Hide system info
+msg: Απόκρυψη πληροφοριών συστήματος
+
+id: Master volume
+msg: Κεντρική ένταση
+
+id: Show media info
+# Missing translation
+msg: 
+
+id: Show system info
+msg: Εμφάνιση πληροφοριών συστήματος
+
+id: Suspend
+msg: Αναστολή λειτουργείας
+
+id: Time until sleep
+msg: Χρόνος μέχρι να αδρανοποιηθεί το σύστημα
+
+id: View log
+# Missing translation
+msg: 
+
+id: dB
+msg: dB
+
+id: min
+msg: λεπτό
+
+#
+# ./glwskins/flat/osd/osd_audio.view
+#
+id: Audio
+msg: Ήχος
+
+#
+# ./glwskins/flat/osd/osd_main.view
+#
+id: Audio settings
+msg: Ρύθμισης  Ήχου
+
+id: Subtitle settings
+msg: Ρυθμίσεις Υποτίτλων
+
+id: Video settings
+msg: Ρυθμίσεις Βίντεο
+
+#
+# ./glwskins/flat/osk.view
+#
+id: Default
+msg: Προεπιλογή
+
+id: Keyboard layout:
+msg: Διάταξη πληκτρολογίου
+
+#
+# ./glwskins/flat/pages/directory.view
+#
+id: Album
+msg: Άλμπουμ
+
+id: Artist
+msg: Καλλιτέχνης
+
+id: Custom
+msg: Τροποποιημένα
+
+id: Grid
+# Missing translation
+msg: 
+
+id: List
+msg: Λίστα 
+
+id: Page layout
+# Missing translation
+msg: 
+
+id: Search results
+# Missing translation
+msg: 
+
+id: TV Season
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/empty.view
+#
+id: No contents
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/home.view
+#
+id: Dismiss
+msg: Ματαίωση
+
+id: Home
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/openerror.view
+#
+id: Unable to open resource
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/playqueue.view
+#
+id: Playqueue
+msg: Αναπαραγωγή Λίστας
+
+#
+# ./glwskins/flat/pages/searchresults.view
+#
+id: Show more
+# Missing translation
+msg: 
+
+id: %d hits
+# Missing plural translation for '%d hits' and '%d hit'
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwskins/flat/pages/slideshow.view
+#
+id: Interval: %ds
+# Missing translation
+msg: 
+
+id: Play/Pause
+# Missing translation
+msg: 
+
+id: Stop
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/stpp.view
+#
+id: Remote control - %s
+# Missing translation
+msg: 
+
+id: Remote controlling %s
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/stppstpp.view
+#
+id: Nested remote controll is not supported
+# Missing translation
+msg: 
+
+id: Remote control
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/stppvideo.view
+#
+id: Audio tracks
+msg: Μουσικά Κομμάτια 
+
+id: Audio volume adjustment: %d dB
+msg: Ρύθμιση έντασης ήχου: %d dB
+
+id: CPU is too slow to decode this video
+msg: Ο CPU είναι πολύ αργός για να αποκωδικοποιήσει αυτό το βίντεο
+
+id: Next
+# Missing translation
+msg: 
+
+id: Previous
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/tvseason.view
+#
+id: Season %d
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/upgrade.view
+#
+id: %s is up to date
+msg: Το %s είναι ενημερωμένο
+
+id: An error occured during download
+msg: Ένα σφάλμα συνέβη κατά την διάρκεια της λήψης!
+
+id: Changelog for %s releases
+msg: Αλλαγές για την έκδοση %s
+
+id: Check for updates now
+msg: Έλεγχος για ενημερώσεις 
+
+id: Checking for updates
+# Missing translation
+msg: 
+
+id: Current version:
+msg: Τρέχουσα έκδοση:
+
+id: Download and install
+# Missing translation
+msg: 
+
+id: Downloading %s
+msg: Λήψη %s
+
+id: New version %s is available for download
+msg: Η καινούργια έκδοση %s είναι διαθέσιμη για λήψη
+
+id: No upgrade available
+msg: Δεν υπάρχει διαθέσιμη αναβάθμιση
+
+id: Retry
+# Missing translation
+msg: 
+
+id: Stable
+msg: Σταθερή 
+
+id: Testing
+msg: Δοκιμαστική 
+
+id: Unable to query for new version
+msg: Αδυναμία αναζήτησης νέας έκδοσης
+
+#
+# ./glwskins/flat/popups/auth.view
+#
+id: Domain
+msg: Διεύθυνση Δικτύου
+
+id: Password
+msg: Κωδικός
+
+id: Remember me
+msg: Απομνημόνευση
+
+id: Username
+msg: Όνομα Χρήστη
+
+#
+# ./glwskins/flat/popups/common.view
+#
+id: Cancel
+msg: Ακύρωση
+
+id: Ok
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/filepicker.view
+#
+id: Back
+# Missing translation
+msg: 
+
+id: Close
+# Missing translation
+msg: 
+
+id: Folder select mode, press right to open subfolder
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/resume.view
+#
+id: No, Start over
+msg: Όχι, Ξεκίνημα από την αρχή
+
+id: Resume from %s
+# Missing translation
+msg: 
+
+id: Yes
+msg: Ναι 
+
+#
+# ./glwskins/flat/popups/textDialog.view
+#
+id: OK
+msg: OK
+
+#
+# ./glwskins/flat/sysinfo.view
+#
+id: CPU Temp
+msg: Θερμ. CPU
+
+id: Connected
+# Missing translation
+msg: 
+
+id: Fragmentation
+msg: Θρυμματισμός   
+
+id: Framerate
+# Missing translation
+msg: 
+
+id: GPU Temp
+msg: Θερμ. GPU
+
+id: HDD Avail
+msg: Ελ. χώρος HDD
+
+id: IP Address
+# Missing translation
+msg: 
+
+id: Inactive memory
+# Missing translation
+msg: 
+
+id: Memory usage
+msg: Χρήση μνήμης
+
+id: Network
+# Missing translation
+msg: 
+
+id: Not available
+# Missing translation
+msg: 
+
+id: System Free
+msg: Διαθέσιμη
+
+id: System Total
+msg: Ολική
+
+id: VM Page In/Out
+# Missing translation
+msg: 
+
+id: Version
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/universe.view
+#
+id: Audio muted
+msg: Ήχος σε σίγαση
+
+id: Copying %d files
+# Missing translation
+msg: 
+
+id: Master volume: %d dB
+msg: Ήχος εξόδου: %d dB
+
+id: Overscan adjustment\nPosition border at screen edges
+# Missing translation
+msg: 
+
+#
+# ./src/api/stpp.c
+#
+id: Allow remote control
+# Missing translation
+msg: 
+
+id: Device not available
+# Missing translation
+msg: 
+
+id: Movians for remote control
+# Missing translation
+msg: 
+
+#
+# ./src/api/tmdb.c
+#
+id: Language (ISO 639-1 code)
+msg: Γλώσσα (κωδικοποίηση ISO 639-1)
+
+id: Use original title
+msg: Χρησιμοποίηση πρωτότυπου τίτλου
+
+#
+# ./src/arch/android/android.c
+#
+id: Android Storage
+# Missing translation
+msg: 
+
+#
+# ./src/arch/linux/pulseaudio.c
+#
+id: Unable to initialize audio system %s -- %s
+msg: Αδυναμία προετοιμασίας συστήματος ήχου %s -- %s
+
+#
+# ./src/arch/ps3/ps3_main.c
+#
+id: System is low on memory (%d kB RAM available)
+msg: Το σύστημα είναι χαμηλό σε μνήμη (%d kB RAM διαθέσιμα)
+
+#
+# ./src/arch/ps3/ps3_vdec.c
+#
+id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
+msg: Cell-h264: %d Ref-frames για το περιεχόμενο %d είναι ασύμβατα με τον επιταχυντή hardware του PS3. Απενεργοπόιηση επιτάχυνσης
+
+id: Cell-h264: Broken headers, Disabling acceleration
+msg: Cell-h264: Κατεστραμένες κεφαλίδες, Απενεργοπόιηση επιτάχυνσης
+
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: Εξαναγκασμός του επιπέδου 4.2 σε επίπεδο %d.%d. Η αναπαραγωγή μπορεί να διακοπεί.
+
+id: Unable to accelerate %s, library not loaded.
+msg: Αδυναμία επιτάχυνσης %s, η βιβλιοθήκη δεν φορτώθηκε.
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Αδυναμία ανοίγματος του κώδικα Cell. Σφάλμα 0x%x.
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Αδυναμία ανοίγματος του κώδικα Cell. Αδυναμία ανευρέσεις %d bytes της RAM
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Αδυναμία αναζήτησης του κώδικα Cell. Σφάλμα 0x%x
+
+#
+# ./src/arch/rpi/rpi_audio.c
+#
+id: 8 Channel PCM
+msg: 8 Κανάλια PCM
+
+id: AC3 Pass-Through
+msg: AC3 Pass-Through
+
+id: Analog
+msg: Αναλογικό
+
+id: Audio output port
+msg: Θύρα εξόδου ήχου
+
+id: Autodetect
+msg: Αυτόματη αναγνώριση
+
+id: DTS Pass-Through
+msg: DTS Pass-Through
+
+id: HDMI
+msg: HDMI
+
+#
+# ./src/arch/rpi/rpi_tv.c
+#
+id: Match display and content framerate
+# Missing translation
+msg: 
+
+#
+# ./src/audio2/audio.c
+#
+id: Audio delay
+msg: Καθυστέρηση ήχου
+
+id: Audio gain
+# Missing translation
+msg: 
+
+id: Setup audio output
+msg: Ρύθμιση εξόδου ήχου
+
+id: Video playback
+msg: Αναπαραγωγή Βίντεο
+
+#
+# ./src/audio2/audio_test.c
+#
+id: 440Hz sinewave -12dB
+msg: 440Hz ημιτονοειδές κύμα -12dB
+
+id: Audio test
+msg: Δοκιμή ήχου
+
+id: Center
+msg: Κεντρικά
+
+id: Front Left
+msg: Εμπρόσθιο Αριστερό
+
+id: Front Right
+msg: Εμπρόσθιο Δεξί
+
+id: LFE
+msg: Υπογούφερ
+
+id: Pink noise
+msg: Ροζ θόρυβος
+
+id: Play test signal
+msg: Αναπαραγωγή δοκιμαστικού ήχου
+
+id: Rear Left
+msg: Όπισθιο Αριστερό
+
+id: Rear Right
+msg: Όπισθιο Δεξί
+
+id: Speaker position
+msg: Θέση ηχείων
+
+id: Surround Left
+msg: Surround Αριστερό
+
+id: Surround Right
+msg: Surround Δεξί
+
+id: Test signal type
+msg: Τύπος δοκιμαστικού ήχου
+
+#
+# ./src/backend/bittorrent/bt_backend.c
+#
+id: No files in torrent
+msg: Κανένα αρχείο στο torrent
+
+id: Unable to open torrent: %s
+msg: Αδυναμία ανοίγματος torrent: %s
+
+#
+# ./src/backend/bittorrent/diskio.c
+#
+id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
+msg: Τα torrents χρησιμοποιούν %d MB από τα επιτρεπόμενα %d MB. Συνολικός ελεύθερος χώρος: %d MB
+
+#
+# ./src/backend/bittorrent/fa_torrent.c
+#
+id: Connected peers
+msg: Συνδεδεμένοι χρήστες
+
+id: Known peers
+msg: Γνωστοί χρήστες
+
+id: Receiving from
+msg: Λήψη από
+
+id: Torrent leechers
+msg: Παρασιτικοί χρήστες
+
+id: Torrent seeders
+msg: Διαμοιραστές
+
+#
+# ./src/backend/bittorrent/torrent_settings.c
+#
+id: BitTorrent
+msg: BitTorrent
+
+id: Clear cache
+msg: Καθαρισμός προσωρινής μνήμης
+
+id: Enable bittorrent
+msg: Ενεργοποίηση bittorrent
+
+id: Max upload speed
+# Missing translation
+msg: 
+
+id: Max usage of free space for caching torrents
+msg: Μέγιστη ελεύθερη μνήμη για προσωρινη αποθήκευση torrent(s)
+
+id: Status
+msg: Κατάσταση
+
+id: Torrent cache path
+msg: Διαδρομή προσωρινής αποθήκευσης torrent
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+msg: DVD
+
+id: DVD read error, restarting disc
+msg: Σφάλμα αναπαραγωγής DVD, επανεκκίνηση δίσκου
+
+#
+# ./src/backend/hls/hls.c
+#
+id: Primary
+msg: Πρωταρχικό
+
+id: Supplementary
+# Missing translation
+msg: 
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Channels
+# Missing translation
+msg: 
+
+id: Invalid HTSP URL
+msg: Μη έγκυρη διεύθυνση HTSP
+
+id: No such channel
+# Missing translation
+msg: 
+
+id: Recorded shows
+# Missing translation
+msg: 
+
+id: Recorder
+# Missing translation
+msg: 
+
+#
+# ./src/backend/playlist.c
+#
+id: Unable to open playlist
+# Missing translation
+msg: 
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Αναζήτηση
+
+id: Search result for: %s
+msg: Αποτελέσματα αναζήτησης για: %s
+
+#
+# ./src/backend/slideshow/slideshow.c
+#
+id: 3 seconds
+# Missing translation
+msg: 
+
+id: 5 seconds
+# Missing translation
+msg: 
+
+id: 7 seconds
+# Missing translation
+msg: 
+
+id: Slideshow speed
+# Missing translation
+msg: 
+
+#
+# ./src/blobcache_file.c
+#
+id: Cache cleared
+msg: Η μνημη Cache καθαρίστηκε
+
+id: Clear cached files
+msg: Καθάρισμα αρχείων Cache
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: Αδυναμία χειρισμού τύπων περιεχομένου %d
+
+id: Checking file contents
+msg: Έλεγχος περιεχόμενων αρχείου
+
+id: Invalid URL from redirect
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+msg: Αδυναμία ανοίγματος του αρχείου: %s
+
+#
+# ./src/fileaccess/fa_filepicker.c
+#
+id: Select a file
+# Missing translation
+msg: 
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Αναζήτηση μέσω Unix Locatedb
+
+#
+# ./src/fileaccess/fa_scanner.c
+#
+id: Deleted %s
+msg: Διαγράφηκε %s
+
+id: Filename
+msg: Όνομα Αρχείου
+
+id: Include in library
+# Missing translation
+msg: 
+
+id: Newest first
+# Missing translation
+msg: 
+
+id: Oldest first
+# Missing translation
+msg: 
+
+id: Show only supported files
+msg: Παρουσίαση μόνο υποστηριζόμενων αρχείων
+
+id: Sort folders first
+msg: Ταξινόμηση φακέλων πρώτα
+
+id: Sort on
+msg: Ταξινόμηση
+
+id: Unable to delete %s\n%s
+msg: Αδυναμία Διαγραφής %s\n%s
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: Αναζήτηση μέσω Spotlight
+
+#
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+# Missing translation
+msg: 
+
+id: Browse archives as folders
+msg: Περιήγηση αρχείων σε φακέλους
+
+id: Enable file deletion from item menu
+msg: Ενεργοποίηση διαγραφής αρχείων από το  μενού εργαλείων
+
+id: Show filename extensions
+msg: Εμφάνιση επεκτάσεων αρχείων
+
+id: Store per-file settings in filesystem
+msg: Αποθήκευση ρυθμίσεων ανα-αρχείο στο σύστημα αρχείων
+
+id: %d archive parts
+msg[0]: %d κομμάτια αρχείου
+
+id: %d directories
+msg[0]: %d κατάλογοι
+msg[1]: %d κατάλογος
+
+id: %d files
+msg[0]: %d αρχεία
+msg[1]: %d αρχείο
+
+#
+# ./src/fileaccess/smb/fa_nativesmb.c
+#
+id: Access denied
+msg: Η πρόσβαση απορρίφθηκε
+
+id: Account restricted
+msg: Ο λογαριασμός έχει περιοριστεί
+
+id: Bad network share name
+msg: Λάθος όνομα κοινόχρηστου δικτύου
+
+id: Logon failure
+msg: Σφάλμα κατά την είσοδο
+
+id: Object name not found
+msg: Το όνομα του αντικειμένου δεν βρέθηκε
+
+#
+# ./src/i18n.c
+#
+id: 12 Hour
+# Missing translation
+msg: 
+
+id: 24 Hour
+# Missing translation
+msg: 
+
+id: Default character set
+msg: Προεπιλεγμένος Χαρακτήρας
+
+id: Ignore 'The' at beginning of words when sorting
+msg: Αγνόησε το 'The' στην αρχή τον λέξεων κατά την ταξινόμηση
+
+id: Language
+msg: Γλώσσα
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: Οι κωδικοποιήσεις γλώσσας θα πρέπει να ρυθμίζονται ως τρεις χαρακτήρες κωδικοποίησης  ISO, π.χ. (eng, swe, fra)
+
+id: Languages
+msg: Γλώσσες
+
+id: Preferred languages
+msg: Προτιμώμενη γλώσσα
+
+id: Primary audio language code
+msg: Πρωτεύων κωδικοποίηση γλώσσας ήχου
+
+id: Primary subtitle language code
+msg: Πρωτεύων κωδικοποίηση γλώσσας υποτίτλων
+
+id: Secondary audio language code
+msg: Δευτερεύων κωδικοποίηση γλώσσας ήχου
+
+id: Secondary subtitle language code
+msg: Δευτερεύων κωδικοποίηση γλώσσας υποτίτλων
+
+id: System default
+# Missing translation
+msg: 
+
+id: Tertiary audio language code
+msg: Τριτεύων κωδικοποίηση γλώσσας ήχου
+
+id: Tertiary subtitle language code
+msg: Τριτεύων κωδικοποίηση γλώσσας υποτίτλων
+
+id: Time format
+# Missing translation
+msg: 
+
+id: Timezone
+# Missing translation
+msg: 
+
+#
+# ./src/ipc/libcec.c
+#
+id: Longpress SELECT for item menu
+# Missing translation
+msg: 
+
+id: Switch TV input source
+# Missing translation
+msg: 
+
+id: Use STOP key for combo input
+# Missing translation
+msg: 
+
+#
+# ./src/keyring.c
+#
+id: Forget remembered passwords
+msg: Διαγραφή αποθηκεμένων κωδικών
+
+id: Rembered passwords erased
+msg: Οι αποθηκεμένοι κωδικοί σβήστηκαν 
+
+#
+# ./src/media/media_settings.c
+#
+id: Align on video frame
+# Missing translation
+msg: 
+
+id: Audio volume
+msg: Ένταση ήχου
+
+id: Delay
+# Missing translation
+msg: 
+
+id: Go to standby after video ends
+msg: Τερματισμός λειτουργίας όταν τελειώσει το βίντεο
+
+id: Horizontal pan
+msg: Οριζόντια επέκταση
+
+id: Horizontal position
+# Missing translation
+msg: 
+
+id: Horizontal scale
+# Missing translation
+msg: 
+
+id: Reset defaults for folder '%s'
+msg: Επαναφορά προεπιλογών για τον φάκελο '%s'
+
+id: Save as defaults for folder '%s'
+msg: Αποθήκευση προεπιλογών για τον φάκελο '%s'
+
+id: Save as global default
+msg: Αποθήκευση ως καθολική προεπιλογή
+
+id: Scaling
+# Missing translation
+msg: 
+
+id: Stretch video to fullscreen
+msg: Αναπαραγωγή βίντεο σε πλήρη οθόνη
+
+id: Stretch video to widescreen
+msg: Αναπαραγωγή βίντεο σε ευρεία οθόνη
+
+id: Vertical pan
+msg: Κάθετη επέκταση
+
+id: Vertical position
+# Missing translation
+msg: 
+
+id: Vertical scale
+# Missing translation
+msg: 
+
+id: Video frame interpolation
+msg: Παρεμβολή video frame 
+
+id: Video zoom
+msg: Μεγέθυνση βίντεο
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+msg: Εύρεση
+
+#
+# ./src/metadata/decoration.c
+#
+id: Automatic
+msg: Αυτόματο
+
+id: Erase all playback info
+msg: Διαγραφή πληροφοριών αναπαραγωγής
+
+id: Manual
+msg: Χειροκίνητο
+
+id: Mark all as seen
+msg: Μαρκάρισμα όλων ότι τα έχω δει
+
+id: Mark all as unseen
+msg: Μαρκάρισμα όλων ότι δεν τα έχω δει
+
+id: Metadata mode
+msg: Λειτουργία- Metadata
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+msg: Ενσωματωμένο στο αρχείο
+
+id: Track %d
+msg: Τίτλος %d
+
+#
+# ./src/metadata/metadata_sources.c
+#
+id: Enabled
+msg: Ενεργοποιημένο
+
+id: Metadata
+msg: Metadata
+
+id: Metadata configuration and provider settings
+msg: Διαμόρφωση Metadata και ρυθμίσεις παρόχου
+
+id: Providers for Music
+msg: Πάροχοι Μουσικής
+
+id: Providers for Video
+msg: Πάροχοι Βίντεο
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: %d αρχεία διαγράφηκαν
+
+id: Clear all metadata
+msg: Καθαρισμός όλων των αρχείων metadata
+
+id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
+msg: Ο καθαρισμός όλων των αρχείων metadata σημαίνει απώλεια <b>όλων</b> των αρχείων metadata από εξωτερικές πηγές όπως το themoviedb.org, κλπ\n\nΠληροφορίες όπως σημεία συνέχισης, μετρητές αναπαραγωγών, κλπ θα παραμείνουν.\nΕίστε σίγουροι ότι θέλετε να συνεχίσετε;
+
+#
+# ./src/metadata/mlp.c
+#
+id: Custom search query
+msg: Ερώτημα προσαρμοσμένης αναζήτησης
+
+id: Custom title
+msg: Τροποποιημένος τίτλος
+
+id: IMDb ID
+msg: IMDb ID
+
+id: Metadata loaded from <b>%s</b> based on %s
+# Missing translation
+msg: 
+
+id: Metadata source
+msg: Πηγή Metadata
+
+id: Movie
+msg: Ταινία
+
+id: Movie title
+msg: Τίτλος Ταινίας
+
+id: No data found
+msg: Δεν βρέθηκαν δεδομένα
+
+id: None
+msg: Κανένα
+
+id: Refresh metadata
+msg: Ανανέωση Metadata
+
+id: Title, Season, Episode
+msg: Τίτλος, Σεζόν, Επεισόδιο
+
+id: custom IMDb ID
+msg: Τροποποίηση  IMDb ID
+
+id: custom query
+msg: Τροποποιημένη Αναζήτηση
+
+id: filename
+msg: Όνομα αρχείου
+
+id: filename as TV episode
+msg: Όνομα αρχείου ως επεισόδιο TV
+
+id: folder name
+msg: Όνομα φακέλου
+
+#
+# ./src/navigator.c
+#
+id: Add and remove items on homepage
+msg: Προσθήκη και αφαίρεση δυνατοτήτων στην αρχική οθόνη 
+
+id: Added %s to home page
+# Missing translation
+msg: 
+
+id: Added new bookmark: %s
+msg: Προσθέθηκε νέος σελιδοδείκτης: %s
+
+id: Bookmarks
+msg: Σελιδοδείκτες
+
+id: Icon
+# Missing translation
+msg: 
+
+id: Music
+msg: Μουσική
+
+id: No handler for URL
+msg: Δεν υπάρχει κρατημένο URL
+
+id: Other
+msg: Άλλα
+
+id: Photos
+msg: Φωτογραφίες
+
+id: Removed %s from homepage
+# Missing translation
+msg: 
+
+id: Removed bookmark: %s
+msg: Αφαιρέθηκε ο σελιδοδείκτης: %s 
+
+id: TV
+msg: TV
+
+id: Title
+msg: Τίτλος
+
+id: Type
+msg: Τύπος
+
+id: URL
+msg: URL
+
+id: Video
+msg: Βίντεο
+
+#
+# ./src/networking/connman.c
+#
+id: Enable Wi-Fi
+msg: Ενεργοποίηση Wi-Fi 
+
+id: Network connections
+msg: Συνδέσεις Δικτύου
+
+#
+# ./src/networking/ftp_server.c
+#
+id: Enable FTP server
+msg: Ενεργοποίηση FTP-Server 
+
+id: FTP server
+msg: FTP-Server
+
+id: Server TCP port
+msg: Θύρα Server TCP 
+
+#
+# ./src/networking/http_server.c
+#
+id: Power Off
+# Missing translation
+msg: 
+
+id: Rebooting
+# Missing translation
+msg: 
+
+id: Restarting
+# Missing translation
+msg: 
+
+id: Standby
+msg: Λειτουργία Αναμονής
+
+#
+# ./src/notifications.c
+#
+id: Show news on home screen
+# Missing translation
+msg: 
+
+#
+# ./src/plugins.c
+#
+id: Alternate plugin Repository URL
+msg: Εναλλακτική διεύθυνση URL για τα πρόσθετα
+
+id: Audio decoders
+# Missing translation
+msg: 
+
+id: Auto install plugins on demand
+# Missing translation
+msg: 
+
+id: Auto installed plugin %s (Version %s)
+# Missing translation
+msg: 
+
+id: Automatically upgrade plugins
+msg: Αυτόματη αναβάθμιση επεκτάσεων
+
+id: Available plugins
+msg: Διαθέσιμες επεκτάσεις
+
+id: Background
+msg: Υπόβαθρο
+
+id: Beta testing passwords
+msg: Κωδικοί δοκιμαστικής έκδοσης 
+
+id: Browse available plugins
+msg: Περιήγηση διαθέσιμων επεκτάσεων
+
+id: Browsing
+msg: Αναζήτηση
+
+id: Cloud services
+msg: Υπηρεσίες Cloud
+
+id: Corrupt plugin bundle
+msg: Κατεστραμμένο πακέτο πρόσθετου
+
+id: Custom backgrounds can now be set in Settings -> Look and Feel
+# Missing translation
+msg: 
+
+id: Disk write error
+msg: Σφάλμα εγγραφής δίσκου!
+
+id: Downloading
+msg: Λήψη
+
+id: File open error
+msg: Σφάλμα κατά το άνοιγμα αρχείου
+
+id: Home page
+msg: Αρχική Σελίδα
+
+id: Images
+msg: Εικόνες
+
+id: Installed
+# Missing translation
+msg: 
+
+id: Installed plugins
+msg: Εγκατεστημένες επεκτάσεις
+
+id: Installed version higher than available
+msg: Η εγκατεστημένη έκδοση είναι πιο πρόσφατη από την διαθέσιμη
+
+id: Installing
+msg: Εγκατάσταση
+
+id: List of albums
+msg: Λίστες Άλμπουμ
+
+id: Loading screen
+msg: Οθόνη Φόρτωσης
+
+id: Movies
+msg: Ταινίες
+
+id: Music streaming
+msg: Streaming Μουσικής
+
+id: Not installable
+msg: Δεν μπορεί να εγκατασταθεί
+
+id: Not installed
+msg: Δεν εγκαταστάθηκε
+
+id: Not upgradable
+msg: Δεν μπορεί να αναβαθμιστεί
+
+id: On Screen Keyboards
+msg: Πληκτρολογια στην οθόνη
+
+id: Online TV
+msg: Διαδικτυακή TV
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+msg: Το πρόσθετο %s % καταργήθηκε επειδή μπορεί να προκαλέσει προβλήματα. Προσπάθηστε να επανεγκαταστήσετε μια διαφορετική έκδοση χειροκίνητα.
+
+id: Plugin %s has been uninstalled - %s
+# Missing translation
+msg: 
+
+id: Plugin categories
+# Missing translation
+msg: 
+
+id: Plugins
+msg: Πρόσθετα
+
+id: Preferred views from plugins
+msg: Προτιμώμενες προβολές από τα πρόσθετα
+
+id: Screen saver
+msg: Προφύλαξη Οθόνης
+
+id: TV channels
+msg: Κανάλια TV
+
+id: Unable to load plugin.json: %s
+msg: Αδυναμία φόρτωσης plugin.json: %s
+
+id: Unable to load plugin.json: Malformed JSON
+msg: Αδυναμία φόρτωσης plugin.json: Ακατάλληλο JSON
+
+id: Uncategorized
+msg: Χωρίς Κατηγοριοποίηση 
+
+id: Up to date
+msg: Ενημερωμένο
+
+id: Upgradable
+msg: Αναβαθμίσιμο
+
+id: Upgraded plugin %s to version %s
+msg: Αναβάθμιση πρόσθετου %s στην έκδοση %s
+
+id: User interface extensions
+msg: Πρόσθετα Περιβάλλοντος Χρήστη
+
+id: Version %s is no longer compatible with Movian
+# Missing translation
+msg: 
+
+id: Video streaming
+msg: Streaming Βίντεο
+
+#
+# ./src/prop/prop_proxy.c
+#
+id: Remote exited
+# Missing translation
+msg: 
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Αυτόματος Τερματισμός Λειτουργίας
+
+id: Enable SSH server
+msg: Ενεργοποίηση SSH-Server 
+
+id: Logout
+msg: Αποσύνδεση
+
+id: Open shell
+msg: Άνοιγμα Shell 
+
+id: Power off system
+msg: Τερματισμός Συστήματος 
+
+id: Quit
+msg: Έξοδος
+
+id: SSH server
+msg: SSH-Server
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled on home screen
+msg: Ενεργοποίηση στην αρχική σελίδα
+
+id: Name
+msg: Όνομα
+
+#
+# ./src/service.c
+#
+id: Local network
+msg: Τοπικό Δίκτυο
+
+id: Remove from homepage
+# Missing translation
+msg: 
+
+#
+# ./src/settings.c
+#
+id: About
+# Missing translation
+msg: 
+
+id: Applications and installed plugins
+msg: Εφαρμογές και Εγκατεστημένα Πρόσθετα
+
+id: Configure communications with your TV
+msg: Ρύθμιση επικοινωνίας με την τηλεόραση σας
+
+id: Developer settings
+msg: Επιλογές Προγραμματιστών
+
+id: Discovered media sources
+msg: Ανακαλυφθέντες Πηγές 
+
+id: File browsing
+msg: Εξερεύνηση Αρχείων
+
+id: Fonts and user interface styling
+msg: Στυλ και γραμματοσειρά περιβάλλοντος χρήστη 
+
+id: General
+msg: Γενικά
+
+id: Global settings
+msg: Γενικές Ρυθμίσεις
+
+id: Look and feel
+msg: Εμφάνιση και Αίσθηση
+
+id: Network services, etc
+msg: Δικτυακές Υπηρεσίες, κλπ.
+
+id: Network settings
+msg: Ρυθμίσεις Δικτύου
+
+id: Reset
+# Missing translation
+msg: 
+
+id: Settings useful for developers
+msg: Ρυθμίσεις χρήσιμες για τους προγραμματιστές
+
+id: Software upgrade
+msg: Αναβάθμιση Προγράμματος 
+
+id: Starting and stopping
+msg: Ξεκίνημα και σταμάτημα
+
+id: System name
+msg: Όνομα Συστήματος
+
+id: System related settings
+msg: Ρυθμίσεις σχετιζόμενες με το σύστημα
+
+id: TV Control
+# Missing translation
+msg: 
+
+#
+# ./src/subtitles/subtitles.c
+#
+id: Any subtitle in central folder
+msg: Οποιοσδήποτε υπότιτλος στον κεντρικό φάκελο
+
+id: Any subtitle in same folder as video
+msg: Οποιοσδήποτε υπότιτλος στον ίδιο φάκελο με το βίντεο
+
+id: Auto
+msg: Αυτόματο
+
+id: Automatically select from this source
+msg: Αυτόματη επιλογή από αυτήν την πηγή
+
+id: Central subtitle folder
+msg: Κεντρικός φάκελος υποτίτλων
+
+id: Color
+msg: Χρώμα
+
+id: External file
+msg: Εξωτερικό αρχείο
+
+id: Force subtitles to reside on video frame
+msg: Εξαναγκασμένη προσαρμογή των υπότιτλων στο καρέ του βίντεο
+
+id: Generic settings for video subtitles
+msg: Γενικές ρυθμίσεις για τους υποτίτλους των βίντεο
+
+id: Ignore embedded styling
+msg: Αγνοήστε τα ενσωματωμένα στυλ
+
+id: Left
+msg: Αριστερά
+
+id: Outline color
+msg: Χρώμα περιγράμματος
+
+id: Outline size
+msg: Μέγεθος περιγράμματος
+
+id: Path to central folder
+msg: Διαδρομή για τον κεντρικό φάκελο
+
+id: Providers for Subtitles
+msg: Πάροχοι υποτίτλων
+
+id: Right
+msg: Δεξιά
+
+id: Shadow color
+msg: Σκιώδες χρώμα
+
+id: Shadow offset
+msg: Σκιώδης αντιστάθμιση
+
+id: Subtitle horizontal displacement
+msg: Οριζόντια μετατόπιση υποτίτλων
+
+id: Subtitle position
+msg: Θέση υποτίτλων
+
+id: Subtitle size
+msg: Μέγεθος υποτίτλων
+
+id: Subtitle size and positioning
+msg: Μέγεθος και θέση υποτίτλων
+
+id: Subtitle vertical displacement
+msg: Κάθετη μετατόπιση υποτίτλων
+
+id: Subtitles embedded in video file
+msg: Οι υπότιτλοι είναι ενσωματωμένοι στο βίντεο
+
+id: Subtitles with matching filename in central folder
+msg: Υπότιτλοι με ίδιο άνομα αρχείου στον κεντρικό φάκελο
+
+id: Subtitles with matching filename in same folder as video
+msg: Υπότιτλοι με ίδιο όνομα αρχείου στον ίδιο φάκελο με το βίντεο
+
+#
+# ./src/text/fontstash.c
+#
+id: Defaults
+msg: Προεπιλεγμένα
+
+id: Fonts
+msg: Γραμματοσειρές
+
+id: Installed fonts
+msg: Εγκατεστημένες γραμματοσειρές
+
+id: Narrow text
+msg: Λεπτό κείμενο 
+
+id: Reset main font to default
+msg: Επαναφορά κύριας γραμματοσειράς στην προεπιλεγμένη
+
+id: Reset narrow font to default
+msg: Επαναφορά λεπτής γραμματοσειράς στην προεπιλεγμένη
+
+id: Reset subtitle font to default
+msg: Επαναφορά γραμματοσειράς υποτίτλων στην προεπιλεγμένη
+
+id: Unable to install font: %s
+msg: Αδυναμία εγκατάστασης γραμματοσειράς: %s
+
+id: Use font %s for
+msg: Χρήση γραμματοσειράς %s σε 
+
+#
+# ./src/ui/clipboard.c
+#
+id: Copy failed: %s
+# Missing translation
+msg: 
+
+id: Target folder
+# Missing translation
+msg: 
+
+#
+# ./src/ui/glw/glw_ps3.c
+#
+id: Dual-Shock Remote
+# Missing translation
+msg: 
+
+id: No
+msg: Όχι
+
+id: Seek using L2 and R2 button
+msg: Μετάβαση με την χρήση των L2 και R2 κουμπιών
+
+id: Yes with Select button
+msg: Επιλογή "ναι" με την χρήση του κουμπιού select
+
+#
+# ./src/ui/glw/glw_settings.c
+#
+id: Custom background image
+# Missing translation
+msg: 
+
+id: Emulate Up/Down buttons with mouse wheel
+# Missing translation
+msg: 
+
+id: Folder for screensaver images
+# Missing translation
+msg: 
+
+id: Font and icon size
+msg: Μέγεθος γραμματοσειράς και εικονιδίων
+
+id: Interface horizontal shrink
+# Missing translation
+msg: 
+
+id: Interface vertical shrink
+# Missing translation
+msg: 
+
+id: Screensaver
+# Missing translation
+msg: 
+
+id: Screensaver delay
+msg: Καθυστέρηση προφύλαξης οθόνης
+
+id: Seconds per image
+# Missing translation
+msg: 
+
+id: Use Bing images of the day
+# Missing translation
+msg: 
+
+id: Wrap when reaching beginning/end of lists
+msg: Ατελείωτες κινήσεις μέσα στους καταλόγους
+
+#
+# ./src/ui/glw/glw_view_eval.c
+#
+id: %d days ago
+# Missing translation
+msg: 
+
+id: %d hours ago
+# Missing translation
+msg: 
+
+id: %d minutes ago
+# Missing translation
+msg: 
+
+id: %d months ago
+# Missing translation
+msg: 
+
+id: %d weeks ago
+# Missing translation
+msg: 
+
+id: %d years ago
+# Missing translation
+msg: 
+
+id: Just now
+# Missing translation
+msg: 
+
+id: One day ago
+# Missing translation
+msg: 
+
+id: One hour ago
+# Missing translation
+msg: 
+
+id: One minute ago
+# Missing translation
+msg: 
+
+id: One month ago
+# Missing translation
+msg: 
+
+#
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Αυτόματη μετάβαση σε αυτήν την λειτουργεία 
+
+id: DVI-Video color range
+msg: Εύρος χρωμάτων DVI-Βίντεο
+
+id: Switch to this mode now
+msg: Μετάβαση σε αυτήν την λειτουργία τώρα
+
+id: Video modes
+msg: Λειτουργίες Βίντεο
+
+#
+# ./src/upgrade.c
+#
+id: %s version %s is available
+msg: Η έκδοση του %s %s είναι διαθέσιμη
+
+id: Notify about upgrades
+msg: Ενημέρωση για αναβαθμίσεις
+
+id: Open download page
+msg: Άνοιγμα σελίδας λήψης
+
+id: System
+msg: Σύστημα
+
+id: Upgrade to releases from
+msg: Αναβάθμιση ενημερώσεων από
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Date (newest first)
+msg: Ημερομηνία  (Νεότερα)
+
+id: Date (oldest first)
+msg: Ημερομηνία (Παλαιότερα)
+
+id: Device not found
+msg: Η συσκευή δεν βρέθηκε
+
+id: Malformed URI after device
+msg: Εσφαλμένη μορφή URI από την συσκευή
+
+id: Malformed URI after service
+msg: Εσφαλμένη μορφή URI από την υπηρεσία
+
+id: Service not found
+msg: Η υπηρεσία δεν βρέθηκε
+
+#
+# ./src/video/video_settings.c
+#
+id: Always
+msg: Πάντα
+
+id: Ask
+msg: Ερώτηση
+
+id: Automatically play next video in list
+msg: Αυτόματη αναπαραγωγή του επόμενου βίντεο στην λίστα 
+
+id: Count video as played when reaching
+msg: Υπολόγισε ότι το βίντεο έχει παιχτεί όταν φθάσει στο 
+
+id: Enable VDPAU
+msg: Ενεργοποίηση VDPAU
+
+id: Hardware accelerated decoding
+# Missing translation
+msg: 
+
+id: Maximum resolution for deinterlacer
+msg: Μέγιστη ανάλυση για απόπλεξη
+
+id: Never
+msg: Ποτέ
+
+id: No limit
+msg: Χωρίς όριο
+
+id: Per-file volume
+msg: Ένταση ανα-αρχείο
+
+id: Preferred VDPAU deinterlacer method
+msg: Προτιμώμενη μέθοδος απόπλεξης
+
+id: Resume video playback
+msg: Συνέχιση αναπαραγωγής βίντεο
+
+id: Show clock during playback
+# Missing translation
+msg: 
+
+id: Step when seeking backward
+msg: Βήμα κατα την αναζήτηση προς τα πίσω
+
+id: Step when seeking forward
+msg: Βήμα κατα την αναζήτηση προς τα μπροστά
+
+id: Temporal
+msg: Προσωρινός
+
+id: Temporal/Spatial
+msg: Προσωρινός/Με Διαστήματα
+
+id: Up / Down during video playback controls
+msg: Πάνω / Κάτω κατά την αναπαραγωγή video
+
+id: Video acceleration and display behaviour
+msg: Επιτάχυνση βίντεο και ρυθμίσεις αναπαραγωγής
+
+id: Video buffer size
+# Missing translation
+msg: 
+

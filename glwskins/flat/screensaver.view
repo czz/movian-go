@@ -1,0 +1,37 @@
+widget(slideshow, {
+  alpha: $ui.screenSaverAlpha;
+
+  time: $core.glw.screensaver.imageDuration;
+  transitionTime: 2;
+
+  cloner($core.glw.screensaver.items, container_z, {
+
+    image({
+      zoffset: -1400;
+      source: $self.url;
+    });
+
+    underscan({
+      hidden: isVoid($self.info);
+      vbox({
+        padding: [0, 0.5em, 0.5em, 0.5em + $ui.universeBottomHeight];
+        alpha: iir(delay(isVisible(), 3, 0), 16);
+
+        space(1);
+        hbox({
+          zbox({
+            quad({
+              color: 0;
+              alpha: 0.8;
+            });
+            label({
+              padding: [2em, 0.25em, 0.5em, 0.25em];
+              caption: $self.info;
+            });
+          });
+          space(1);
+        });
+      });
+    });
+  });
+});

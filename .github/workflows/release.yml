@@ -1,0 +1,376 @@
+name: Release
+
+# Tag push (e.g. 8.0.0) → build every platform, package exactly like
+# a local dist/, attach to a GitHub Release. Artifacts are also kept
+# as workflow artifacts for inspection.
+on:
+  push:
+    tags: ['*.*.*']
+
+# Re-pushing a tag cancels the previous run for that tag — avoids
+# paying release-build minutes (macOS is 10x) for superseded commits.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  linux:
+    name: Linux amd64 (bundle + CEF pkg)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglfw3-dev libgl1-mesa-dev libegl-dev \
+            libfreetype-dev libwayland-dev libasound2-dev \
+            libva-dev libvulkan-dev libx11-dev libdrm-dev \
+            zlib1g-dev libbz2-dev liblzma-dev nasm \
+            cmake unzip wayland-protocols libwayland-bin libxkbcommon-dev \
+            libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+
+      # Ubuntu ships glfw 3.3 (X11-only) — vendored static 3.4,
+      # shadow-installed under /usr/local so pkg-config finds it.
+      - name: Cache vendored GLFW 3.4
+        uses: actions/cache@v4
+        with:
+          path: third_party/glfw/linux
+          key: glfw-linux-${{ hashFiles('scripts/build_glfw_linux.sh', 'scripts/deps.env') }}
+
+      - name: Build + install vendored GLFW 3.4
+        run: |
+          ./scripts/build_glfw_linux.sh
+          sudo mkdir -p /usr/local/lib/pkgconfig /usr/local/include
+          sudo cp -a third_party/glfw/linux/include/GLFW /usr/local/include/
+          sudo cp third_party/glfw/linux/lib/libglfw3.a /usr/local/lib/
+          sudo cp third_party/glfw/linux/lib/pkgconfig/glfw3.pc /usr/local/lib/pkgconfig/
+
+      - name: Cache vendored FFmpeg build
+        uses: actions/cache@v4
+        with:
+          path: ffmpeg/lib
+          key: ffmpeg-${{ runner.os }}-${{ hashFiles('scripts/deps.env', 'scripts/build_ffmpeg.sh', 'ffmpeg/patches') }}
+
+      - name: Build vendored FFmpeg
+        run: ./scripts/build_ffmpeg.sh
+
+      - name: Cache CEF dist
+        uses: actions/cache@v4
+        with:
+          path: |
+            third_party/cef
+            .deps
+          key: cef-${{ hashFiles('scripts/fetch_cef.sh') }}
+
+      - name: Fetch CEF linux64
+        run: ./scripts/fetch_cef.sh linux64
+
+      - name: Build bundle (standalone)
+        run: |
+          make linux-bundle
+          strip movian-go-bundle
+          mkdir dist
+          mv movian-go-bundle dist/movian-go-linux-amd64
+
+      # Same package layout as local dist/: binary + cef/Release
+      # merged (Release + Resources) + launcher exporting CEF_DIR and
+      # LD_LIBRARY_PATH.
+      - name: Build + package CEF variant
+        run: |
+          PKG_CONFIG_PATH=$PWD/third_party/cef/linux64 \
+            go build -tags "glfw x11 bundle webpopup cef" \
+            -ldflags "-X github.com/czz/movian-go/internal/version.appversion=${GITHUB_REF_NAME}" \
+            -o dist/movian-go-linux-amd64-cef/movian-go ./cmd/movian-go
+          strip dist/movian-go-linux-amd64-cef/movian-go
+          mkdir -p dist/movian-go-linux-amd64-cef/cef/Release
+          cp -a third_party/cef/linux64/Release/. \
+            dist/movian-go-linux-amd64-cef/cef/Release/
+          cp -a third_party/cef/linux64/Resources/. \
+            dist/movian-go-linux-amd64-cef/cef/Release/
+          strip --strip-unneeded dist/movian-go-linux-amd64-cef/cef/Release/libcef.so
+          printf '#!/bin/sh\nD=$(cd "$(dirname "$0")" && pwd)\nexport CEF_DIR="$D/cef"\nexport LD_LIBRARY_PATH="$D/cef/Release${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"\nexec "$D/movian-go" "$@"\n' \
+            > dist/movian-go-linux-amd64-cef/movian-go.sh
+          chmod +x dist/movian-go-linux-amd64-cef/movian-go.sh
+          tar -C dist -czf dist/movian-go-linux-amd64-cef.tar.gz movian-go-linux-amd64-cef
+          rm -rf dist/movian-go-linux-amd64-cef
+
+      - name: Upload linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: |
+            dist/movian-go-linux-amd64
+            dist/movian-go-linux-amd64-cef.tar.gz
+
+  windows:
+    name: Windows (amd64 + 386, CEF pkg)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install mingw + nsis
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-mingw-w64-x86-64 gcc-mingw-w64-i686 nasm nsis
+
+      - name: Cache windows deps + FFmpeg
+        uses: actions/cache@v4
+        with:
+          path: |
+            third_party/zlib/windows
+            third_party/glfw/windows
+            third_party/libxml2/windows
+            ffmpeg/windows/amd64/lib
+            ffmpeg/windows/386/lib
+          key: windeps-${{ hashFiles('scripts/build_windows_deps.sh', 'scripts/build_ffmpeg_windows.sh', 'ffmpeg/patches') }}
+
+      - name: Build windows deps + FFmpeg
+        run: |
+          [ -f third_party/zlib/windows/amd64/lib/libz.a ] || ./scripts/build_windows_deps.sh amd64
+          [ -f third_party/zlib/windows/386/lib/libz.a ] || ./scripts/build_windows_deps.sh 386
+          [ -f ffmpeg/windows/amd64/lib/libavcodec.a ] || ./scripts/build_ffmpeg_windows.sh amd64
+          [ -f ffmpeg/windows/386/lib/libavcodec.a ] || ./scripts/build_ffmpeg_windows.sh 386
+
+      - name: Cache CEF dists
+        uses: actions/cache@v4
+        with:
+          path: |
+            third_party/cef
+            .deps
+          key: cef-${{ hashFiles('scripts/fetch_cef.sh') }}
+
+      - name: Fetch CEF windows64 + windows32
+        run: |
+          ./scripts/fetch_cef.sh windows64
+          ./scripts/fetch_cef.sh windows32
+
+      # exe + CEF dlls/paks flat in one dir — Windows resolves
+      # libcef.dll from the exe directory, no launcher needed.
+      - name: Build + package amd64
+        run: |
+          PKG_CONFIG_PATH=$PWD/third_party/cef/windows64 make windows
+          x86_64-w64-mingw32-strip movian-go.exe
+          mkdir -p dist/movian-go-windows-amd64-cef
+          mv movian-go.exe dist/movian-go-windows-amd64-cef/
+          cp -a third_party/cef/windows64/Release/. \
+            dist/movian-go-windows-amd64-cef/
+          cp -a third_party/cef/windows64/Resources/. \
+            dist/movian-go-windows-amd64-cef/
+          rm -f dist/movian-go-windows-amd64-cef/libcef.lib
+          tar -C dist -czf dist/movian-go-windows-amd64-cef.tar.gz movian-go-windows-amd64-cef
+          makensis -DARCH=amd64 -DVERSION=${GITHUB_REF_NAME} \
+            -DSRCDIR=$PWD/dist/movian-go-windows-amd64-cef \
+            -DOUTFILE=$PWD/dist/movian-go-windows-amd64-setup.exe \
+            scripts/movian-go.nsi
+          rm -rf dist/movian-go-windows-amd64-cef
+
+      - name: Build + package 386
+        run: |
+          PKG_CONFIG_PATH=$PWD/third_party/cef/windows32 make windows32
+          i686-w64-mingw32-strip movian-go32.exe
+          mkdir -p dist/movian-go-windows-386-cef
+          mv movian-go32.exe dist/movian-go-windows-386-cef/
+          cp -a third_party/cef/windows32/Release/. \
+            dist/movian-go-windows-386-cef/
+          cp -a third_party/cef/windows32/Resources/. \
+            dist/movian-go-windows-386-cef/
+          rm -f dist/movian-go-windows-386-cef/libcef.lib
+          tar -C dist -czf dist/movian-go-windows-386-cef.tar.gz movian-go-windows-386-cef
+          makensis -DARCH=386 -DVERSION=${GITHUB_REF_NAME} \
+            -DSRCDIR=$PWD/dist/movian-go-windows-386-cef \
+            -DOUTFILE=$PWD/dist/movian-go-windows-386-setup.exe \
+            scripts/movian-go.nsi
+          rm -rf dist/movian-go-windows-386-cef
+
+      - name: Upload windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: |
+            dist/movian-go-windows-amd64-cef.tar.gz
+            dist/movian-go-windows-amd64-setup.exe
+            dist/movian-go-windows-386-cef.tar.gz
+            dist/movian-go-windows-386-setup.exe
+
+  android:
+    name: Android (armv7 + arm64 APK)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Cache Android native libs
+        uses: actions/cache@v4
+        with:
+          path: |
+            ffmpeg/android/arm/lib
+            ffmpeg/android/arm64/lib
+            third_party/libxml2/android
+          key: android-libs-${{ hashFiles('scripts/build_ffmpeg_android.sh', 'scripts/build_libxml2_android.sh', 'ffmpeg/patches') }}
+
+      - name: Build vendored FFmpeg + libxml2 (arm + arm64)
+        run: |
+          export ANDROID_NDK="$ANDROID_NDK_HOME"
+          ./scripts/build_libxml2_android.sh
+          ./scripts/build_ffmpeg_android.sh
+
+      - name: Build + sign APK (debug key)
+        run: |
+          ANDROID_NDK="$ANDROID_NDK_HOME" make apk
+          mkdir dist && mv movian-go.apk dist/
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: dist/movian-go.apk
+
+  rpi:
+    name: Raspberry Pi (armv6)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install cross toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+
+      - name: Cache RPi sysroot + FFmpeg
+        uses: actions/cache@v4
+        with:
+          path: |
+            third_party/rpi/sysroot
+            ffmpeg/rpi
+          key: rpi-libs-${{ hashFiles('scripts/build_ffmpeg_rpi.sh', 'ffmpeg/patches') }}
+
+      - name: Build + package
+        run: |
+          make rpi RPI_TAGS="rpi connman mgos webpopup libcec"
+          arm-linux-gnueabihf-strip movian-go-rpi
+          mkdir -p dist/movian-go-rpi-armv6
+          mv movian-go-rpi dist/movian-go-rpi-armv6/
+          cp -a glwskins res lang dist/movian-go-rpi-armv6/
+          printf '#!/bin/sh\nD=$(cd "$(dirname "$0")" && pwd)\nexec "$D/movian-go-rpi" "$@"\n' \
+            > dist/movian-go-rpi-armv6/movian-go.sh
+          chmod +x dist/movian-go-rpi-armv6/movian-go.sh
+          tar -C dist -czf dist/movian-go-rpi-armv6.tar.gz movian-go-rpi-armv6
+          rm -rf dist/movian-go-rpi-armv6
+
+      - name: Upload RPi artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpi
+          path: dist/movian-go-rpi-armv6.tar.gz
+
+  macos:
+    name: macOS (amd64 + arm64, CEF pkg)
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - { os: macos-13, cefplat: macosx64, arch: amd64 }
+          - { os: macos-latest, cefplat: macosarm64, arch: arm64 }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install brew deps
+        run: brew install glfw nasm
+
+      - name: Cache FFmpeg darwin build
+        uses: actions/cache@v4
+        with:
+          path: ffmpeg/darwin
+          key: ffmpeg-darwin-${{ matrix.cefplat }}-${{ hashFiles('scripts/build_ffmpeg_darwin.sh', 'ffmpeg/patches') }}
+
+      - name: Build vendored FFmpeg
+        run: ./scripts/build_ffmpeg_darwin.sh
+
+      - name: Fetch CEF ${{ matrix.cefplat }}
+        run: ./scripts/fetch_cef.sh ${{ matrix.cefplat }}
+
+      # darwin CEF: resdir = CEF_DIR/Release/Chromium Embedded
+      # Framework.framework/Resources — package the Release dir
+      # (framework + helper apps) as cef/Release next to the binary,
+      # launcher exports CEF_DIR.
+      - name: Build + package
+        run: |
+          PKG_CONFIG_PATH=$PWD/third_party/cef/${{ matrix.cefplat }} \
+            go build -tags "glfw webpopup cef" \
+            -ldflags "-X github.com/czz/movian-go/internal/version.appversion=${GITHUB_REF_NAME}" \
+            -o dist/movian-go-macos-${{ matrix.arch }} ./cmd/movian-go
+          strip -x dist/movian-go-macos-${{ matrix.arch }}
+          mkdir -p dist/movian-go-macos-${{ matrix.arch }}-cef
+          mv dist/movian-go-macos-${{ matrix.arch }} \
+             dist/movian-go-macos-${{ matrix.arch }}-cef/movian-go
+          cp -a "third_party/cef/${{ matrix.cefplat }}/Release" \
+             dist/movian-go-macos-${{ matrix.arch }}-cef/cef/
+          printf '#!/bin/sh\nD=$(cd "$(dirname "$0")" && pwd)\nexport CEF_DIR="$D/cef"\nexec "$D/movian-go" "$@"\n' \
+            > dist/movian-go-macos-${{ matrix.arch }}-cef/movian-go.sh
+          chmod +x dist/movian-go-macos-${{ matrix.arch }}-cef/movian-go.sh
+          tar -C dist -czf dist/movian-go-macos-${{ matrix.arch }}-cef.tar.gz \
+            movian-go-macos-${{ matrix.arch }}-cef
+          rm -rf dist/movian-go-macos-${{ matrix.arch }}-cef
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ matrix.arch }}
+          path: dist/movian-go-macos-${{ matrix.arch }}-cef.tar.gz
+
+  publish:
+    name: Publish GitHub Release
+    needs: [linux, windows, android, rpi, macos]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          name: Movian Go ${{ github.ref_name }}
+          draft: false
+          prerelease: false

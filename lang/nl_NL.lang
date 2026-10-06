@@ -1,0 +1,2136 @@
+language: Dutch
+native: Nederlands
+maintainer: GuardianSoul, eussNL
+#
+# ./glwskins/flat/ctxmenu/default_details.view
+#
+id: Bookmark
+# Missing translation
+msg: 
+
+id: Bookmarked
+# Missing translation
+msg: 
+
+id: Copy to clipboard
+# Missing translation
+msg: 
+
+id: Copy to location...
+# Missing translation
+msg: 
+
+id: Delete
+msg: Verwijderen
+
+id: Queue
+msg: In de wachtrij zetten
+
+#
+# ./glwskins/flat/ctxmenu/plugin_details.view
+#
+id: Author:
+# Missing translation
+msg: 
+
+id: Available version:
+msg: Beschikbare versie:
+
+id: Changelog
+# Missing translation
+msg: 
+
+id: Install
+msg: Installeren
+
+id: Installed version:
+# Missing translation
+msg: 
+
+id: Status:
+# Missing translation
+msg: 
+
+id: Uninstall
+msg: Verwijderen
+
+id: Upgrade
+msg: Bijwerken
+
+#
+# ./glwskins/flat/ctxmenu/video_details.view
+#
+id: Continue from %s
+msg: Voortzetten vanaf %s
+
+id: Mark as seen
+msg: Als bekeken markeren
+
+id: Mark as unseen
+msg: Als niet bekeken markeren
+
+id: Play from beginning
+msg: Afspelen vanaf het begin
+
+id: Play until end of list
+msg: Tot het einde van de lijst afspelen
+
+id: Video Cast
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/items/details/video.view
+#
+id: Season %d - Episode %d
+# Missing translation
+msg: 
+
+id: Seen %d times, %s
+# Missing plural translation for 'Seen %d times, %s' and 'Seen %d time, %s'
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwskins/flat/items/list/add.view
+#
+id: Add new entry
+msg: Nieuw item toevoegen
+
+#
+# ./glwskins/flat/items/list/bool.view
+#
+id: Off
+msg: Uit
+
+id: On
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/items/list/font.view
+#
+id: Condensed
+msg: Verkort
+
+id: Subtitles
+msg: Ondertiteling
+
+id: User interface
+msg: Gebruikersinterface
+
+#
+# ./glwskins/flat/items/list/tvepisode.view
+#
+id: Episode %d - %s
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/loading.view
+#
+id: %d kb/s
+# Missing translation
+msg: 
+
+id: Bitrate:
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/log.view
+#
+id: System log
+msg: Systeemlogboek
+
+#
+# ./glwskins/flat/mediainfo.view
+#
+id: A/V diff
+# Missing translation
+msg: 
+
+id: Audio bitrate
+# Missing translation
+msg: 
+
+id: Audio codec
+# Missing translation
+msg: 
+
+id: Audio packets
+# Missing translation
+msg: 
+
+id: Buffer usage
+# Missing translation
+msg: 
+
+id: No media loaded
+msg: Geen media geladen
+
+id: Remaining buffer
+# Missing translation
+msg: 
+
+id: Source
+# Missing translation
+msg: 
+
+id: Video bitrate
+# Missing translation
+msg: 
+
+id: Video codec
+# Missing translation
+msg: 
+
+id: Video framerate
+# Missing translation
+msg: 
+
+id: Video packets
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/menu/sidebar.view
+#
+id: Bookmark page
+# Missing translation
+msg: 
+
+id: Page settings
+# Missing translation
+msg: 
+
+id: Paste
+# Missing translation
+msg: 
+
+id: Reload page
+# Missing translation
+msg: 
+
+id: Remove bookmark
+# Missing translation
+msg: 
+
+id: Settings
+msg: Instellingen
+
+#
+# ./glwskins/flat/menu/sidebar_common.view
+#
+id: Activate sleep timer
+# Missing translation
+msg: 
+
+id: Disable sleep timer
+# Missing translation
+msg: 
+
+id: Exit %s
+# Missing translation
+msg: 
+
+id: Hide media info
+# Missing translation
+msg: 
+
+id: Hide system info
+# Missing translation
+msg: 
+
+id: Master volume
+# Missing translation
+msg: 
+
+id: Show media info
+# Missing translation
+msg: 
+
+id: Show system info
+# Missing translation
+msg: 
+
+id: Suspend
+msg: Slaapstand
+
+id: Time until sleep
+# Missing translation
+msg: 
+
+id: View log
+# Missing translation
+msg: 
+
+id: dB
+# Missing translation
+msg: 
+
+id: min
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/osd/osd_audio.view
+#
+id: Audio
+msg: Geluid
+
+#
+# ./glwskins/flat/osd/osd_main.view
+#
+id: Audio settings
+msg: Geluidsinstellingen
+
+id: Subtitle settings
+msg: Ondertitelingsinstellingen
+
+id: Video settings
+msg: Video-instellingen
+
+#
+# ./glwskins/flat/osk.view
+#
+id: Default
+msg: Standaard
+
+id: Keyboard layout:
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/directory.view
+#
+id: Album
+msg: Album
+
+id: Artist
+msg: Artiest
+
+id: Custom
+msg: Aangepast
+
+id: Grid
+# Missing translation
+msg: 
+
+id: List
+msg: Lijst
+
+id: Page layout
+# Missing translation
+msg: 
+
+id: Search results
+# Missing translation
+msg: 
+
+id: TV Season
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/empty.view
+#
+id: No contents
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/home.view
+#
+id: Dismiss
+msg: Sluiten
+
+id: Home
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/openerror.view
+#
+id: Unable to open resource
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/playqueue.view
+#
+id: Playqueue
+msg: Afspeellijst
+
+#
+# ./glwskins/flat/pages/searchresults.view
+#
+id: Show more
+# Missing translation
+msg: 
+
+id: %d hits
+# Missing plural translation for '%d hits' and '%d hit'
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwskins/flat/pages/slideshow.view
+#
+id: Interval: %ds
+# Missing translation
+msg: 
+
+id: Play/Pause
+# Missing translation
+msg: 
+
+id: Stop
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/stpp.view
+#
+id: Remote control - %s
+# Missing translation
+msg: 
+
+id: Remote controlling %s
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/stppstpp.view
+#
+id: Nested remote controll is not supported
+# Missing translation
+msg: 
+
+id: Remote control
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/stppvideo.view
+#
+id: Audio tracks
+msg: Geluidssporen
+
+id: Audio volume adjustment: %d dB
+# Missing translation
+msg: 
+
+id: CPU is too slow to decode this video
+msg: De CPU is te langzaam om deze video te decoderen
+
+id: Next
+# Missing translation
+msg: 
+
+id: Previous
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/tvseason.view
+#
+id: Season %d
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/upgrade.view
+#
+id: %s is up to date
+# Missing translation
+msg: 
+
+id: An error occured during download
+msg: Er is een fout opgetreden tijdens het downloaden
+
+id: Changelog for %s releases
+msg: Veranderingen voor %s uitgaven
+
+id: Check for updates now
+msg: Nu op updates controleren
+
+id: Checking for updates
+# Missing translation
+msg: 
+
+id: Current version:
+msg: Huidige versie:
+
+id: Download and install
+# Missing translation
+msg: 
+
+id: Downloading %s
+# Missing translation
+msg: 
+
+id: New version %s is available for download
+msg: Nieuwe versie %s kan worden gedownload
+
+id: No upgrade available
+msg: Geen updates beschikbaar
+
+id: Retry
+# Missing translation
+msg: 
+
+id: Stable
+msg: Stabiel
+
+id: Testing
+msg: Test
+
+id: Unable to query for new version
+msg: Kan niet zoeken naar een nieuwere versie
+
+#
+# ./glwskins/flat/popups/auth.view
+#
+id: Domain
+msg: Domein
+
+id: Password
+msg: Wachtwoord
+
+id: Remember me
+msg: Onthoud mij
+
+id: Username
+msg: Gebruikersnaam
+
+#
+# ./glwskins/flat/popups/common.view
+#
+id: Cancel
+msg: Annuleren
+
+id: Ok
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/filepicker.view
+#
+id: Back
+# Missing translation
+msg: 
+
+id: Close
+# Missing translation
+msg: 
+
+id: Folder select mode, press right to open subfolder
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/resume.view
+#
+id: No, Start over
+# Missing translation
+msg: 
+
+id: Resume from %s
+# Missing translation
+msg: 
+
+id: Yes
+msg: Ja
+
+#
+# ./glwskins/flat/popups/textDialog.view
+#
+id: OK
+msg: Oke
+
+#
+# ./glwskins/flat/sysinfo.view
+#
+id: CPU Temp
+# Missing translation
+msg: 
+
+id: Connected
+# Missing translation
+msg: 
+
+id: Fragmentation
+# Missing translation
+msg: 
+
+id: Framerate
+# Missing translation
+msg: 
+
+id: GPU Temp
+# Missing translation
+msg: 
+
+id: HDD Avail
+# Missing translation
+msg: 
+
+id: IP Address
+# Missing translation
+msg: 
+
+id: Inactive memory
+# Missing translation
+msg: 
+
+id: Memory usage
+# Missing translation
+msg: 
+
+id: Network
+# Missing translation
+msg: 
+
+id: Not available
+# Missing translation
+msg: 
+
+id: System Free
+# Missing translation
+msg: 
+
+id: System Total
+# Missing translation
+msg: 
+
+id: VM Page In/Out
+# Missing translation
+msg: 
+
+id: Version
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/universe.view
+#
+id: Audio muted
+msg: Geluid gedempt
+
+id: Copying %d files
+# Missing translation
+msg: 
+
+id: Master volume: %d dB
+msg: Hoofdvolume: %d dB
+
+id: Overscan adjustment\nPosition border at screen edges
+# Missing translation
+msg: 
+
+#
+# ./src/api/stpp.c
+#
+id: Allow remote control
+# Missing translation
+msg: 
+
+id: Device not available
+# Missing translation
+msg: 
+
+id: Movians for remote control
+# Missing translation
+msg: 
+
+#
+# ./src/api/tmdb.c
+#
+id: Language (ISO 639-1 code)
+msg: Taal (ISO 639-1-codering)
+
+id: Use original title
+msg: Originele titel gebruiken
+
+#
+# ./src/arch/android/android.c
+#
+id: Android Storage
+# Missing translation
+msg: 
+
+#
+# ./src/arch/linux/pulseaudio.c
+#
+id: Unable to initialize audio system %s -- %s
+# Missing translation
+msg: 
+
+#
+# ./src/arch/ps3/ps3_main.c
+#
+id: System is low on memory (%d kB RAM available)
+msg: Het systeem heeft weinig geheugen over (%d kB RAM beschikbaar)
+
+#
+# ./src/arch/ps3/ps3_vdec.c
+#
+id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
+# Missing translation
+msg: 
+
+id: Cell-h264: Broken headers, Disabling acceleration
+# Missing translation
+msg: 
+
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: Niveau 4.2 voor inhoud in niveau %d.%d forceren. De video wordt mogelijk niet goed afgespeeld.
+
+id: Unable to accelerate %s, library not loaded.
+msg: %s kon niet worden versneld, bibliotheek niet geladen.
+
+id: Unable to open Cell codec. Error 0x%x
+msg: De Cell-codec kon niet worden geopend. Fout 0x%x
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: De Cell-codec kon niet worden geopend. %d bytes aan RAM toewijzen niet mogelijk
+
+id: Unable to query Cell codec. Error 0x%x
+msg: De Cell-codec kon niet worden aangevraagd. Fout 0x%x
+
+#
+# ./src/arch/rpi/rpi_audio.c
+#
+id: 8 Channel PCM
+# Missing translation
+msg: 
+
+id: AC3 Pass-Through
+# Missing translation
+msg: 
+
+id: Analog
+# Missing translation
+msg: 
+
+id: Audio output port
+# Missing translation
+msg: 
+
+id: Autodetect
+# Missing translation
+msg: 
+
+id: DTS Pass-Through
+# Missing translation
+msg: 
+
+id: HDMI
+# Missing translation
+msg: 
+
+#
+# ./src/arch/rpi/rpi_tv.c
+#
+id: Match display and content framerate
+# Missing translation
+msg: 
+
+#
+# ./src/audio2/audio.c
+#
+id: Audio delay
+msg: Geluidsvertaging
+
+id: Audio gain
+# Missing translation
+msg: 
+
+id: Setup audio output
+# Missing translation
+msg: 
+
+id: Video playback
+msg: Videoweergave
+
+#
+# ./src/audio2/audio_test.c
+#
+id: 440Hz sinewave -12dB
+# Missing translation
+msg: 
+
+id: Audio test
+# Missing translation
+msg: 
+
+id: Center
+msg: Centreren
+
+id: Front Left
+# Missing translation
+msg: 
+
+id: Front Right
+# Missing translation
+msg: 
+
+id: LFE
+# Missing translation
+msg: 
+
+id: Pink noise
+# Missing translation
+msg: 
+
+id: Play test signal
+# Missing translation
+msg: 
+
+id: Rear Left
+# Missing translation
+msg: 
+
+id: Rear Right
+# Missing translation
+msg: 
+
+id: Speaker position
+# Missing translation
+msg: 
+
+id: Surround Left
+# Missing translation
+msg: 
+
+id: Surround Right
+# Missing translation
+msg: 
+
+id: Test signal type
+# Missing translation
+msg: 
+
+#
+# ./src/backend/bittorrent/bt_backend.c
+#
+id: No files in torrent
+# Missing translation
+msg: 
+
+id: Unable to open torrent: %s
+# Missing translation
+msg: 
+
+#
+# ./src/backend/bittorrent/diskio.c
+#
+id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
+# Missing translation
+msg: 
+
+#
+# ./src/backend/bittorrent/fa_torrent.c
+#
+id: Connected peers
+# Missing translation
+msg: 
+
+id: Known peers
+# Missing translation
+msg: 
+
+id: Receiving from
+# Missing translation
+msg: 
+
+id: Torrent leechers
+# Missing translation
+msg: 
+
+id: Torrent seeders
+# Missing translation
+msg: 
+
+#
+# ./src/backend/bittorrent/torrent_settings.c
+#
+id: BitTorrent
+# Missing translation
+msg: 
+
+id: Clear cache
+# Missing translation
+msg: 
+
+id: Enable bittorrent
+# Missing translation
+msg: 
+
+id: Max upload speed
+# Missing translation
+msg: 
+
+id: Max usage of free space for caching torrents
+# Missing translation
+msg: 
+
+id: Status
+# Missing translation
+msg: 
+
+id: Torrent cache path
+# Missing translation
+msg: 
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+msg: DVD
+
+id: DVD read error, restarting disc
+msg: DVD-leesfout, schijf herstarten
+
+#
+# ./src/backend/hls/hls.c
+#
+id: Primary
+# Missing translation
+msg: 
+
+id: Supplementary
+# Missing translation
+msg: 
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Channels
+# Missing translation
+msg: 
+
+id: Invalid HTSP URL
+msg: Ongeldige HTSP-URL
+
+id: No such channel
+# Missing translation
+msg: 
+
+id: Recorded shows
+# Missing translation
+msg: 
+
+id: Recorder
+# Missing translation
+msg: 
+
+#
+# ./src/backend/playlist.c
+#
+id: Unable to open playlist
+# Missing translation
+msg: 
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Zoeken
+
+id: Search result for: %s
+msg: Zoekresultaat voor: %s
+
+#
+# ./src/backend/slideshow/slideshow.c
+#
+id: 3 seconds
+# Missing translation
+msg: 
+
+id: 5 seconds
+# Missing translation
+msg: 
+
+id: 7 seconds
+# Missing translation
+msg: 
+
+id: Slideshow speed
+# Missing translation
+msg: 
+
+#
+# ./src/blobcache_file.c
+#
+id: Cache cleared
+msg: Cachegeheugen verwijderd
+
+id: Clear cached files
+msg: Cachebestanden verwijderen
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: De inhoudstype %d wordt niet ondersteund
+
+id: Checking file contents
+# Missing translation
+msg: 
+
+id: Invalid URL from redirect
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+msg: Het bestand kon niet worden geopend: %s
+
+#
+# ./src/fileaccess/fa_filepicker.c
+#
+id: Select a file
+# Missing translation
+msg: 
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Zoeken via Unix-locatedb
+
+#
+# ./src/fileaccess/fa_scanner.c
+#
+id: Deleted %s
+# Missing translation
+msg: 
+
+id: Filename
+msg: Bestandsnaam
+
+id: Include in library
+# Missing translation
+msg: 
+
+id: Newest first
+# Missing translation
+msg: 
+
+id: Oldest first
+# Missing translation
+msg: 
+
+id: Show only supported files
+msg: Alleen ondersteunde bestanden weergeven
+
+id: Sort folders first
+msg: Mappen eerst sorteren
+
+id: Sort on
+msg: Sorteren op
+
+id: Unable to delete %s\n%s
+# Missing translation
+msg: 
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: Zoeken via Spotlight
+
+#
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+# Missing translation
+msg: 
+
+id: Browse archives as folders
+# Missing translation
+msg: 
+
+id: Enable file deletion from item menu
+# Missing translation
+msg: 
+
+id: Show filename extensions
+# Missing translation
+msg: 
+
+id: Store per-file settings in filesystem
+# Missing translation
+msg: 
+
+id: %d archive parts
+msg[0]: 
+msg[1]: 
+
+id: %d directories
+msg[0]: 
+msg[1]: 
+
+id: %d files
+msg[0]: 
+msg[1]: 
+
+#
+# ./src/fileaccess/smb/fa_nativesmb.c
+#
+id: Access denied
+msg: Toegang geweigerd
+
+id: Account restricted
+msg: Account beperkt
+
+id: Bad network share name
+msg: Onjuiste deelnaam voor netwerk
+
+id: Logon failure
+msg: Inlogfout
+
+id: Object name not found
+# Missing translation
+msg: 
+
+#
+# ./src/i18n.c
+#
+id: 12 Hour
+# Missing translation
+msg: 
+
+id: 24 Hour
+# Missing translation
+msg: 
+
+id: Default character set
+# Missing translation
+msg: 
+
+id: Ignore 'The' at beginning of words when sorting
+# Missing translation
+msg: 
+
+id: Language
+msg: Taal
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: Configureer de taalcodes als ISO-codes met drie tekens, bijvoorbeeld (nld, eng, fra)
+
+id: Languages
+msg: Talen
+
+id: Preferred languages
+msg: Voorkeurstalen
+
+id: Primary audio language code
+msg: Primaire audiotaal
+
+id: Primary subtitle language code
+msg: Primaire ontertitelingstaal
+
+id: Secondary audio language code
+msg: Secondaire audiotaal
+
+id: Secondary subtitle language code
+msg: Secondaire ondertitelingstaal
+
+id: System default
+# Missing translation
+msg: 
+
+id: Tertiary audio language code
+msg: Tertiaire audiotaal
+
+id: Tertiary subtitle language code
+msg: Tertiaire audiotaal
+
+id: Time format
+# Missing translation
+msg: 
+
+id: Timezone
+# Missing translation
+msg: 
+
+#
+# ./src/ipc/libcec.c
+#
+id: Longpress SELECT for item menu
+# Missing translation
+msg: 
+
+id: Switch TV input source
+# Missing translation
+msg: 
+
+id: Use STOP key for combo input
+# Missing translation
+msg: 
+
+#
+# ./src/keyring.c
+#
+id: Forget remembered passwords
+msg: Onthouden wachtwoorden vergeten
+
+id: Rembered passwords erased
+msg: Onthouden wachtwoorden verwijderd
+
+#
+# ./src/media/media_settings.c
+#
+id: Align on video frame
+# Missing translation
+msg: 
+
+id: Audio volume
+# Missing translation
+msg: 
+
+id: Delay
+# Missing translation
+msg: 
+
+id: Go to standby after video ends
+# Missing translation
+msg: 
+
+id: Horizontal pan
+# Missing translation
+msg: 
+
+id: Horizontal position
+# Missing translation
+msg: 
+
+id: Horizontal scale
+# Missing translation
+msg: 
+
+id: Reset defaults for folder '%s'
+# Missing translation
+msg: 
+
+id: Save as defaults for folder '%s'
+# Missing translation
+msg: 
+
+id: Save as global default
+# Missing translation
+msg: 
+
+id: Scaling
+# Missing translation
+msg: 
+
+id: Stretch video to fullscreen
+msg: Video uitrekken naar volledig scherm
+
+id: Stretch video to widescreen
+msg: Video uitrekken naar breedbeeld
+
+id: Vertical pan
+# Missing translation
+msg: 
+
+id: Vertical position
+# Missing translation
+msg: 
+
+id: Vertical scale
+# Missing translation
+msg: 
+
+id: Video frame interpolation
+# Missing translation
+msg: 
+
+id: Video zoom
+msg: Videovergroting
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+msg: Indexeren
+
+#
+# ./src/metadata/decoration.c
+#
+id: Automatic
+msg: Automatisch
+
+id: Erase all playback info
+# Missing translation
+msg: 
+
+id: Manual
+# Missing translation
+msg: 
+
+id: Mark all as seen
+# Missing translation
+msg: 
+
+id: Mark all as unseen
+# Missing translation
+msg: 
+
+id: Metadata mode
+# Missing translation
+msg: 
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+msg: Ingesloten in bestand
+
+id: Track %d
+msg: Nummer %d
+
+#
+# ./src/metadata/metadata_sources.c
+#
+id: Enabled
+msg: Ingeschakeld
+
+id: Metadata
+msg: Metadata
+
+id: Metadata configuration and provider settings
+msg: Metadataconfiguratie en aanbiedersinstellingen
+
+id: Providers for Music
+msg: Muziekaanbieders
+
+id: Providers for Video
+msg: Videoaanbieders
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: %d items verwijderd
+
+id: Clear all metadata
+msg: Alle metadata legen
+
+id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
+# Missing translation
+msg: 
+
+#
+# ./src/metadata/mlp.c
+#
+id: Custom search query
+msg: Aangepaste zoekopdracht
+
+id: Custom title
+msg: Aangepaste titel
+
+id: IMDb ID
+msg: IMDb-ID
+
+id: Metadata loaded from <b>%s</b> based on %s
+# Missing translation
+msg: 
+
+id: Metadata source
+msg: Bron metadata
+
+id: Movie
+msg: Film
+
+id: Movie title
+msg: Film titel
+
+id: No data found
+msg: Geen data gevonden
+
+id: None
+msg: Geen
+
+id: Refresh metadata
+msg: Metadata vernieuwen
+
+id: Title, Season, Episode
+msg: Titel, Seizoen, Aflevering
+
+id: custom IMDb ID
+msg: aangepaste IMDb-ID
+
+id: custom query
+msg: aangepaste zoekopdracht
+
+id: filename
+msg: bestandsnaam
+
+id: filename as TV episode
+msg: bestandsnaam als tv-aflevering
+
+id: folder name
+msg: mapnaam
+
+#
+# ./src/navigator.c
+#
+id: Add and remove items on homepage
+msg: Items toevoegen en verwijderen aan thuispagina
+
+id: Added %s to home page
+# Missing translation
+msg: 
+
+id: Added new bookmark: %s
+msg: Nieuwe bladwijzer toevoegen: %s
+
+id: Bookmarks
+msg: Bladwijzers
+
+id: Icon
+# Missing translation
+msg: 
+
+id: Music
+msg: Muziek
+
+id: No handler for URL
+msg: Geen handler voor URL
+
+id: Other
+msg: Overige
+
+id: Photos
+msg: Foto's
+
+id: Removed %s from homepage
+# Missing translation
+msg: 
+
+id: Removed bookmark: %s
+msg: Bladwijzer verwijderd: %s
+
+id: TV
+msg: Tv
+
+id: Title
+msg: Titel
+
+id: Type
+msg: Type
+
+id: URL
+msg: URL
+
+id: Video
+msg: Video
+
+#
+# ./src/networking/connman.c
+#
+id: Enable Wi-Fi
+# Missing translation
+msg: 
+
+id: Network connections
+# Missing translation
+msg: 
+
+#
+# ./src/networking/ftp_server.c
+#
+id: Enable FTP server
+# Missing translation
+msg: 
+
+id: FTP server
+# Missing translation
+msg: 
+
+id: Server TCP port
+# Missing translation
+msg: 
+
+#
+# ./src/networking/http_server.c
+#
+id: Power Off
+# Missing translation
+msg: 
+
+id: Rebooting
+# Missing translation
+msg: 
+
+id: Restarting
+# Missing translation
+msg: 
+
+id: Standby
+# Missing translation
+msg: 
+
+#
+# ./src/notifications.c
+#
+id: Show news on home screen
+# Missing translation
+msg: 
+
+#
+# ./src/plugins.c
+#
+id: Alternate plugin Repository URL
+msg: Alternatieve repository-URL voor plugin
+
+id: Audio decoders
+# Missing translation
+msg: 
+
+id: Auto install plugins on demand
+# Missing translation
+msg: 
+
+id: Auto installed plugin %s (Version %s)
+# Missing translation
+msg: 
+
+id: Automatically upgrade plugins
+msg: Plugins automatisch bijwerken
+
+id: Available plugins
+# Missing translation
+msg: 
+
+id: Background
+msg: Achtergrond
+
+id: Beta testing passwords
+msg: Beta testers wachtwoord
+
+id: Browse available plugins
+# Missing translation
+msg: 
+
+id: Browsing
+msg: Bladeren
+
+id: Cloud services
+msg: Cloudservices
+
+id: Corrupt plugin bundle
+msg: Beschadigde pluginbundel
+
+id: Custom backgrounds can now be set in Settings -> Look and Feel
+# Missing translation
+msg: 
+
+id: Disk write error
+msg: Schrijffout
+
+id: Downloading
+msg: Downloaden
+
+id: File open error
+msg: Fout bij openen bestand
+
+id: Home page
+msg: Thuispagina
+
+id: Images
+msg: Afbeeldingen
+
+id: Installed
+# Missing translation
+msg: 
+
+id: Installed plugins
+# Missing translation
+msg: 
+
+id: Installed version higher than available
+msg: Geïnstalleerde versie hoger dan beschikbaar
+
+id: Installing
+msg: Installeren
+
+id: List of albums
+msg: Lijst van albums
+
+id: Loading screen
+msg: Laadscherm
+
+id: Movies
+msg: Films
+
+id: Music streaming
+msg: Muziek streaming
+
+id: Not installable
+msg: Niet installeerbaar
+
+id: Not installed
+msg: Niet geïnstalleerd
+
+id: Not upgradable
+msg: Niet bij te werken
+
+id: On Screen Keyboards
+# Missing translation
+msg: 
+
+id: Online TV
+msg: Online tv
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+# Missing translation
+msg: 
+
+id: Plugin %s has been uninstalled - %s
+# Missing translation
+msg: 
+
+id: Plugin categories
+# Missing translation
+msg: 
+
+id: Plugins
+msg: Plugins
+
+id: Preferred views from plugins
+msg: Vookeursinstellingen van plugins
+
+id: Screen saver
+msg: Schermbeveiliging
+
+id: TV channels
+msg: TV kanalen
+
+id: Unable to load plugin.json: %s
+msg: De plugin.json kon niet worden geladen: %s
+
+id: Unable to load plugin.json: Malformed JSON
+msg: De plugin.json kon niet worden geladen: Misvormde JSON
+
+id: Uncategorized
+msg: Ongecategoriseerd
+
+id: Up to date
+msg: Bijgewerkt
+
+id: Upgradable
+msg: Kan worden bijgewerkt
+
+id: Upgraded plugin %s to version %s
+msg: Plugin %s is bijgewerkt naar versie %s
+
+id: User interface extensions
+msg: Gebruikersinterface-extensies
+
+id: Version %s is no longer compatible with Movian
+# Missing translation
+msg: 
+
+id: Video streaming
+msg: Video's streamen
+
+#
+# ./src/prop/prop_proxy.c
+#
+id: Remote exited
+# Missing translation
+msg: 
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Automatische slaapstand
+
+id: Enable SSH server
+# Missing translation
+msg: 
+
+id: Logout
+msg: Uitloggen
+
+id: Open shell
+msg: Shell openen
+
+id: Power off system
+msg: Systeem uitschakelen
+
+id: Quit
+# Missing translation
+msg: 
+
+id: SSH server
+# Missing translation
+msg: 
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled on home screen
+msg: Ingeschakeld op beginscherm
+
+id: Name
+msg: Naam
+
+#
+# ./src/service.c
+#
+id: Local network
+msg: Lokaal netwerk
+
+id: Remove from homepage
+# Missing translation
+msg: 
+
+#
+# ./src/settings.c
+#
+id: About
+# Missing translation
+msg: 
+
+id: Applications and installed plugins
+msg: Applicaties en geïnstalleerde plugins
+
+id: Configure communications with your TV
+# Missing translation
+msg: 
+
+id: Developer settings
+msg: Ontwikkelaarsinstellingen
+
+id: Discovered media sources
+msg: Gevonden mediabronnen
+
+id: File browsing
+# Missing translation
+msg: 
+
+id: Fonts and user interface styling
+msg: Lettertypen en gebruikersinterface stijlen
+
+id: General
+msg: Algemeen
+
+id: Global settings
+msg: Algemene instellingen
+
+id: Look and feel
+msg: Uiterlijk
+
+id: Network services, etc
+# Missing translation
+msg: 
+
+id: Network settings
+# Missing translation
+msg: 
+
+id: Reset
+# Missing translation
+msg: 
+
+id: Settings useful for developers
+msg: Handige instellingen voor ontwikkelaars
+
+id: Software upgrade
+msg: Softwareupdate
+
+id: Starting and stopping
+# Missing translation
+msg: 
+
+id: System name
+# Missing translation
+msg: 
+
+id: System related settings
+msg: Systeemgerelateerde instellingen
+
+id: TV Control
+# Missing translation
+msg: 
+
+#
+# ./src/subtitles/subtitles.c
+#
+id: Any subtitle in central folder
+# Missing translation
+msg: 
+
+id: Any subtitle in same folder as video
+# Missing translation
+msg: 
+
+id: Auto
+msg: Automatisch
+
+id: Automatically select from this source
+# Missing translation
+msg: 
+
+id: Central subtitle folder
+# Missing translation
+msg: 
+
+id: Color
+msg: Kleur
+
+id: External file
+msg: Extern bestand
+
+id: Force subtitles to reside on video frame
+msg: Ondertitels forceren om op videoframe te blijven
+
+id: Generic settings for video subtitles
+msg: Algemene instellingen voor video-ondertitels
+
+id: Ignore embedded styling
+msg: Geïntegreerde stijl nergeren
+
+id: Left
+msg: Links
+
+id: Outline color
+msg: Omtrekkleur
+
+id: Outline size
+msg: Omtrekgrootte
+
+id: Path to central folder
+# Missing translation
+msg: 
+
+id: Providers for Subtitles
+# Missing translation
+msg: 
+
+id: Right
+msg: Rechts
+
+id: Shadow color
+msg: Schaduwkleur
+
+id: Shadow offset
+msg: Schaduwafstand
+
+id: Subtitle horizontal displacement
+# Missing translation
+msg: 
+
+id: Subtitle position
+msg: Ondertitelingspositie
+
+id: Subtitle size
+msg: Ondertitelingsgrootte
+
+id: Subtitle size and positioning
+msg: Ondertitelingsgrootte en -positionering
+
+id: Subtitle vertical displacement
+# Missing translation
+msg: 
+
+id: Subtitles embedded in video file
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in central folder
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in same folder as video
+# Missing translation
+msg: 
+
+#
+# ./src/text/fontstash.c
+#
+id: Defaults
+msg: Standaardinstellingen
+
+id: Fonts
+msg: Lettertypen
+
+id: Installed fonts
+msg: Geïnstalleerde lettertypen
+
+id: Narrow text
+msg: Smalle tekst
+
+id: Reset main font to default
+msg: Herstel hoofd lettertype naar standaard
+
+id: Reset narrow font to default
+msg: Herstel small lettertype naar standaard
+
+id: Reset subtitle font to default
+msg: Herstel ondertitel lettertype naar standaard
+
+id: Unable to install font: %s
+# Missing translation
+msg: 
+
+id: Use font %s for
+msg: Lettertype %s gebruiken voor
+
+#
+# ./src/ui/clipboard.c
+#
+id: Copy failed: %s
+# Missing translation
+msg: 
+
+id: Target folder
+# Missing translation
+msg: 
+
+#
+# ./src/ui/glw/glw_ps3.c
+#
+id: Dual-Shock Remote
+# Missing translation
+msg: 
+
+id: No
+msg: Nee
+
+id: Seek using L2 and R2 button
+# Missing translation
+msg: 
+
+id: Yes with Select button
+# Missing translation
+msg: 
+
+#
+# ./src/ui/glw/glw_settings.c
+#
+id: Custom background image
+# Missing translation
+msg: 
+
+id: Emulate Up/Down buttons with mouse wheel
+# Missing translation
+msg: 
+
+id: Folder for screensaver images
+# Missing translation
+msg: 
+
+id: Font and icon size
+# Missing translation
+msg: 
+
+id: Interface horizontal shrink
+# Missing translation
+msg: 
+
+id: Interface vertical shrink
+# Missing translation
+msg: 
+
+id: Screensaver
+# Missing translation
+msg: 
+
+id: Screensaver delay
+msg: Vertraging schermbeveiliging
+
+id: Seconds per image
+# Missing translation
+msg: 
+
+id: Use Bing images of the day
+# Missing translation
+msg: 
+
+id: Wrap when reaching beginning/end of lists
+# Missing translation
+msg: 
+
+#
+# ./src/ui/glw/glw_view_eval.c
+#
+id: %d days ago
+# Missing translation
+msg: 
+
+id: %d hours ago
+# Missing translation
+msg: 
+
+id: %d minutes ago
+# Missing translation
+msg: 
+
+id: %d months ago
+# Missing translation
+msg: 
+
+id: %d weeks ago
+# Missing translation
+msg: 
+
+id: %d years ago
+# Missing translation
+msg: 
+
+id: Just now
+# Missing translation
+msg: 
+
+id: One day ago
+# Missing translation
+msg: 
+
+id: One hour ago
+# Missing translation
+msg: 
+
+id: One minute ago
+# Missing translation
+msg: 
+
+id: One month ago
+# Missing translation
+msg: 
+
+#
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Automatisch naar deze modus omschakelen
+
+id: DVI-Video color range
+msg: Kleurbereik voor DVI-video
+
+id: Switch to this mode now
+msg: Nu naar deze modus omschakelen
+
+id: Video modes
+msg: Videomodi
+
+#
+# ./src/upgrade.c
+#
+id: %s version %s is available
+# Missing translation
+msg: 
+
+id: Notify about upgrades
+msg: Informeren over updates
+
+id: Open download page
+msg: Downloadpagina openen
+
+id: System
+msg: Systeem
+
+id: Upgrade to releases from
+msg: Type updates
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Date (newest first)
+msg: Datum (nieuwste eerst)
+
+id: Date (oldest first)
+msg: Datum (oudste eerst)
+
+id: Device not found
+msg: Apparaat niet gevonden
+
+id: Malformed URI after device
+msg: Onjuiste URI na-apparaat
+
+id: Malformed URI after service
+msg: Onjuiste URI na-service
+
+id: Service not found
+msg: Service niet gevonden
+
+#
+# ./src/video/video_settings.c
+#
+id: Always
+# Missing translation
+msg: 
+
+id: Ask
+# Missing translation
+msg: 
+
+id: Automatically play next video in list
+msg: De volgende video in de lijst automatisch afspelen
+
+id: Count video as played when reaching
+msg: Video als afgespeeld rekenen bij nadering
+
+id: Enable VDPAU
+msg: VDPAU inschakelen
+
+id: Hardware accelerated decoding
+# Missing translation
+msg: 
+
+id: Maximum resolution for deinterlacer
+msg: Maximale resolutie voor deinterlacer
+
+id: Never
+# Missing translation
+msg: 
+
+id: No limit
+msg: Geen limiet
+
+id: Per-file volume
+# Missing translation
+msg: 
+
+id: Preferred VDPAU deinterlacer method
+msg: Voorkeursmethode voor VDPAU-deinterlacer
+
+id: Resume video playback
+msg: Videoweergave hervatten
+
+id: Show clock during playback
+# Missing translation
+msg: 
+
+id: Step when seeking backward
+# Missing translation
+msg: 
+
+id: Step when seeking forward
+# Missing translation
+msg: 
+
+id: Temporal
+msg: Tijdelijk
+
+id: Temporal/Spatial
+msg: Tijdelijk/ruimtelijk
+
+id: Up / Down during video playback controls
+# Missing translation
+msg: 
+
+id: Video acceleration and display behaviour
+msg: Videoversnelling en weergavegedrag
+
+id: Video buffer size
+# Missing translation
+msg: 
+

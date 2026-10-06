@@ -1,0 +1,14 @@
+prefix=/tmp/movian-go/ffmpeg/android/arm
+exec_prefix=${prefix}
+libdir=/tmp/movian-go/ffmpeg/android/arm/lib
+includedir=/tmp/movian-go/ffmpeg/android/arm/include
+
+Name: libavutil
+Description: FFmpeg utility library
+Version: 61.1.101
+Requires: 
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavutil -lm -lz -latomic -landroid -lmediandk -pthread
+Libs.private: 
+Cflags: -I${includedir}

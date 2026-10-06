@@ -1,0 +1,73 @@
+#define KEY_(CH, ACTION, W=1, FW=0.5) {
+  widget(container_z, {
+    weight: W;
+    filterConstraintX: true;
+    filterConstraintY: true;
+    widget(quad, {
+      color: select(isNavFocused(), 0.5, 0.3) + iir(isPressed(), 4, true);
+    });
+
+    focusable: FW;
+    onEvent(activate, {
+      fireEvent(targetedEvent("input", ACTION));
+      $ui.osk.shift = 0;
+    });
+    widget(label, {
+      align: center;
+      caption: CH;
+      bold: true;
+      color: select(isNavFocused(), 0, 1) - iir(isPressed(), 4, true);
+    });
+  });
+}
+
+
+#define KEY(CH, SCH, W=1, FW=0.5) {
+  KEY_(select($ui.osk.shifted, SCH, CH),
+       select($ui.osk.shifted, SCH, CH), W, FW);
+}
+
+
+#define ACTION(CH, EV, W=1, LIT=false, ENABLED=true) {
+  widget(container_z, {
+    weight: W;
+    alpha: iir(select(ENABLED, 1.0, 0.3), 10);
+    filterConstraintX: true;
+    filterConstraintY: true;
+
+    widget(quad, {
+      color: select(LIT, [0.4, 0.6, 0.3],
+		    select(isNavFocused(), 0.5, 0.3))  + iir(isPressed(), 4, true);
+    });
+
+    focusable: select(ENABLED, 0.5, 0);
+    onEvent(activate, EV);
+    widget(label, {
+      align: center;
+      caption: CH;
+      bold: true;
+      color: select(isNavFocused(), 0, 1)  - iir(isPressed(), 4, true);
+    });
+  });
+}
+
+#define ACTION_ICON(ICON, EV, W=1, LIT=false, ENABLED=true) {
+  widget(container_z, {
+    weight: W;
+    alpha: iir(select(ENABLED, 1.0, 0.3), 10);
+    filterConstraintX: true;
+    filterConstraintY: true;
+
+    widget(quad, {
+      color: select(LIT, [0.4, 0.6, 0.3],
+		    select(isNavFocused(), 0.5, 0.3))  + iir(isPressed(), 4, true);
+    });
+
+    focusable: select(ENABLED, 0.5, 0);
+    onEvent(activate, EV);
+    widget(icon, {
+      source: ICON;
+      color: select(isNavFocused(), 0, 1)  - iir(isPressed(), 4, true);
+    });
+  });
+}
