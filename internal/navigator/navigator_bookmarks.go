@@ -48,7 +48,7 @@ func (nav *Navigator) bookmarksSetup() {
 		switch event {
 		case propcore.EventReqNewChild:
 			// C: PROP_REQ_NEW_CHILD → bookmark_add("New bookmark", "none:", "other", NULL, NULL)
-			nav.bookmarkAdd("New bookmark", "none:", "other", "", "")
+			nav.bookmarkAdd("New bookmark", "none:", "other", "", "", true)
 		case propcore.EventReqDeleteVector:
 			// C: PROP_REQ_DELETE_VECTOR → prop_vec_destroy_entries
 			if len(args) > 0 {
@@ -146,7 +146,7 @@ func (nav *Navigator) bookmarkEventsink(eventType propcore.EventType, args []any
 	} else {
 		// C: bookmark_add(title, url, "other", icon, url) + bookmarks_save()
 		//    + notify_add("Added new bookmark: %s")
-		nav.bookmarkAdd(title, url, "other", icon, url)
+		nav.bookmarkAdd(title, url, "other", icon, url, true)
 		nav.bookmarksSave()
 		if nav.ns.notificationMgr != nil {
 			nav.ns.notificationMgr.NotifyAdd(nil, notifications.NotifyInfo, "", 3, "Added new bookmark: %s", title)
@@ -159,7 +159,7 @@ func (nav *Navigator) bookmarkEventsink(eventType propcore.EventType, args []any
 // bookmark_add.
 func (nav *Navigator) bookmarkLoad(o *htsmsg.HTSMsg) {
 	nav.bookmarkAdd(o.GetStr("title"), o.GetStr("url"),
-		o.GetStr("svctype"), o.GetStr("icon"), o.GetStr("id"))
+		o.GetStr("svctype"), o.GetStr("icon"), o.GetStr("id"), false)
 }
 
 // bookmarksLoad loads bookmarks from the persistent htsmsg store.
@@ -213,9 +213,10 @@ func (nav *Navigator) bookmarksLoad() {
 // status/statustxt links, a TRACK_DESTROY teardown subscription, a
 // delete-request subscription on the service root, and a settings page
 // ("model") built from bound strings + a multiopt type setting + a
-// delete action. Finally prop_set_parent into bookmark_nodes, then
-// nav_update_bookmarked + bookmark_link_queries.
-func (nav *Navigator) bookmarkAdd(title string, url string, itemType string, icon string, id string) {
+// delete action. Finally prop_set_parent into bookmark_nodes, then optionally
+// nav_update_bookmarked before bookmark_link_queries. updatePages is false
+// during initial restore because StartNavigator holds navMutex.
+func (nav *Navigator) bookmarkAdd(title string, url string, itemType string, icon string, id string, updatePages bool) {
 	if title == "" || url == "" {
 		return
 	}
@@ -368,8 +369,9 @@ func (nav *Navigator) bookmarkAdd(title string, url string, itemType string, ico
 		nav.propManager.SetParentEx(p, nav.bookmarkNodes, nil, "")
 	}
 
-	// C: nav_update_bookmarked() — global update across all navigators
-	nav.ns.UpdateAllBookmarks()
+	if updatePages {
+		nav.ns.UpdateAllBookmarks()
+	}
 	// C: bookmark_link_queries(bm)
 	nav.bookmarkLinkQueries(bm)
 }

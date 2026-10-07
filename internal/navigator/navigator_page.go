@@ -569,7 +569,7 @@ func navPageBookmarkedSet(opaque any, event propcore.EventType, args ...any) {
 				"Added %s to home page", title).(*propcore.Prop)
 		}
 		// C: bookmark_add(title, np->np_url, "other", rstr_get(np->np_icon), NULL)
-		np.nav.bookmarkAdd(title, np.url, "other", np.icon, "")
+		np.nav.bookmarkAdd(title, np.url, "other", np.icon, "", true)
 	} else {
 		// C: LIST_FOREACH(bm, &bookmarks, bm_link) { if url matches:
 		//      prop_ref_dec(p); p = notify_add("Removed %s from homepage");
