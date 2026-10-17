@@ -37,16 +37,21 @@ const (
 	gltStateStashed   = 6
 )
 
-// C: GLW_TEX_* flags (glw.h)
+// C: GLW_TEX_* flags (glw_texture.h:26-33)
 const (
-	glwTexRepeat               = 0x1
-	glwTexMipmapped            = 0x2
-	glwTexIntensityAnalysis    = 0x4
-	glwTexPrimaryColorAnalysis = 0x8
-	glwTexCornerTopleft        = 0x10
-	glwTexCornerTopright       = 0x20
-	glwTexCornerBottomleft     = 0x40
-	glwTexCornerBottomright    = 0x80
+	// C: GLW_TEX_REPEAT 0x80000000.
+	// Go: the signed int value preserves the 32-bit bit pattern.
+	glwTexRepeat = -0x80000000
+	// C: GLW_TEX_INTENSITY_ANALYSIS 0x40000000.
+	glwTexIntensityAnalysis = 0x40000000
+	// C: GLW_TEX_PRIMARY_COLOR_ANALYSIS 0x20000000.
+	glwTexPrimaryColorAnalysis = 0x20000000
+	// C: GLW_TEX_CORNER_* are GLW_IMAGE_CORNER_* (glw_texture.h:26-29).
+	// Go: aliased, so both sets share one definition of the low four bits.
+	glwTexCornerTopleft     = glwImageCornerTopleft
+	glwTexCornerTopright    = glwImageCornerTopright
+	glwTexCornerBottomleft  = glwImageCornerBottomleft
+	glwTexCornerBottomright = glwImageCornerBottomright
 )
 
 // C: glt_set_state(a, b) (a)->glt_state = b
