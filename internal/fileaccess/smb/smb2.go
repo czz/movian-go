@@ -15,6 +15,7 @@ import (
 	"time"
 
 	smb2 "github.com/hirochachacha/go-smb2/v2"
+	"github.com/hirochachacha/go-smb2/v2/auth"
 	"github.com/hirochachacha/go-smb2/v2/x/protocol"
 	"github.com/hirochachacha/go-smb2/v2/x/wire"
 
@@ -135,16 +136,7 @@ func (sys *System) smb2Dial(host string, port int, interactive bool) (*smb2.Sess
 		if r == -1 {
 			return nil, errors.New("Authentication rejected by user")
 		}
-		cred := smb2NTLMCredential{}
-		if ku != krUnset {
-			cred.User = ku
-		}
-		if kp != krUnset {
-			cred.Password = kp
-		}
-		if kd != krUnset {
-			cred.Domain = kd
-		}
+		cred := smb2Credential(host, ku, kp, kd)
 		d := &smb2.Dialer{
 			Credentials:     cred,
 			TransportDialer: smb2TCPDialer{},
@@ -168,6 +160,30 @@ func (sys *System) smb2Dial(host string, port int, interactive bool) (*smb2.Sess
 		return nil, err
 	}
 	return nil, errors.New("Authentication failed")
+}
+
+// smb2Credential maps the keyring result to go-smb2's NTLM credential.
+// An unset or empty domain stays nil so go-smb2 authenticates against the
+// server's challenge TargetName; a pointer to "" would force an empty
+// domain instead.
+//
+// TargetSPN is set to cifs/<host> without the port. go-smb2 otherwise
+// derives it from the dial address ("host:port"), which differs from the
+// SPN Windows clients and smbclient send and can be rejected by servers
+// that harden SPN target-name checking.
+func smb2Credential(host, user, password, domain string) auth.NTLMCredential {
+	spn := "cifs/" + host
+	cred := auth.NTLMCredential{TargetSPN: &spn}
+	if user != krUnset {
+		cred.User = user
+	}
+	if password != krUnset {
+		cred.Password = password
+	}
+	if domain != krUnset && domain != "" {
+		cred.Domain = &domain
+	}
+	return cred
 }
 
 func smb2IsAuthError(err error) bool {
@@ -257,7 +273,13 @@ func (sys *System) smb2GetConn(host string, port int, interactive bool) (*smb2Co
 		sys.s2conns = map[string]*smb2Conn{}
 	}
 	if old := sys.s2conns[key]; old != nil {
-		old.dead = true
+		if !old.dead {
+			// A concurrent dial won while we were dialing and its
+			// session may already serve other callers: keep it.
+			sys.s2mu.Unlock()
+			sess.Abort()
+			return old, nil
+		}
 		old.sess.Abort()
 	}
 	sys.s2conns[key] = cc
