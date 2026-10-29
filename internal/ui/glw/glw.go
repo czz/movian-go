@@ -7,6 +7,7 @@ package glw
 // the established convention (GconfClipboardSet, EsSetPropDeps, ...).
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"fmt"
 	"math"
 	"os"
@@ -15,7 +16,6 @@ import (
 
 	eventpkg "github.com/czz/movian-go/internal/event"
 	imagepkg "github.com/czz/movian-go/internal/image"
-	miscpkg "github.com/czz/movian-go/internal/misc"
 	propcore "github.com/czz/movian-go/internal/prop"
 )
 

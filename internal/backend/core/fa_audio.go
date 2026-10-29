@@ -349,13 +349,7 @@ func mediaEventData(me *mediacore.MediaEvent) *event.Event {
 	if me == nil {
 		return nil
 	}
-	if ev, ok := me.Data.(interface{ AsEvent() *event.Event }); ok {
-		return ev.AsEvent()
-	}
-	if ev, ok := me.Data.(*event.Event); ok {
-		return ev
-	}
-	return nil
+	return event.ExtArg(me.Data)
 }
 
 // faEventIsType — C: event_is_type.

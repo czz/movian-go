@@ -8,6 +8,7 @@
 package core
 
 import (
+	charset "github.com/czz/movian-go/internal/charset"
 	"crypto/md5"
 	"errors"
 	"fmt"
@@ -25,7 +26,6 @@ import (
 	mediacore "github.com/czz/movian-go/internal/media/core"
 	medialibav "github.com/czz/movian-go/internal/media/libav"
 	"github.com/czz/movian-go/internal/metadata"
-	"github.com/czz/movian-go/internal/misc"
 	propcore "github.com/czz/movian-go/internal/prop"
 	"github.com/czz/movian-go/internal/subtitles"
 	"github.com/czz/movian-go/internal/trace"
@@ -682,7 +682,7 @@ func (bs *BackendSystem) buildChapters(mp *mediacore.MediaPipe,
 		setChildPropFloat(p, "end", float64(avc.EndUS)/1000000.0)
 
 		// C: av_dict_get(avc->metadata, "title") + utf8_verify
-		if avc.Title != "" && misc.Utf8Verify(avc.Title) != 0 {
+		if avc.Title != "" && charset.Utf8Verify(avc.Title) != 0 {
 			setChildPropString(p, "title", avc.Title)
 		}
 

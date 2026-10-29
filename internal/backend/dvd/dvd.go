@@ -8,6 +8,7 @@
 package dvd
 
 import (
+	charset "github.com/czz/movian-go/internal/charset"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -549,9 +550,9 @@ func dvdSetSpuStream(dp *dvdPlayer, id string, manual int) {
 }
 
 // dvdlang — C: dvdlang
-func dvdlang(code uint16) *misc.IsolangT {
+func dvdlang(code uint16) *charset.IsolangT {
 	buf := []byte{byte(code >> 8), byte(code), 0}
-	return misc.IsolangFind(string(buf[:2]))
+	return charset.IsolangFind(string(buf[:2]))
 }
 
 // dvdUpdateStreams — C: dvd_update_streams

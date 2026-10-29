@@ -14,6 +14,7 @@ package subtitles
 // cycle.
 
 import (
+	charset "github.com/czz/movian-go/internal/charset"
 	"slices"
 	"strings"
 	"sync"
@@ -21,7 +22,6 @@ import (
 	fileaccesscore "github.com/czz/movian-go/internal/fileaccess"
 	"github.com/czz/movian-go/internal/htsmsg"
 	mediacore "github.com/czz/movian-go/internal/media/core"
-	"github.com/czz/movian-go/internal/misc"
 	"github.com/czz/movian-go/internal/nls"
 	propcore "github.com/czz/movian-go/internal/prop"
 	settingscore "github.com/czz/movian-go/internal/settings"
@@ -460,7 +460,7 @@ func (s *System) checkSubtitleFile(ss *SubScanner, subFilename, subURL,
 		strings.EqualFold(postfix, ".webvtt"):
 		// C: if(postfix - sub_filename > 4 && postfix[-4] == '.')
 		if pi > 4 && subFilename[pi-4] == '.' {
-			if il := misc.IsolangFind(subFilename[pi-3 : pi]); il != nil {
+			if il := charset.IsolangFind(subFilename[pi-3 : pi]); il != nil {
 				lang = il.Iso639_2
 			}
 		}
@@ -469,7 +469,7 @@ func (s *System) checkSubtitleFile(ss *SubScanner, subFilename, subURL,
 	case strings.EqualFold(postfix, ".ass") ||
 		strings.EqualFold(postfix, ".ssa"):
 		if pi > 4 && subFilename[pi-4] == '.' {
-			if il := misc.IsolangFind(subFilename[pi-3 : pi]); il != nil {
+			if il := charset.IsolangFind(subFilename[pi-3 : pi]); il != nil {
 				lang = il.Iso639_2
 			}
 		}
@@ -577,7 +577,7 @@ func (s *System) fsSubScanDir(ss *SubScanner, url, video string, descendAll bool
 					level-1, sp1, sp2, lang)
 			} else if len(filename) > 5 &&
 				strings.EqualFold(filename[:5], "subs-") {
-				if il := misc.IsolangFind(filename[5:]); il != nil {
+				if il := charset.IsolangFind(filename[5:]); il != nil {
 					lang = il.Iso639_2
 				}
 				s.fsSubScanDir(ss, fde.URL, video, descendAll,

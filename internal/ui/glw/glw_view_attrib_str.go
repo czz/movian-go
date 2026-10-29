@@ -3,11 +3,11 @@ package glw
 // C: src/ui/glw/glw_view_attrib.c — canonical 1:1 port.
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"strconv"
 	"strings"
 
 	facore "github.com/czz/movian-go/internal/fileaccess"
-	miscpkg "github.com/czz/movian-go/internal/misc"
 	tracepkg "github.com/czz/movian-go/internal/trace"
 )
 

@@ -3,6 +3,7 @@ package glw
 // C: src/ui/glw/glw_settings.c — canonical 1:1 port.
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,7 +15,6 @@ import (
 	facore "github.com/czz/movian-go/internal/fileaccess"
 	"github.com/czz/movian-go/internal/htsmsg"
 	"github.com/czz/movian-go/internal/metadata"
-	miscpkg "github.com/czz/movian-go/internal/misc"
 	propcore "github.com/czz/movian-go/internal/prop"
 	settingscore "github.com/czz/movian-go/internal/settings"
 	tracepkg "github.com/czz/movian-go/internal/trace"

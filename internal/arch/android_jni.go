@@ -5,6 +5,12 @@ package arch
 // Canonical port of the JNI plumbing shared by src/arch/android/*.c.
 // The C code calls (*env)->Method(env, ...) directly; in Go every JNI
 // call goes through a static C wrapper in this preamble.
+//
+// contract: JNI boundary. JNIEnv via JNIEnv() is thread-local —
+// never cache across calls; global refs via ml_jni_new_global_ref
+// must be paired with a delete (the Android-16 crash was a leaked
+// Surface ref); ml_jni_* helpers are the only permitted way to touch
+// JVM state from Go.
 
 /*
 #cgo LDFLAGS: -landroid -llog

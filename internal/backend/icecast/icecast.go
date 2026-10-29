@@ -6,6 +6,7 @@ package icecast
 // feeds audio packets into the media pipe.
 
 import (
+	charset "github.com/czz/movian-go/internal/charset"
 	"bytes"
 	"errors"
 	"fmt"
@@ -58,7 +59,7 @@ type icecastPlayContext struct {
 
 	// charsetSrc — C: i18n_get_default_charset() (i18n.c), resolved via
 	// the injected i18n instance for icymeta title decoding.
-	charsetSrc misc.CharsetDefaultSrc
+	charsetSrc charset.CharsetDefaultSrc
 
 	// gconf — C: gconf_t gconf (enable_icecast_debug). Injected via bs.
 	gconf *gconf.T
@@ -89,7 +90,7 @@ var mbSpecialEOF = &mediacore.MediaBuf{}
 // the LIST_INITs of the two header lists (done in stream_radio by use).
 func newIcecastPlayContext(u *usage.Reporter, pm *propcore.PropManager,
 	fam *fileaccesscore.FileAccessManager, sys *libav.LibAVSystem, ts *trace.TraceSystem,
-	dcs misc.CharsetDefaultSrc, g *gconf.T, ms *mediacore.MediaSystem) *icecastPlayContext {
+	dcs charset.CharsetDefaultSrc, g *gconf.T, ms *mediacore.MediaSystem) *icecastPlayContext {
 	if g == nil {
 		g = gconf.New()
 	}
@@ -530,13 +531,7 @@ func eventData(me *mediacore.MediaEvent) *event.Event {
 	if me == nil {
 		return nil
 	}
-	if ev, ok := me.Data.(interface{ AsEvent() *event.Event }); ok {
-		return ev.AsEvent()
-	}
-	if ev, ok := me.Data.(*event.Event); ok {
-		return ev
-	}
-	return nil
+	return event.ExtArg(me.Data)
 }
 
 // eventIsType — C: event_is_type.

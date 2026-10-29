@@ -1,4 +1,4 @@
-package misc
+package charset
 
 // Port of src/misc/big5.c (+ utf8_put from src/misc/str.c)
 

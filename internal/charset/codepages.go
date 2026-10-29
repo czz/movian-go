@@ -1,4 +1,4 @@
-package misc
+package charset
 
 // Port of src/misc/codepages.c — charset lookup tables
 

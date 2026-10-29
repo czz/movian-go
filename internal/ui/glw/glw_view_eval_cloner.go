@@ -3,9 +3,9 @@ package glw
 // C: src/ui/glw/glw_view_eval.c — canonical 1:1 port (core engine).
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"unsafe"
 
-	miscpkg "github.com/czz/movian-go/internal/misc"
 	propcore "github.com/czz/movian-go/internal/prop"
 )
 

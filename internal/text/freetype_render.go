@@ -6,6 +6,7 @@ package text
 // canonical source.
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"errors"
 	"fmt"
 	"slices"
@@ -16,7 +17,6 @@ import (
 	"github.com/czz/movian-go/internal/app"
 	facore "github.com/czz/movian-go/internal/fileaccess"
 	"github.com/czz/movian-go/internal/image"
-	miscpkg "github.com/czz/movian-go/internal/misc"
 	"github.com/czz/movian-go/internal/trace"
 )
 

@@ -3,6 +3,7 @@ package ext
 // Canonical port of src/subtitles/ext_subtitles.c.
 
 import (
+	charset "github.com/czz/movian-go/internal/charset"
 	"bytes"
 	"fmt"
 	"slices"
@@ -20,7 +21,7 @@ import (
 // package (it sits below pkg/text). C links these directly; Go
 // registers hooks on the MediaSystem instance.
 func RegisterMediaHooks(ms *mediacore.MediaSystem) {
-	ms.SubtitlesLoad = func(mp *mediacore.MediaPipe, url string, dcs misc.CharsetDefaultSrc) any {
+	ms.SubtitlesLoad = func(mp *mediacore.MediaPipe, url string, dcs charset.CharsetDefaultSrc) any {
 		return SubtitlesLoad(mp, url, dcs)
 	}
 	ms.SubtitlesDestroy = func(es any) {
@@ -721,7 +722,7 @@ func esSort(es *subtitles.ExtSubtitles, trimStop bool) {
 }
 
 // convertToUtf8 — C: convert_to_utf8
-func convertToUtf8(src *misc.Buf, url string, dcs misc.CharsetDefaultSrc) *misc.Buf {
+func convertToUtf8(src *misc.Buf, url string, dcs charset.CharsetDefaultSrc) *misc.Buf {
 	b, _how := misc.Utf8FromBytes(src.C8(), src.Len(), nil, dcs)
 	_ = _how // C: TRACE(TRACE_INFO, "Subtitles", "%s is not valid UTF-8. %s", url, how)
 	src.Release()
@@ -730,7 +731,7 @@ func convertToUtf8(src *misc.Buf, url string, dcs misc.CharsetDefaultSrc) *misc.
 
 // subtitlesCreate — C: subtitles_create
 func subtitlesCreate(sys *subtitles.System, path string, buf *misc.Buf,
-	fr *mediacore.AVRational, dcs misc.CharsetDefaultSrc) *subtitles.ExtSubtitles {
+	fr *mediacore.AVRational, dcs charset.CharsetDefaultSrc) *subtitles.ExtSubtitles {
 	trimStop := false
 	var s *subtitles.ExtSubtitles
 
@@ -750,7 +751,7 @@ func subtitlesCreate(sys *subtitles.System, path string, buf *misc.Buf,
 			u8[0] == 0xef && u8[1] == 0xbb && u8[2] == 0xbf {
 			// UTF-8 BOM
 			off = 3
-		} else if misc.Utf8Verify(misc.CStr(buf.C8())) != 0 {
+		} else if charset.Utf8Verify(misc.CStr(buf.C8())) != 0 {
 			// It's UTF-8 clean (C: utf8_verify on NUL-terminated buf_cstr)
 		} else {
 			buf = convertToUtf8(buf, path, dcs)
@@ -784,7 +785,7 @@ func subtitlesCreate(sys *subtitles.System, path string, buf *misc.Buf,
 }
 
 // subtitlesFromZipfile — C: subtitles_from_zipfile
-func subtitlesFromZipfile(mp *mediacore.MediaPipe, b *misc.Buf, dcs misc.CharsetDefaultSrc) *subtitles.ExtSubtitles {
+func subtitlesFromZipfile(mp *mediacore.MediaPipe, b *misc.Buf, dcs charset.CharsetDefaultSrc) *subtitles.ExtSubtitles {
 	var ret *subtitles.ExtSubtitles
 
 	fam := mp.FAM
@@ -819,7 +820,7 @@ func faLoad(fam *fileaccesscore.FileAccessManager, url string) *fileaccesscore.B
 }
 
 // SubtitlesLoad — C: subtitles_load
-func SubtitlesLoad(mp *mediacore.MediaPipe, url string, dcs misc.CharsetDefaultSrc) *subtitles.ExtSubtitles {
+func SubtitlesLoad(mp *mediacore.MediaPipe, url string, dcs charset.CharsetDefaultSrc) *subtitles.ExtSubtitles {
 	if s, ok := myStrBegins(url, "vobsub:"); ok {
 		sub := VobsubLoad(s, mp)
 		if sub != nil {

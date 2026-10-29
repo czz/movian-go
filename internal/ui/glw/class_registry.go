@@ -7,9 +7,9 @@ package glw
 // the established convention (GconfClipboardSet, EsSetPropDeps, ...).
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"fmt"
 
-	miscpkg "github.com/czz/movian-go/internal/misc"
 )
 
 // C: static LIST_HEAD(, glw_class) glw_classes (glw.c:2786)

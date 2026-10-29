@@ -3,11 +3,11 @@ package glw
 // C: src/ui/glw/glw_view_lexer.c — canonical 1:1 port.
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"math"
 	"strings"
 
 	facore "github.com/czz/movian-go/internal/fileaccess"
-	miscpkg "github.com/czz/movian-go/internal/misc"
 	propcore "github.com/czz/movian-go/internal/prop"
 )
 

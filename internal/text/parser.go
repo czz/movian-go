@@ -1,6 +1,7 @@
 package text
 
 import (
+	charset "github.com/czz/movian-go/internal/charset"
 	"strconv"
 	"strings"
 
@@ -354,7 +355,7 @@ func cstrlen(b []byte) int {
 //	int context, int default_color)
 //
 // C uses utf8_get(&str) which advances a const char*. Go: str is a []byte
-// cursor; misc.Utf8Get(&str) advances it identically.
+// cursor; charset.Utf8Get(&str) advances it identically.
 func parseStr(sys *System, output []uint32, str []byte, flags int, context int,
 	defaultColor int) int {
 	pc := parseCtxT{}
@@ -365,7 +366,7 @@ func parseStr(sys *System, output []uint32, str []byte, flags int, context int,
 	sol := 1 // Start of line
 
 	for {
-		c := misc.Utf8Get(&str)
+		c := charset.Utf8Get(&str)
 		if c == 0 {
 			break
 		}
@@ -407,7 +408,7 @@ func parseStr(sys *System, output []uint32, str []byte, flags int, context int,
 			}
 
 			for {
-				d = misc.Utf8Get(&str)
+				d = charset.Utf8Get(&str)
 				if d == 0 {
 					break
 				}
@@ -445,7 +446,7 @@ func parseStr(sys *System, output []uint32, str []byte, flags int, context int,
 			}
 
 			for {
-				d = misc.Utf8Get(&str)
+				d = charset.Utf8Get(&str)
 				if d == 0 {
 					break
 				}
@@ -482,7 +483,7 @@ func parseStr(sys *System, output []uint32, str []byte, flags int, context int,
 			}
 
 			for {
-				d = misc.Utf8Get(&str)
+				d = charset.Utf8Get(&str)
 				if d == 0 {
 					break
 				}
@@ -514,7 +515,7 @@ func parseStr(sys *System, output []uint32, str []byte, flags int, context int,
 		}
 
 		if p != -1 {
-			d = misc.UnicodeCompose(p, c)
+			d = charset.UnicodeCompose(p, c)
 		} else {
 			d = -1
 		}

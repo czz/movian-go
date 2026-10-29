@@ -5,9 +5,9 @@ package glw
 // src/ui/glw/glw_image.c.
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"unsafe"
 
-	miscpkg "github.com/czz/movian-go/internal/misc"
 )
 
 // C: gi_mode (glw_image.c:55-59)

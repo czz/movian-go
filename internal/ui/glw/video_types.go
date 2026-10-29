@@ -4,13 +4,13 @@ package glw
 // Every constant, enum, struct, inline helper and macro from the header.
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"sync"
 	"unsafe"
 
 	"github.com/czz/movian-go/internal/media"
 	mediacore "github.com/czz/movian-go/internal/media/core"
 	medialibav "github.com/czz/movian-go/internal/media/libav"
-	miscpkg "github.com/czz/movian-go/internal/misc"
 	propcore "github.com/czz/movian-go/internal/prop"
 	"github.com/czz/movian-go/internal/video/decoder"
 )

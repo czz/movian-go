@@ -459,7 +459,7 @@ func (pm *PluginManager) pluginRepoDelete(pr *PluginRepo, value any) {
 	// C: if(e->e_nav != NULL) { prop_send_ext_event(
 	//      prop_create_r(e->e_nav, "eventSink"),
 	//      event_create_action(ACTION_NAV_BACK)) }
-	if e, ok := value.(*event.Event); ok && e != nil && e.Nav != nil &&
+	if e := event.ExtArg(value); e != nil && e.Nav != nil &&
 		pm.eventManager != nil && pm.propManager != nil {
 		be := pm.eventManager.CreateAction(event.ACTION_NAV_BACK).AsEvent()
 		es := pm.propManager.CreateEx(e.Nav, "eventSink", nil, false, false)

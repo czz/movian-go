@@ -3,9 +3,9 @@ package glw
 // C: src/ui/glw/glw_view_parser.c — canonical 1:1 port.
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"unsafe"
 
-	miscpkg "github.com/czz/movian-go/internal/misc"
 	"github.com/czz/movian-go/internal/nls"
 )
 

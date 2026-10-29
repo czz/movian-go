@@ -559,92 +559,7 @@ func esSubCb(opaque any, eventType propcore.EventType, args ...any) {
 
 	case propcore.EventExtEvent:
 		e := event.ConcreteOf(esArgExtEvent(args, 0))
-
-		var nav *propcore.Prop
-		switch ev := e.(type) {
-		case *event.EventPayload:
-			if ev.Type == event.EVENT_DYNAMIC_ACTION {
-				nargs = 2
-				ctx.PushString("action")
-				if eps.epsActionAsArray {
-					ctx.PushArray()
-					ctx.PushString(ev.Payload)
-					ctx.PutPropIndex(-2, 0)
-				} else {
-					ctx.PushString(ev.Payload)
-				}
-				nav = ev.Nav
-			}
-
-		case *event.EventActionVector:
-			if ev.Type == event.EVENT_ACTION_VECTOR {
-				// C: assert(eav->num > 0)
-				nargs = 2
-				ctx.PushString("action")
-				if eps.epsActionAsArray {
-					ctx.PushArray()
-					for i, a := range ev.Actions {
-						ctx.PushString(esEnv.eventManager.ActionCode2Str(a))
-						ctx.PutPropIndex(-2, i)
-					}
-				} else {
-					ctx.PushString(esEnv.eventManager.ActionCode2Str(ev.Actions[0]))
-				}
-				nav = ev.Nav
-			}
-		case *event.EventInt:
-			if ev.Type == event.EVENT_UNICODE {
-				nargs = 2
-				ctx.PushString("unicode")
-				ctx.PushInt(ev.Val)
-				nav = ev.Nav
-			}
-		case *event.EventProp:
-			if ev.Type == event.EVENT_PROPREF {
-				nargs = 2
-				ctx.PushString("propref")
-				if p, ok := ev.P.(*propcore.Prop); ok {
-					esStpropPush(ctx, p)
-				} else {
-					ctx.PushNull()
-				}
-				nav = ev.Nav
-			}
-		case *event.Event:
-			// Fallback for flattened *Event (subtypes lose their outer
-			// type on round-trip — C casts event_t* back). Payload and
-			// Actions live on the base Event.
-			switch ev.Type {
-			case event.EVENT_DYNAMIC_ACTION:
-				nargs = 2
-				ctx.PushString("action")
-				if eps.epsActionAsArray {
-					ctx.PushArray()
-					ctx.PushString(ev.Payload)
-					ctx.PutPropIndex(-2, 0)
-				} else {
-					ctx.PushString(ev.Payload)
-				}
-				nav = ev.Nav
-			case event.EVENT_ACTION_VECTOR:
-				nargs = 2
-				ctx.PushString("action")
-				if eps.epsActionAsArray {
-					ctx.PushArray()
-					for i, a := range ev.Actions {
-						ctx.PushString(esEnv.eventManager.ActionCode2Str(a))
-						ctx.PutPropIndex(-2, i)
-					}
-				} else {
-					ctx.PushString(esEnv.eventManager.ActionCode2Str(ev.Actions[0]))
-				}
-				nav = ev.Nav
-			}
-		}
-		if nargs > 0 && nav != nil {
-			esStpropPush(ctx, nav)
-			nargs++
-		}
+		nargs = esExtEvent(ctx, eps, e)
 
 	case propcore.EventSelectChild:
 		// Go: notifySub(sub, EventSelectChild, child, parent [, extra])
@@ -1125,3 +1040,98 @@ func registerEsPropb() {
 		Functions: esFnlistProp,
 	})
 }
+
+// esExtEvent — the EventExtEvent branch of esSubCb: pushes the JS
+// side of an external event (action/unicode/propref) onto ctx and
+// returns the arg count the callback passed to JS. C: es_sub_callback
+// PROP_EXT_EVENT branch (es_prop.c).
+func esExtEvent(ctx *gaftape.Context, eps *esPropSub, e any) int {
+	nargs := 0
+	var nav *propcore.Prop
+	switch ev := e.(type) {
+	case *event.EventPayload:
+		if ev.Type == event.EVENT_DYNAMIC_ACTION {
+			nargs = 2
+			ctx.PushString("action")
+			if eps.epsActionAsArray {
+				ctx.PushArray()
+				ctx.PushString(ev.Payload)
+				ctx.PutPropIndex(-2, 0)
+			} else {
+				ctx.PushString(ev.Payload)
+			}
+			nav = ev.Nav
+		}
+
+	case *event.EventActionVector:
+		if ev.Type == event.EVENT_ACTION_VECTOR {
+			// C: assert(eav->num > 0)
+			nargs = 2
+			ctx.PushString("action")
+			if eps.epsActionAsArray {
+				ctx.PushArray()
+				for i, a := range ev.Actions {
+					ctx.PushString(esEnv.eventManager.ActionCode2Str(a))
+					ctx.PutPropIndex(-2, i)
+				}
+			} else {
+				ctx.PushString(esEnv.eventManager.ActionCode2Str(ev.Actions[0]))
+			}
+			nav = ev.Nav
+		}
+	case *event.EventInt:
+		if ev.Type == event.EVENT_UNICODE {
+			nargs = 2
+			ctx.PushString("unicode")
+			ctx.PushInt(ev.Val)
+			nav = ev.Nav
+		}
+	case *event.EventProp:
+		if ev.Type == event.EVENT_PROPREF {
+			nargs = 2
+			ctx.PushString("propref")
+			if p, ok := ev.P.(*propcore.Prop); ok {
+				esStpropPush(ctx, p)
+			} else {
+				ctx.PushNull()
+			}
+			nav = ev.Nav
+		}
+	case *event.Event:
+		// Fallback for flattened *Event (subtypes lose their outer
+		// type on round-trip — C casts event_t* back). Payload and
+		// Actions live on the base Event.
+		switch ev.Type {
+		case event.EVENT_DYNAMIC_ACTION:
+			nargs = 2
+			ctx.PushString("action")
+			if eps.epsActionAsArray {
+				ctx.PushArray()
+				ctx.PushString(ev.Payload)
+				ctx.PutPropIndex(-2, 0)
+			} else {
+				ctx.PushString(ev.Payload)
+			}
+			nav = ev.Nav
+		case event.EVENT_ACTION_VECTOR:
+			nargs = 2
+			ctx.PushString("action")
+			if eps.epsActionAsArray {
+				ctx.PushArray()
+				for i, a := range ev.Actions {
+					ctx.PushString(esEnv.eventManager.ActionCode2Str(a))
+					ctx.PutPropIndex(-2, i)
+				}
+			} else {
+				ctx.PushString(esEnv.eventManager.ActionCode2Str(ev.Actions[0]))
+			}
+			nav = ev.Nav
+		}
+	}
+	if nargs > 0 && nav != nil {
+		esStpropPush(ctx, nav)
+		nargs++
+	}
+	return nargs
+}
+

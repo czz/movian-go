@@ -3,6 +3,7 @@ package misc
 import (
 	"crypto/rand"
 	"fmt"
+	charset "github.com/czz/movian-go/internal/charset"
 	"strings"
 )
 
@@ -55,8 +56,8 @@ func Dictcmp(a, b string, ignoreThe int) int {
 	bb := []byte(b)
 
 	for {
-		ua := Utf8Get(&ab)
-		ub := Utf8Get(&bb)
+		ua := charset.Utf8Get(&ab)
+		ub := charset.Utf8Get(&bb)
 
 		adig := 0
 		if ua >= '0' && ua <= '9' {
@@ -69,8 +70,8 @@ func Dictcmp(a, b string, ignoreThe int) int {
 		switch adig | bdig<<1 {
 		case 0: /* 0: a is not a digit, nor is b */
 			if ua != ub {
-				ua = unicodeCasefold(uint(ua))
-				ub = unicodeCasefold(uint(ub))
+				ua = charset.UnicodeCasefold(uint(ua))
+				ub = charset.UnicodeCasefold(uint(ub))
 				if ua != ub {
 					return ua - ub
 				}
@@ -105,11 +106,11 @@ func Mystrstr(haystack, needle string) string {
 	h := []byte(haystack)
 	n := []byte(needle)
 
-	nv := unicodeCasefold(uint(Utf8Get(&n)))
+	nv := charset.UnicodeCasefold(uint(charset.Utf8Get(&n)))
 
 	for {
 		r := h
-		hv := unicodeCasefold(uint(Utf8Get(&h)))
+		hv := charset.UnicodeCasefold(uint(charset.Utf8Get(&h)))
 		if hv == 0 {
 			return ""
 		}
@@ -119,28 +120,16 @@ func Mystrstr(haystack, needle string) string {
 			n1 := n
 
 			for {
-				nv = unicodeCasefold(uint(Utf8Get(&n1)))
+				nv = charset.UnicodeCasefold(uint(charset.Utf8Get(&n1)))
 				if nv == 0 {
 					return string(r)
 				}
-				hv = unicodeCasefold(uint(Utf8Get(&h1)))
+				hv = charset.UnicodeCasefold(uint(charset.Utf8Get(&h1)))
 				if nv != hv {
 					break
 				}
 			}
 		}
-	}
-}
-
-func UnicodeStart() {
-	n := len(unicodeCasefolding) / 2
-	x := int(unicodeCasefolding[n*2-1])
-	casefoldtable = make([]uint16, x)
-
-	for i := range n {
-		from := unicodeCasefolding[i*2+0]
-		to := unicodeCasefolding[i*2+1]
-		casefoldtable[from] = to
 	}
 }
 

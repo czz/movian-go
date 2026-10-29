@@ -4,10 +4,10 @@ package glw
 // Function bodies of glw_style.c are ported separately.
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"fmt"
 	"unsafe"
 
-	miscpkg "github.com/czz/movian-go/internal/misc"
 )
 
 // C: LIST_HEAD(glw_style_attribute_list, glw_style_attribute);

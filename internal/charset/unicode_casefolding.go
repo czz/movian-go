@@ -1,4 +1,4 @@
-package misc
+package charset
 
 // Port of misc/unicode_casefolding.h — generated
 
@@ -227,4 +227,31 @@ var unicodeCasefolding = []uint16{
 	0x2CD4, 0x2CD5, 0x2CD6, 0x2CD7, 0x2CD8, 0x2CD9, 0x2CDA, 0x2CDB,
 	0x2CDC, 0x2CDD, 0x2CDE, 0x2CDF, 0x2CE0, 0x2CE1, 0x2CE2, 0x2CE3,
 	0x2CEB, 0x2CEC, 0x2CED, 0x2CEE,
+}
+
+// casefoldTable — built at UnicodeStart from unicodeCasefolding pairs.
+// C: casefold_table (str.c).
+var casefoldTable []uint16
+
+// UnicodeCasefold — C: unicode_casefold (str.c) lookup.
+func UnicodeCasefold(i uint) int {
+	if int(i) < len(casefoldTable) {
+		if r := int(casefoldTable[i]); r != 0 {
+			return r
+		}
+	}
+	return int(i)
+}
+
+// UnicodeStart — C: unicode_init() (misc/str.c): builds casefoldTable
+// from the unicodeCasefolding pair table.
+func UnicodeStart() {
+	n := len(unicodeCasefolding) / 2
+	x := int(unicodeCasefolding[n*2-1])
+	casefoldTable = make([]uint16, x)
+	for i := range n {
+		from := unicodeCasefolding[i*2+0]
+		to := unicodeCasefolding[i*2+1]
+		casefoldTable[from] = to
+	}
 }

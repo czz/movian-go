@@ -4,6 +4,7 @@
 package ecmascript
 
 import (
+	charset "github.com/czz/movian-go/internal/charset"
 	"bytes"
 	"fmt"
 	"strings"
@@ -24,7 +25,7 @@ func esIsUtf8Gaf(gaf *gaftape.Context) int {
 	}
 
 	str := gaf.RequireString(-1)
-	v := misc.Utf8Verify(str)
+	v := charset.Utf8Verify(str)
 	gaf.Pop()
 	gaf.PushBoolean(v != 0)
 	return 1
@@ -37,7 +38,7 @@ func esIsUtf8Gaf(gaf *gaftape.Context) int {
 
 // esCharsetSrc — C: i18n_get_default_charset() reached from es_string.c.
 // Resolved through the injected i18n instance (esEnv.i18n).
-func esCharsetSrc() misc.CharsetDefaultSrc {
+func esCharsetSrc() charset.CharsetDefaultSrc {
 	if esEnv.i18n == nil {
 		return nil
 	}
@@ -45,7 +46,7 @@ func esCharsetSrc() misc.CharsetDefaultSrc {
 }
 
 func esUtf8FromBytesAuto(gaf *gaftape.Context, bufstart []byte) *misc.Buf {
-	var cs *misc.Charset
+	var cs *charset.Charset
 
 	bufsize := len(bufstart)
 	bufend := bufsize
@@ -64,11 +65,11 @@ func esUtf8FromBytesAuto(gaf *gaftape.Context, bufstart []byte) *misc.Buf {
 				if strings.EqualFold(string(cpy[:12]), "content-type") {
 					_, after, ok := bytes.Cut(cpy, []byte("charset="))
 					if ok {
-						charset := string(after)
-						if e := strings.IndexByte(charset, '"'); e >= 0 {
-							charset = charset[:e]
-							if strings.EqualFold(charset, "utf-8") ||
-								strings.EqualFold(charset, "utf8") {
+						csname := string(after)
+						if e := strings.IndexByte(csname, '"'); e >= 0 {
+							csname = csname[:e]
+							if strings.EqualFold(csname, "utf-8") ||
+								strings.EqualFold(csname, "utf8") {
 								x := make([]byte, bufsize+1)
 								copy(x, bufstart)
 								x[bufsize] = 0
@@ -77,7 +78,7 @@ func esUtf8FromBytesAuto(gaf *gaftape.Context, bufstart []byte) *misc.Buf {
 								return misc.BufCreateAndCopy(len(rbuf),
 									[]byte(rbuf))
 							} else {
-								cs = misc.CharsetGet(charset)
+								cs = charset.CharsetGet(csname)
 							}
 						}
 					}
@@ -124,7 +125,7 @@ func esUtf8FromBytesGaf(gaf *gaftape.Context) int {
 		return 1
 	}
 
-	cs := misc.CharsetGet(csname)
+	cs := charset.CharsetGet(csname)
 	if cs == nil {
 		gaf.Error(gaftape.GAF_ERR_ERROR,
 			"Unknown character encoding %s", csname)

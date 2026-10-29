@@ -193,7 +193,7 @@ func (p *PlaybackPipeline) dispatchPacket(pkt *libav.AVPacketInfo) {
 				}
 			}
 
-			outBuf, err := libav.LibAVAudioDecode(p.audioDecoder, avPkt, ptsUs)
+			outBuf, err := p.audioDecoder.Decode(avPkt, ptsUs)
 			if err != nil {
 				p.ts.Error("DISPATCH", "audio decode error: %v", err)
 			}
@@ -262,7 +262,7 @@ func (p *PlaybackPipeline) drainDecoders() {
 	p.mu.Unlock()
 
 	if audioDecoder != nil {
-		if _, err := libav.LibAVAudioDrain(audioDecoder); err != nil {
+		if _, err := audioDecoder.Drain(); err != nil {
 			p.ts.Error("DRAIN", "audio drain error: %v", err)
 		}
 	}

@@ -38,6 +38,7 @@ static void *sx_mmap(size_t len, int fd, off_t off) {
 import "C"
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"fmt"
 	"os"
 	"sync"
@@ -45,7 +46,6 @@ import (
 
 	backendcore "github.com/czz/movian-go/internal/backend/core"
 	imagepkg "github.com/czz/movian-go/internal/image"
-	miscpkg "github.com/czz/movian-go/internal/misc"
 	"github.com/czz/movian-go/internal/trace"
 )
 

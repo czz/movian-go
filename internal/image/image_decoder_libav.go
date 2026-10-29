@@ -17,6 +17,7 @@ package image
 */
 import "C"
 import (
+	miscbuf "github.com/czz/movian-go/internal/misc"
 	"errors"
 	"fmt"
 	"runtime"
@@ -25,7 +26,6 @@ import (
 	"github.com/czz/movian-go/internal/gconf"
 
 	"github.com/czz/movian-go/internal/arch"
-	miscbuf "github.com/czz/movian-go/internal/misc"
 )
 
 // fulhack — C: fulhack (image_decoder_libav.c:52-79). Copies the

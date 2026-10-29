@@ -883,7 +883,7 @@ func beSlideshowOpen(page *propcore.Prop, url string, syncFlag int,
 				return
 			}
 			if len(args) > 0 {
-				if e, ok := args[0].(*event.Event); ok {
+				if e := event.ExtArg(args[0]); e != nil {
 					slideshowEventsink(ss, e)
 				}
 			}

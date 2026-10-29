@@ -1,4 +1,4 @@
-package misc
+package charset
 
 // Port of src/misc/isolang.c + isolang.h
 

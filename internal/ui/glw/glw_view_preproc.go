@@ -3,9 +3,9 @@ package glw
 // C: src/ui/glw/glw_view_preproc.c — canonical 1:1 port.
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"unsafe"
 
-	miscpkg "github.com/czz/movian-go/internal/misc"
 )
 
 // C: typedef struct macro_arg (glw_view_preproc.c:27-32)

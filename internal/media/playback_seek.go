@@ -38,7 +38,7 @@ func (p *PlaybackPipeline) SeekToPosition(positionSec int64) error {
 
 	// Flush audio decoder to clear buffered samples (mirrors C's avcodec_flush_buffers)
 	if p.audioDecoder != nil {
-		libav.LibAVAudioFlush(p.audioDecoder)
+		p.audioDecoder.Flush()
 	}
 
 	// Flush video decoder codec buffers (mirrors C's avcodec_flush_buffers in video_decoder)

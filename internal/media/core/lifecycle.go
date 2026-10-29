@@ -1,6 +1,7 @@
 package core
 
 import (
+	charset "github.com/czz/movian-go/internal/charset"
 	"slices"
 	"sync"
 	"sync/atomic"
@@ -76,7 +77,7 @@ type MediaSystem struct {
 	// video_overlay_decode / sub_ass_render (ext_subtitles.c,
 	// video_overlay.c) — per-instance. SubtitlesDestroy is captured by
 	// extSubDtor at buffer creation (mb_data dtor has no mp back-pointer).
-	SubtitlesLoad      func(mp *MediaPipe, url string, dcs misc.CharsetDefaultSrc) any
+	SubtitlesLoad      func(mp *MediaPipe, url string, dcs charset.CharsetDefaultSrc) any
 	SubtitlesDestroy   func(es any)
 	VideoOverlayDecode func(mp *MediaPipe, mb *MediaBuf)
 	SubAssRender       func(mp *MediaPipe, src string, header []byte, fontdomain int)

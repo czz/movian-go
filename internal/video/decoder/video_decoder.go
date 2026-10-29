@@ -279,6 +279,50 @@ func mediaDiscontinuityDebug(aux *mediacore.MediaDiscontinuityAux,
 }
 
 // decoderThread — C: vd_thread (video_decoder.c:187-497)
+// decodeDvdMsg — the DVD/SPU message group of decoderThread's dispatch
+// (C: vd_thread MB_*DVD* cases, video_decoder.c).
+func (vd *VideoDecoder) decodeDvdMsg(mp *mediacore.MediaPipe, mb *mediacore.MediaBuf) {
+	switch mediacore.MediaBufDataType(mb.DataType) {
+	case mediacore.MBDVDResetSPU:
+		mp.OverlayMutex.Lock()
+		vd.SPUCurBut = 1
+		mediacore.DvdspuFlushLocked(mp)
+		mp.OverlayMutex.Unlock()
+
+	case mediacore.MBCtrlDVDHilite:
+		vd.SPUCurBut = int(mb.Data32)
+		vd.SPURepaint = true
+
+	case mediacore.MBDVDPCI:
+		vd.PCI = append(vd.PCI[:0], mb.Data...)
+		vd.SPURepaint = true
+		// C: event_create(EVENT_DVD_PCI, ...) + mp_enqueue_event
+		mp.EventQueue = append(mp.EventQueue, &mediacore.MediaEvent{
+			Type: int(event.EVENT_DVD_PCI),
+			Data: slices.Clone(mb.Data),
+		})
+		mp.EventCond.Signal()
+
+	case mediacore.MBDVDCLUT:
+		mediacore.DvdspuDecodeClut(vd.dvdClut[:], bytesToU32(mb.Data, 16))
+
+	case mediacore.MBDVDSPU:
+		d := mb.Payload()
+		mediacore.DvdspuEnqueue(mp, d, len(d),
+			vd.dvdClut[:], 0, 0, mb.PTS)
+
+	case mediacore.MBCtrlDVDSPU2:
+		// C: clut at data[0:64], w/h at uint32[16]/[17],
+		// SPU packet at data+72.
+		d := mb.Payload()
+		clut := bytesToU32(d, 16)
+		w := int(binary.NativeEndian.Uint32(d[64:]))
+		h := int(binary.NativeEndian.Uint32(d[68:]))
+		mediacore.DvdspuEnqueue(mp, d[72:], len(d)-72,
+			clut, w, h, mb.PTS)
+	}
+}
+
 func (vd *VideoDecoder) decoderThread() {
 	mp := vd.MP
 	mq := mp.Video // C: &mp->mp_video
@@ -495,43 +539,10 @@ func (vd *VideoDecoder) decoderThread() {
 				mb.Codec.Reconfigure(mc, mb.FrameInfo)
 			}
 
-		case mediacore.MBDVDResetSPU:
-			mp.OverlayMutex.Lock()
-			vd.SPUCurBut = 1
-			mediacore.DvdspuFlushLocked(mp)
-			mp.OverlayMutex.Unlock()
-
-		case mediacore.MBCtrlDVDHilite:
-			vd.SPUCurBut = int(mb.Data32)
-			vd.SPURepaint = true
-
-		case mediacore.MBDVDPCI:
-			vd.PCI = append(vd.PCI[:0], mb.Data...)
-			vd.SPURepaint = true
-			// C: event_create(EVENT_DVD_PCI, ...) + mp_enqueue_event
-			mp.EventQueue = append(mp.EventQueue, &mediacore.MediaEvent{
-				Type: int(event.EVENT_DVD_PCI),
-				Data: slices.Clone(mb.Data),
-			})
-			mp.EventCond.Signal()
-
-		case mediacore.MBDVDCLUT:
-			mediacore.DvdspuDecodeClut(vd.dvdClut[:], bytesToU32(mb.Data, 16))
-
-		case mediacore.MBDVDSPU:
-			d := mb.Payload()
-			mediacore.DvdspuEnqueue(mp, d, len(d),
-				vd.dvdClut[:], 0, 0, mb.PTS)
-
-		case mediacore.MBCtrlDVDSPU2:
-			// C: clut at data[0:64], w/h at uint32[16]/[17],
-			// SPU packet at data+72.
-			d := mb.Payload()
-			clut := bytesToU32(d, 16)
-			w := int(binary.NativeEndian.Uint32(d[64:]))
-			h := int(binary.NativeEndian.Uint32(d[68:]))
-			mediacore.DvdspuEnqueue(mp, d[72:], len(d)-72,
-				clut, w, h, mb.PTS)
+		case mediacore.MBDVDResetSPU, mediacore.MBCtrlDVDHilite,
+			mediacore.MBDVDPCI, mediacore.MBDVDCLUT,
+			mediacore.MBDVDSPU, mediacore.MBCtrlDVDSPU2:
+			vd.decodeDvdMsg(mp, mb)
 
 		case mediacore.MBSubtitle:
 			// C: if(vd->vd_ext_subtitles == NULL &&

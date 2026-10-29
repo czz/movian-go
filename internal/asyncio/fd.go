@@ -5,12 +5,12 @@ package asyncio
 // (asyncio_posix.c:95-150, 334-569).
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"crypto/tls"
 	"net"
 	"sync"
 	"sync/atomic"
 
-	miscpkg "github.com/czz/movian-go/internal/misc"
 	netcore "github.com/czz/movian-go/internal/networking/core"
 )
 

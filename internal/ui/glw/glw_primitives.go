@@ -5,9 +5,9 @@ package glw
 // and a debug wireframe box).
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"unsafe"
 
-	miscpkg "github.com/czz/movian-go/internal/misc"
 )
 
 // C: glw_quad_t (shared by quad + border classes)

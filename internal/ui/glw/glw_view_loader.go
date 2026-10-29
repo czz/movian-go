@@ -8,9 +8,9 @@ package glw
 // transition position.
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"unsafe"
 
-	miscpkg "github.com/czz/movian-go/internal/misc"
 
 	propcore "github.com/czz/movian-go/internal/prop"
 	tracepkg "github.com/czz/movian-go/internal/trace"

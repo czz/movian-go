@@ -4,12 +4,12 @@ package glw
 // glwf_* handlers. Ported 1:1 from the canonical C implementation.
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"fmt"
 	"unsafe"
 
 	backendcore "github.com/czz/movian-go/internal/backend/core"
 	eventpkg "github.com/czz/movian-go/internal/event"
-	miscpkg "github.com/czz/movian-go/internal/misc"
 	propcore "github.com/czz/movian-go/internal/prop"
 	propproxy "github.com/czz/movian-go/internal/prop/proxy"
 	tracepkg "github.com/czz/movian-go/internal/trace"

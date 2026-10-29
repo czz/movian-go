@@ -3,6 +3,7 @@ package glw
 // C: src/ui/glw/glw_texture_loader.c — canonical 1:1 port.
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"strings"
 
 	"sync"
@@ -10,7 +11,6 @@ import (
 	archpkg "github.com/czz/movian-go/internal/arch"
 	backendcore "github.com/czz/movian-go/internal/backend/core"
 	imagepkg "github.com/czz/movian-go/internal/image"
-	miscpkg "github.com/czz/movian-go/internal/misc"
 	tracepkg "github.com/czz/movian-go/internal/trace"
 	uipkg "github.com/czz/movian-go/internal/ui"
 )

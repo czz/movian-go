@@ -907,7 +907,7 @@ func (p *PlaybackPipeline) cleanupResources() {
 
 	// Close audio decoder
 	if p.audioDecoder != nil {
-		libav.LibAVAudioClose(p.audioDecoder)
+		p.audioDecoder.Close()
 		p.audioDecoder = nil
 	}
 
@@ -968,7 +968,7 @@ func (p *PlaybackPipeline) partialCleanup() {
 
 	// Close audio decoder
 	if p.audioDecoder != nil {
-		libav.LibAVAudioClose(p.audioDecoder)
+		p.audioDecoder.Close()
 		p.audioDecoder = nil
 	}
 

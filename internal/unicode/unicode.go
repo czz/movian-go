@@ -8,10 +8,10 @@
 package unicode
 
 import (
+	charset "github.com/czz/movian-go/internal/charset"
 	"strings"
 	"unicode"
 
-	"github.com/czz/movian-go/internal/misc"
 )
 
 // UnicodeSystem manages Unicode support without global state
@@ -31,7 +31,7 @@ func (us *UnicodeSystem) Start() error {
 	if us.initialized {
 		return nil
 	}
-	misc.UnicodeStart()
+	charset.UnicodeStart()
 	us.initialized = true
 	return nil
 }

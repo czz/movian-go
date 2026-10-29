@@ -7,6 +7,7 @@ package htsmsg
 // validation) and supports the xmlns:prefix → hmf_namespace mapping.
 
 import (
+	charset "github.com/czz/movian-go/internal/charset"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -94,7 +95,7 @@ func xmlIsCCWS(cc *ccSegment, src []byte) bool {
 // addUnicode — C: add_unicode (htsmsg_xml.c:124-138).
 func addUnicode(ccq *[]*ccSegment, c int) {
 	buf := make([]byte, 6)
-	n := misc.Utf8Put(buf, c)
+	n := charset.Utf8Put(buf, c)
 	*ccq = append(*ccq, &ccSegment{
 		encoding: xmlEncUTF8,
 		buf:      buf[:n],
@@ -635,7 +636,7 @@ func (p *xmlParser) parseCD(msg *HTSMsg, field *HTSMsgField, pos int) (int, bool
 			case xmlEnc88591:
 				for _, b := range cc.bytes(p.src) {
 					var tmp [8]byte
-					n := misc.Utf8Put(tmp[:], int(b))
+					n := charset.Utf8Put(tmp[:], int(b))
 					body = append(body, tmp[:n]...)
 				}
 			}

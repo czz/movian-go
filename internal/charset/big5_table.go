@@ -1,4 +1,4 @@
-package misc
+package charset
 
 // Port of src/misc/big5_table.h — indexed by big5 code - 0xa100
 var big5table = []uint16{ // len = maxidx+2 (C bound uses `>` — see big5_convert)

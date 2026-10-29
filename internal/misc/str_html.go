@@ -1,6 +1,7 @@
 package misc
 
 import (
+	charset "github.com/czz/movian-go/internal/charset"
 	"strconv"
 )
 
@@ -35,7 +36,7 @@ func HtmlEntitiesDecode(s []byte) {
 			continue
 		}
 
-		w := Utf8Put(s[i:], code)
+		w := charset.Utf8Put(s[i:], code)
 		i += w
 
 		// C: memmove(s, e + 1, strlen(e + 1) + 1)

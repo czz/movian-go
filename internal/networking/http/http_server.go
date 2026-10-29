@@ -503,193 +503,38 @@ func (s *HTTPServer) handleConnection(conn net.Conn) {
 		conn.Close()
 	}()
 
-	remoteAddr := conn.RemoteAddr().String()
-	localAddr := conn.LocalAddr().String()
-
 	hc = &HTTPConnection{
 		conn:       conn,
 		reader:     bufio.NewReader(conn),
 		writer:     bufio.NewWriter(conn),
-		remoteAddr: remoteAddr,
-		localAddr:  localAddr,
+		remoteAddr: conn.RemoteAddr().String(),
+		localAddr:  conn.LocalAddr().String(),
 	}
 	hc.replyCond = sync.NewCond(&hc.mu)
 
 	// C: http_handle_input loops per request — a keep-alive connection
 	// is reused for subsequent requests until close.
 	for {
-		// Reset per-request state (C: hc->hc_request_headers/args/post_data
-		// are re-initialized per request in HCS_COMMAND state)
-		hc.headers = make(HTTPHeaders, 0, 16)
-		hc.args = make(map[string]string, 8)
-		hc.postData = nil
-		hc.responseHdrs = make(HTTPHeaders, 0, 8)
-		hc.replySent = false
+		hc.resetRequestState()
 
-		// Read request line
 		requestLine, err := hc.reader.ReadString('\n')
 		if err != nil {
 			return
 		}
+		method, parsedURL, ok := hc.parseRequestLine(requestLine)
+		if !ok {
+			return
+		}
+		if !hc.readRequestHeaders() {
+			return
+		}
+		hc.setKeepAlive()
 
-		// Parse request line — C http_tokenize: method URI version
-		parts := strings.Fields(requestLine)
-		if len(parts) < 2 {
-			hc.HTTPError(HTTPStatusBadRequest, "Invalid request line")
+		if method == HTTPCmdPost && !hc.readPostData() {
 			return
 		}
 
-		methodStr := parts[0]
-		requestURI := parts[1]
-
-		// C: http_cmd_* parse the version token ("HTTP/1.0"/"HTTP/1.1")
-		hc.version = httpVersion11
-		if len(parts) >= 3 {
-			switch parts[2] {
-			case "HTTP/1.0":
-				hc.version = httpVersion10
-			case "HTTP/1.1":
-				hc.version = httpVersion11
-			}
-		}
-
-		// Parse method
-		var method HTTPCmd
-		switch strings.ToUpper(methodStr) {
-		case "GET":
-			method = HTTPCmdGet
-		case "HEAD":
-			method = HTTPCmdHead
-		case "POST":
-			method = HTTPCmdPost
-		case "SUBSCRIBE":
-			method = HTTPCmdSubscribe
-		case "UNSUBSCRIBE":
-			method = HTTPCmdUnsubscribe
-		default:
-			hc.HTTPError(HTTPStatusMethodNotAllowed, "Method not allowed")
-			return
-		}
-
-		// Parse URI
-		parsedURL, err := url.ParseRequestURI(requestURI)
-		if err != nil {
-			hc.HTTPError(HTTPStatusBadRequest, "Invalid URI")
-			return
-		}
-
-		// Parse query string
-		for key, values := range parsedURL.Query() {
-			if len(values) > 0 {
-				hc.args[key] = values[0]
-			}
-		}
-
-		// Read headers (LWS continuation lines handled by HTTPHeaderAddLWS)
-		for {
-			line, err := hc.reader.ReadString('\n')
-			if err != nil {
-				return
-			}
-
-			line = strings.TrimRight(line, "\r\n")
-			if line == "" {
-				break
-			}
-
-			hc.headers.HTTPHeaderAddLWS(line)
-		}
-
-		// C: http_handle_request — keep-alive is per-version:
-		//   HTTP/1.0: off unless "Connection: keep-alive"
-		//   HTTP/1.1: on unless "Connection: close"
-		connHdr := hc.headers.HTTPHeaderGet("connection")
-		if hc.version == httpVersion10 {
-			hc.keepAlive = connHdr != "" && strings.EqualFold(connHdr, "keep-alive")
-		} else {
-			hc.keepAlive = connHdr == "" || !strings.EqualFold(connHdr, "close")
-		}
-
-		// Read POST data if present
-		// C: http_cmd_post — no Content-Length → disconnect; >16MB → disconnect;
-		//    "Expect: 100-continue" → emit HTTP/1.1 100 Continue
-		if method == HTTPCmdPost {
-			contentLength := hc.headers.HTTPHeaderGet("Content-Length")
-			if contentLength == "" {
-				// C: "No content length in POST, make us disconnect"
-				return
-			}
-			length, err := strconv.Atoi(contentLength)
-			if err != nil || length > 16*1024*1024 {
-				// C: hc_post_len > 16MB → keep_alive=0 + disconnect
-				return
-			}
-			if length > 0 {
-				if expect := hc.headers.HTTPHeaderGet("Expect"); expect != "" &&
-					strings.EqualFold(expect, "100-continue") {
-					hc.writer.WriteString("HTTP/1.1 100 Continue\r\n\r\n")
-					hc.writer.Flush()
-				}
-				hc.postData = make([]byte, length)
-				if _, err := io.ReadFull(hc.reader, hc.postData); err != nil {
-					return
-				}
-			}
-
-			// C: http_cmd_post (http_server.c:745-758) — for
-			// application/x-www-form-urlencoded bodies the post data is
-			// parsed into hc_req_args just like the URI query args.
-			ctype := hc.headers.HTTPHeaderGet("Content-Type")
-			if ctype != "" {
-				if semi := strings.Index(ctype, ";"); semi >= 0 {
-					ctype = strings.TrimSpace(ctype[:semi])
-				}
-				if ctype == "application/x-www-form-urlencoded" {
-					if vals, err := url.ParseQuery(string(hc.postData)); err == nil {
-						for key, values := range vals {
-							if len(values) > 0 {
-								hc.args[key] = values[0]
-							}
-						}
-					}
-				}
-			}
-		}
-
-		// Find matching path handler
-		path := parsedURL.Path
-		s.mu.RLock()
-		var handler *HTTPPath
-		var remain string
-
-		// Try exact match first
-		if h, ok := s.paths[path]; ok {
-			handler = h
-			remain = ""
-		} else {
-			// Try prefix match — prefixPaths sorted by length descending,
-			// so first match is the longest prefix (early exit).
-			// C: http_resolve (http_server.c:268-307) — a prefix only
-			// matches when the char after it is '/' (or '?' — already
-			// stripped by the URL parse); remain = v + 1 skips the '/'.
-			for _, h := range s.prefixPaths {
-				if strings.HasPrefix(path, h.path) {
-					v := path[len(h.path):]
-					if v == "" {
-						handler = h
-						remain = ""
-					} else if v[0] == '/' {
-						handler = h
-						remain = v[1:]
-					}
-					if handler != nil {
-						break
-					}
-				}
-			}
-		}
-		s.mu.RUnlock()
-
+		handler, remain := s.resolvePath(parsedURL.Path)
 		if handler == nil {
 			hc.HTTPError(HTTPStatusNotFound, "Not found")
 			if !hc.keepAlive {
@@ -697,10 +542,8 @@ func (s *HTTPServer) handleConnection(conn net.Conn) {
 			}
 			continue
 		}
-
 		hc.path = handler
 
-		// Call handler
 		if handler.ws {
 			// WebSocket upgrade — consumes the connection permanently
 			if err := s.handleWebSocketUpgrade(hc); err != nil {
@@ -737,6 +580,165 @@ func (s *HTTPServer) handleConnection(conn net.Conn) {
 			return
 		}
 	}
+}
+
+// resetRequestState — C: hc->hc_request_headers/args/post_data are
+// re-initialized per request in HCS_COMMAND state.
+func (hc *HTTPConnection) resetRequestState() {
+	hc.headers = make(HTTPHeaders, 0, 16)
+	hc.args = make(map[string]string, 8)
+	hc.postData = nil
+	hc.responseHdrs = make(HTTPHeaders, 0, 8)
+	hc.replySent = false
+}
+
+// parseRequestLine — C http_tokenize: "method URI version". Returns
+// the parsed method and URL; ok=false after emitting the error reply.
+func (hc *HTTPConnection) parseRequestLine(requestLine string) (HTTPCmd, *url.URL, bool) {
+	parts := strings.Fields(requestLine)
+	if len(parts) < 2 {
+		hc.HTTPError(HTTPStatusBadRequest, "Invalid request line")
+		return 0, nil, false
+	}
+
+	// C: http_cmd_* parse the version token ("HTTP/1.0"/"HTTP/1.1")
+	hc.version = httpVersion11
+	if len(parts) >= 3 {
+		switch parts[2] {
+		case "HTTP/1.0":
+			hc.version = httpVersion10
+		case "HTTP/1.1":
+			hc.version = httpVersion11
+		}
+	}
+
+	var method HTTPCmd
+	switch strings.ToUpper(parts[0]) {
+	case "GET":
+		method = HTTPCmdGet
+	case "HEAD":
+		method = HTTPCmdHead
+	case "POST":
+		method = HTTPCmdPost
+	case "SUBSCRIBE":
+		method = HTTPCmdSubscribe
+	case "UNSUBSCRIBE":
+		method = HTTPCmdUnsubscribe
+	default:
+		hc.HTTPError(HTTPStatusMethodNotAllowed, "Method not allowed")
+		return 0, nil, false
+	}
+
+	parsedURL, err := url.ParseRequestURI(parts[1])
+	if err != nil {
+		hc.HTTPError(HTTPStatusBadRequest, "Invalid URI")
+		return 0, nil, false
+	}
+	for key, values := range parsedURL.Query() {
+		if len(values) > 0 {
+			hc.args[key] = values[0]
+		}
+	}
+	return method, parsedURL, true
+}
+
+// readRequestHeaders — consume the header block; LWS continuation
+// lines handled by HTTPHeaderAddLWS. false on connection failure.
+func (hc *HTTPConnection) readRequestHeaders() bool {
+	for {
+		line, err := hc.reader.ReadString('\n')
+		if err != nil {
+			return false
+		}
+		line = strings.TrimRight(line, "\r\n")
+		if line == "" {
+			return true
+		}
+		hc.headers.HTTPHeaderAddLWS(line)
+	}
+}
+
+// setKeepAlive — C http_handle_request: keep-alive is per-version —
+// HTTP/1.0: off unless "Connection: keep-alive";
+// HTTP/1.1: on unless "Connection: close".
+func (hc *HTTPConnection) setKeepAlive() {
+	connHdr := hc.headers.HTTPHeaderGet("connection")
+	if hc.version == httpVersion10 {
+		hc.keepAlive = connHdr != "" && strings.EqualFold(connHdr, "keep-alive")
+	} else {
+		hc.keepAlive = connHdr == "" || !strings.EqualFold(connHdr, "close")
+	}
+}
+
+// readPostData — C http_cmd_post: no Content-Length → disconnect;
+// >16MB → disconnect; "Expect: 100-continue" → emit HTTP/1.1 100
+// Continue; x-www-form-urlencoded bodies fold into hc.args.
+func (hc *HTTPConnection) readPostData() bool {
+	contentLength := hc.headers.HTTPHeaderGet("Content-Length")
+	if contentLength == "" {
+		// C: "No content length in POST, make us disconnect"
+		return false
+	}
+	length, err := strconv.Atoi(contentLength)
+	if err != nil || length > 16*1024*1024 {
+		// C: hc_post_len > 16MB → keep_alive=0 + disconnect
+		return false
+	}
+	if length > 0 {
+		if expect := hc.headers.HTTPHeaderGet("Expect"); expect != "" &&
+			strings.EqualFold(expect, "100-continue") {
+			hc.writer.WriteString("HTTP/1.1 100 Continue\r\n\r\n")
+			hc.writer.Flush()
+		}
+		hc.postData = make([]byte, length)
+		if _, err := io.ReadFull(hc.reader, hc.postData); err != nil {
+			return false
+		}
+	}
+
+	// C: http_cmd_post (http_server.c:745-758) — for
+	// application/x-www-form-urlencoded bodies the post data is
+	// parsed into hc_req_args just like the URI query args.
+	ctype := hc.headers.HTTPHeaderGet("Content-Type")
+	if ctype != "" {
+		if semi := strings.Index(ctype, ";"); semi >= 0 {
+			ctype = strings.TrimSpace(ctype[:semi])
+		}
+		if ctype == "application/x-www-form-urlencoded" {
+			if vals, err := url.ParseQuery(string(hc.postData)); err == nil {
+				for key, values := range vals {
+					if len(values) > 0 {
+						hc.args[key] = values[0]
+					}
+				}
+			}
+		}
+	}
+	return true
+}
+
+// resolvePath — C: http_resolve (http_server.c:268-307): exact match
+// first, else longest prefix; a prefix matches only when the char
+// after it is '/' (or '?' — already stripped by the URL parse);
+// remain = v + 1 skips the '/'.
+func (s *HTTPServer) resolvePath(path string) (*HTTPPath, string) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if h, ok := s.paths[path]; ok {
+		return h, ""
+	}
+	for _, h := range s.prefixPaths {
+		if strings.HasPrefix(path, h.path) {
+			v := path[len(h.path):]
+			if v == "" {
+				return h, ""
+			} else if v[0] == '/' {
+				return h, v[1:]
+			}
+		}
+	}
+	return nil, ""
 }
 
 // handleWebSocketUpgrade handles WebSocket upgrade

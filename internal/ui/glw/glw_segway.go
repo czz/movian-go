@@ -4,10 +4,10 @@ package glw
 // (child slides in/out from a screen edge with interpolated width+alpha).
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"math"
 	"unsafe"
 
-	miscpkg "github.com/czz/movian-go/internal/misc"
 )
 
 // C: glw_segway_t — direction values reuse segwayDirectionLeft/Right

@@ -1201,16 +1201,19 @@ func (mm *MetadataManager) mlvSub(mlv *MetadataLazyVideo, m *propcore.Prop,
 	if value == nil {
 		return nil
 	}
-	s := value.Subscribe(
+	s := value.SubscribeOpts(
 		func(opaque any, ev propcore.EventType,
 			args ...any) {
 			mm.mlpSubCb(&mlv.MLP, ev, args...)
 		},
 		mlv,
-		propcore.SubFlagTrackDestroyExp|propcore.SubFlagSubscriptionMonitor,
-		propcore.SubUserInt(id),
-		propcore.SubOrigins{Props: origins},
-		propcore.SubMutex{Ptr: &mm.mlpMutex})
+		propcore.SubOpts{
+			Flags:      propcore.SubFlagTrackDestroyExp | propcore.SubFlagSubscriptionMonitor,
+			UserInt:    int(id),
+			HasUserInt: true,
+			Origins:    origins,
+			Mutex:      &mm.mlpMutex,
+		})
 	mm.pm.RefDec(value)
 	return s
 }

@@ -4,10 +4,10 @@ package glw
 // plus the prop_subscribe(PROP_TAG_...) front-end used throughout GLW.
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"reflect"
 	"unsafe"
 
-	miscpkg "github.com/czz/movian-go/internal/misc"
 	propcore "github.com/czz/movian-go/internal/prop"
 )
 
@@ -439,8 +439,8 @@ func glwPropSubscribeTags(flags int, tags ...any) *propcore.Subscription {
 			}
 			defer glwDeps.pm.RefDec(valueProp)
 		} else {
-			p = glwDeps.pm.Subfind(root, name[1:], 0, 0, nil)
-			valueProp = glwDeps.pm.Subfind(root, name[1:], 1, 0, &origins)
+			p, valueProp, origins = glwDeps.pm.ResolveForSubscription(
+				root, name[1:])
 			if p == nil || valueProp == nil {
 				return nil
 			}
@@ -452,20 +452,14 @@ func glwPropSubscribeTags(flags int, tags ...any) *propcore.Subscription {
 	}
 	defer glwDeps.pm.RefDec(p)
 
-	subArgs := []any{flags}
-	if courier != nil {
-		subArgs = append(subArgs, propcore.SubCourier{C: courier})
-	}
-	if haveUserInt {
-		subArgs = append(subArgs, propcore.SubUserInt(userInt))
-	}
-	if valueProp != nil {
-		subArgs = append(subArgs, propcore.SubValueProp{P: valueProp})
-	}
-	if len(origins) > 0 {
-		subArgs = append(subArgs, propcore.SubOrigins{Props: origins})
-	}
-	return p.Subscribe(cb, opaque, subArgs...)
+	return p.SubscribeOpts(cb, opaque, propcore.SubOpts{
+		Flags:      flags,
+		Courier:    courier,
+		UserInt:    userInt,
+		HasUserInt: haveUserInt,
+		ValueProp:  valueProp,
+		Origins:    origins,
+	})
 }
 
 // C: PROP_TAG_NAMESTR path split on '.'

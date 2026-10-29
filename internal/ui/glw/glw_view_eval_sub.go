@@ -3,9 +3,9 @@ package glw
 // C: src/ui/glw/glw_view_eval.c — canonical 1:1 port (core engine).
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"fmt"
 
-	miscpkg "github.com/czz/movian-go/internal/misc"
 	propcore "github.com/czz/movian-go/internal/prop"
 )
 
@@ -203,8 +203,8 @@ func subscribeByNameVector(f int,
 		}
 		defer glwDeps.pm.RefDec(valueProp)
 	} else {
-		p = glwDeps.pm.Subfind(root, pname[1:], 0, 0, nil)
-		valueProp = glwDeps.pm.Subfind(root, pname[1:], 1, 0, &origins)
+		p, valueProp, origins = glwDeps.pm.ResolveForSubscription(
+			root, pname[1:])
 		if p == nil || valueProp == nil {
 			return nil
 		}

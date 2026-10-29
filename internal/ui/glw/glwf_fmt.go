@@ -4,6 +4,7 @@ package glw
 // glwf_* handlers. Ported 1:1 from the canonical C implementation.
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"fmt"
 	"math"
 	"strconv"
@@ -11,7 +12,6 @@ import (
 	"time"
 
 	archpkg "github.com/czz/movian-go/internal/arch"
-	miscpkg "github.com/czz/movian-go/internal/misc"
 	nls "github.com/czz/movian-go/internal/nls"
 	propcore "github.com/czz/movian-go/internal/prop"
 )

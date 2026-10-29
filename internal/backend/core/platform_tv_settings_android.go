@@ -82,7 +82,7 @@ func (bs *BackendSystem) tvLoadChannelsFromFile() []tvChannel {
 	}
 	if doc.EPGURL != "" {
 		bs.tvKvSet("epgUrl", doc.EPGURL)
-		tvGuideURL = doc.EPGURL // same priming as the Java sidecar
+		tvGuideURL.Store(doc.EPGURL) // same priming as the Java sidecar
 	}
 	defInput := ""
 	for _, in := range bs.tvLoadInputs() {

@@ -3,10 +3,10 @@ package glw
 // C: src/ui/glw/glw_view_attrib.c — canonical 1:1 port.
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"reflect"
 	"strings"
 
-	miscpkg "github.com/czz/movian-go/internal/misc"
 )
 
 // C: str2val (misc/strtab.h:35-45)

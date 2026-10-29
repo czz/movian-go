@@ -48,7 +48,7 @@ func msSetEnable(opaque any, value any) {
 	// C: prop_setv(ms->ms_settings, "metadata", "enabled", NULL,
 	//              PROP_SET_INT, ms->ms_enabled)
 	if ms.Settings != nil {
-		meta := pm.Subfind(ms.Settings, []string{"metadata"}, 0, 0, nil)
+		meta := pm.Ensure(ms.Settings, "metadata")
 		if meta != nil {
 			pm.SetVEx(nil, meta, "enabled", ms.Enabled)
 		}

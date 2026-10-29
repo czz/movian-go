@@ -38,7 +38,7 @@ type PlaybackPipeline struct {
 
 	// Decoders and codec contexts
 	videoDecoder *libav.VideoDecoder
-	audioDecoder *libav.AudioDecoder
+	audioDecoder libav.AudioCodecDecoder
 	videoCodec   *mediacore.MediaCodec
 	audioCodec   *mediacore.MediaCodec
 	videoQueue   *mediacore.MediaQueue

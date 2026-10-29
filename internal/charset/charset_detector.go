@@ -1,4 +1,4 @@
-package misc
+package charset
 
 // Port of misc/charset_detector.c — tables generated mechanically.
 

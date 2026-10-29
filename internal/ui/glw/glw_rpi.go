@@ -48,6 +48,7 @@ static int resource_write_rgb24(DISPMANX_RESOURCE_HANDLE_T res, int pitch,
 import "C"
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"bytes"
 	"os"
 	"slices"
@@ -59,7 +60,6 @@ import (
 	archrpi "github.com/czz/movian-go/internal/arch/rpi"
 	backendcore "github.com/czz/movian-go/internal/backend/core"
 	imagepkg "github.com/czz/movian-go/internal/image"
-	miscpkg "github.com/czz/movian-go/internal/misc"
 	propcore "github.com/czz/movian-go/internal/prop"
 	"github.com/czz/movian-go/internal/trace"
 )

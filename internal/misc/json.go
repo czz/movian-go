@@ -11,6 +11,7 @@ package misc
 
 import (
 	"fmt"
+	charset "github.com/czz/movian-go/internal/charset"
 	"math"
 	"strings"
 )
@@ -63,7 +64,7 @@ func (p *jsonParser) strReadChar(pos int) (int, int) {
 	}
 	if p.s[pos] != '\\' {
 		b := []byte(p.s[pos:])
-		v := Utf8Get(&b)
+		v := charset.Utf8Get(&b)
 		return v, len(p.s) - len(b)
 	}
 	pos++
@@ -142,7 +143,7 @@ func (p *jsonParser) parseString(pos int) (string, int, int) {
 		}
 		pos = np
 		var tmp [8]byte
-		n := Utf8Put(tmp[:], v)
+		n := charset.Utf8Put(tmp[:], v)
 		sb = append(sb, tmp[:n]...)
 	}
 	return string(sb), pos + 1, jsonOK

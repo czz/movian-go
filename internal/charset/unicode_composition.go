@@ -1,4 +1,4 @@
-package misc
+package charset
 
 // Port of src/misc/unicode_composition.c
 

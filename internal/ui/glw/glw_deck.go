@@ -4,11 +4,11 @@ package glw
 // (shows one selected child at a time with transition effects).
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"strconv"
 	"unsafe"
 
 	eventpkg "github.com/czz/movian-go/internal/event"
-	miscpkg "github.com/czz/movian-go/internal/misc"
 	propcore "github.com/czz/movian-go/internal/prop"
 )
 

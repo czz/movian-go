@@ -4,11 +4,12 @@ package glw
 // glwf_* handlers. Ported 1:1 from the canonical C implementation.
 
 import (
+	charsetpkg "github.com/czz/movian-go/internal/charset"
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"strconv"
 	"unsafe"
 
 	eventpkg "github.com/czz/movian-go/internal/event"
-	miscpkg "github.com/czz/movian-go/internal/misc"
 	propcore "github.com/czz/movian-go/internal/prop"
 )
 
@@ -443,7 +444,7 @@ func glwfTargetedEvent(ec *glwViewEvalContext, self *Token, argv []*Token, argc 
 	case tokenRstring:
 		str := miscpkg.RstrGet(b.tRstring)
 		sb := []byte(str)
-		uc = miscpkg.Utf8Get(&sb)
+		uc = charsetpkg.Utf8Get(&sb)
 	default:
 		return glwViewSeterr(ec.ei, b, "targetedEvent(): Invalid second argument")
 	}

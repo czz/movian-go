@@ -3,8 +3,8 @@ package glw
 // C: src/ui/glw/glw_view_eval.c — canonical 1:1 port (core engine).
 
 import (
-	eventpkg "github.com/czz/movian-go/internal/event"
 	miscpkg "github.com/czz/movian-go/internal/misc"
+	eventpkg "github.com/czz/movian-go/internal/event"
 	propcore "github.com/czz/movian-go/internal/prop"
 	tracepkg "github.com/czz/movian-go/internal/trace"
 )

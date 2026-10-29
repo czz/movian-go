@@ -7,11 +7,11 @@ package glw
 // unsafe.Pointer (Map is always the first field, so addresses coincide).
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"fmt"
 	"unsafe"
 
 	eventpkg "github.com/czz/movian-go/internal/event"
-	miscpkg "github.com/czz/movian-go/internal/misc"
 	propcore "github.com/czz/movian-go/internal/prop"
 	tracepkg "github.com/czz/movian-go/internal/trace"
 )

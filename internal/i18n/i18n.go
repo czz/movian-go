@@ -1,6 +1,7 @@
 package i18n
 
 import (
+	charset "github.com/czz/movian-go/internal/charset"
 	"bytes"
 	"errors"
 	"fmt"
@@ -18,7 +19,6 @@ import (
 	"github.com/czz/movian-go/internal/app"
 	facore "github.com/czz/movian-go/internal/fileaccess"
 	"github.com/czz/movian-go/internal/gconf"
-	"github.com/czz/movian-go/internal/misc"
 	httpnet "github.com/czz/movian-go/internal/networking/http"
 	"github.com/czz/movian-go/internal/nls"
 	propcore "github.com/czz/movian-go/internal/prop"
@@ -47,7 +47,7 @@ type I18N struct {
 
 	langAudio      [3]string
 	langSubtitle   [3]string
-	defaultCharset *misc.Charset // C: const charset_t *default_charset
+	defaultCharset *charset.Charset // C: const charset_t *default_charset
 
 	mutex sync.RWMutex
 
@@ -102,7 +102,7 @@ type Language struct {
 }
 
 // Charset — C: charset_t from misc/str.h (defined in misc package).
-type Charset = misc.Charset
+type Charset = charset.Charset
 
 // NewI18N creates a new i18n system instance
 // SetUpdateClockProps wires callout_update_clock_props (C: callout.c —
@@ -190,7 +190,7 @@ func (i *I18N) setDefaultCharset(opaque any, str string) {
 		i.defaultCharset = nil
 		return
 	}
-	cs := misc.CharsetGet(str)
+	cs := charset.CharsetGet(str)
 	if cs != nil {
 		i.defaultCharset = cs
 	}
@@ -542,7 +542,7 @@ func (i *I18N) SubtitleLang(num uint) string {
 
 // GetDefaultCharset returns the default character set
 // C: const charset_t *i18n_get_default_charset(void)
-func (i *I18N) GetDefaultCharset() *misc.Charset {
+func (i *I18N) GetDefaultCharset() *charset.Charset {
 	if i == nil {
 		return nil
 	}
@@ -561,13 +561,13 @@ func (i *I18N) GetProp(stringKey string) *propcore.Prop {
 // CharsetGetIdx returns the charset at the given index
 // C: charset_get_idx (misc/str.c)
 func (i *I18N) CharsetGetIdx(idx int) *Charset {
-	return misc.CharsetGetIdx(uint(idx))
+	return charset.CharsetGetIdx(uint(idx))
 }
 
 // CharsetGet returns the charset with the given ID
 // C: charset_get (misc/str.c)
 func (i *I18N) CharsetGet(id string) *Charset {
-	return misc.CharsetGet(id)
+	return charset.CharsetGet(id)
 }
 
 // GetString returns the translated string — C: nls_get_rstring.

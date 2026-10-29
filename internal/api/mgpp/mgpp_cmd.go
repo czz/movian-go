@@ -403,8 +403,8 @@ func mgppCmdSub(mgpp *Mgpp, id uint32, propRef int, path string, flags uint16, n
 		// e.g. navigators.current.currentpage changing on navigation.
 		// Resolving once via ResolvePath bound the sub to the terminal
 		// node, so navigation never delivered new-page frames.
-		targetProp = mgpp.pm.Subfind(propPtr, components, 0, 0, nil)
-		valueProp = mgpp.pm.Subfind(propPtr, components, 1, 0, &origins)
+		targetProp, valueProp, origins = mgpp.pm.ResolveForSubscription(
+			propPtr, components)
 		if targetProp == nil || valueProp == nil {
 			return fmt.Errorf("path resolution failed for propRef %d, path %v", propRef, components)
 		}
@@ -422,19 +422,14 @@ func mgppCmdSub(mgpp *Mgpp, id uint32, propRef int, path string, flags uint16, n
 	// and its origin chain ride along (SubValueProp/SubOrigins) so the
 	// subscription follows links — same pattern as GLW's
 	// subscribeByNameVector.
-	subArgs := []any{int(flags)}
-	if mgpp.courier != nil {
-		subArgs = append(subArgs, prop.SubCourier{C: mgpp.courier})
-	}
-	if valueProp != nil {
-		subArgs = append(subArgs, prop.SubValueProp{P: valueProp})
-	}
-	if len(origins) > 0 {
-		subArgs = append(subArgs, prop.SubOrigins{Props: origins})
-	}
-	propSub := targetProp.Subscribe(func(opaque any, event prop.EventType, args ...any) {
+	propSub := targetProp.SubscribeOpts(func(opaque any, event prop.EventType, args ...any) {
 		notifyFunc(sub, int(event), args...)
-	}, sub, subArgs...)
+	}, sub, prop.SubOpts{
+		Flags:     int(flags),
+		Courier:   mgpp.courier,
+		ValueProp: valueProp,
+		Origins:   origins,
+	})
 	sub.Sub = propSub
 
 	return nil

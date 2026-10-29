@@ -5,6 +5,7 @@ package glw
 // (Kalman) synchronization.
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"math"
 	"sync"
 	"unsafe"
@@ -15,7 +16,6 @@ import (
 	"github.com/czz/movian-go/internal/media"
 	mediacore "github.com/czz/movian-go/internal/media/core"
 	medialibav "github.com/czz/movian-go/internal/media/libav"
-	miscpkg "github.com/czz/movian-go/internal/misc"
 	propcore "github.com/czz/movian-go/internal/prop"
 	tracepkg "github.com/czz/movian-go/internal/trace"
 	"github.com/czz/movian-go/internal/video/decoder"

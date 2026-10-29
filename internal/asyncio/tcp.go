@@ -5,6 +5,7 @@ package asyncio
 // do_write, connect completion, send/sendq, attach, get_port.
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -15,7 +16,6 @@ import (
 	"time"
 
 	archpkg "github.com/czz/movian-go/internal/arch"
-	miscpkg "github.com/czz/movian-go/internal/misc"
 	netcore "github.com/czz/movian-go/internal/networking/core"
 	tracepkg "github.com/czz/movian-go/internal/trace"
 )

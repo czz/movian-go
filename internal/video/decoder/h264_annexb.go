@@ -10,13 +10,13 @@ package decoder
 //     and (re)creating the inner decoder when they change.
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"bytes"
 	"slices"
 
 	"github.com/czz/movian-go/internal/libav"
 
 	mediacore "github.com/czz/movian-go/internal/media/core"
-	miscpkg "github.com/czz/movian-go/internal/misc"
 )
 
 // H264AnnexBCtx — C: h264_annexb_ctx_t (h264_annexb.h:25-32).

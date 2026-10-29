@@ -11,6 +11,7 @@
 package ext
 
 import (
+	charset "github.com/czz/movian-go/internal/charset"
 	"slices"
 	"strings"
 
@@ -610,7 +611,7 @@ func adDialogueDecode(adc *assDecoderCtx, line string,
 	// C: while((c = utf8_get(&str)) != 0)
 	sb := []byte(str)
 	for {
-		c := misc.Utf8Get(&sb)
+		c := charset.Utf8Get(&sb)
 		if c == 0 {
 			break
 		}

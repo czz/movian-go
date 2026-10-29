@@ -191,7 +191,7 @@ var (
 	tvGuideMu       sync.Mutex
 	tvGuide         *epg.Guide
 	tvGuideFetching atomic.Bool
-	tvGuideURL      string
+	tvGuideURL      atomic.Value // stores string — cross-goroutine EPG URL
 )
 
 // Keep in sync with glwskins/flat/pages/tvchannels.view: the left
@@ -205,8 +205,8 @@ const (
 // tvEPGURL — XMLTV source: kvstore override, primed by the channels
 // sidecar's "epg" field.
 func (bs *BackendSystem) tvEPGURL() string {
-	if tvGuideURL != "" {
-		return tvGuideURL
+	if u, _ := tvGuideURL.Load().(string); u != "" {
+		return u
 	}
 	u := ""
 	if bs.kvstore != nil {
@@ -220,7 +220,7 @@ func (bs *BackendSystem) tvEPGURL() string {
 				"epgUrl", kvstore.SetString, u)
 		}
 	}
-	tvGuideURL = u
+	tvGuideURL.Store(u)
 	return u
 }
 
@@ -244,17 +244,18 @@ func (bs *BackendSystem) tvGuideGet(chans []tvChannel,
 		ctx, cancel := context.WithTimeout(context.Background(),
 			60*time.Second)
 		defer cancel()
-		g, err := epg.FetchXMLTV(ctx, bs.tvEPGURL(), epg.KeepForNames(names))
+		u := bs.tvEPGURL()
+		g, err := epg.FetchXMLTV(ctx, u, epg.KeepForNames(names))
 		if err != nil {
 			bs.traceSystem.Trace(trace.TRACE_ERROR, "TV",
-				"epg fetch %s: %v", tvGuideURL, err)
+				"epg fetch %s: %v", u, err)
 			return
 		}
 		tvGuideMu.Lock()
 		tvGuide = g
 		tvGuideMu.Unlock()
 		bs.traceSystem.Trace(trace.TRACE_DEBUG, "TV",
-			"epg guide loaded: %s", tvGuideURL)
+			"epg guide loaded: %s", u)
 		if onLoaded != nil {
 			onLoaded(g)
 		}
@@ -286,7 +287,7 @@ func (bs *BackendSystem) tvTuneChannel(ch tvChannel) {
 	// movian's own pipeline (their item URL is the media URL
 	// itself) — nothing to feed the TvView. Rowid channels must
 	// continue to the real tune below.
-	if ch.ID <= 0 && tvIsMediaURI(ch.URI) {
+	if ch.ID <= 0 && bs.tvIsFeederURI(ch.URI) {
 		return
 	}
 	// The TvView session renders outside the media-pipe system, so no
@@ -337,8 +338,7 @@ func tvPageModelType(pm *propcore.PropManager, p *propcore.Prop) string {
 
 // tvPiPRect — PiP rect in screen pixels for the channel list page.
 func tvPiPRect(pm *propcore.PropManager) (int, int, int, int) {
-	ui := pm.Subfind(pm.GetGlobal(),
-		[]string{"userinterfaces", "ui"}, 0, 0, nil)
+	ui := pm.Ensure(pm.GetGlobal(), "userinterfaces", "ui")
 	if ui == nil {
 		return 0, 0, 0, 0
 	}
@@ -493,7 +493,7 @@ func tvChannelNodes(pm *propcore.PropManager, nodes *propcore.Prop,
 		pm.SetIntEx(pm.CreateEx(item, "zapIdx", nil, false, false),
 			nil, i)
 		pm.SetStringEx(pm.CreateEx(item, "url", nil, false, false),
-			nil, tvPlayURL(ch), propcore.StringUTF8)
+			nil, bs.tvPlayURL(ch), propcore.StringUTF8)
 		im := pm.CreateEx(item, "metadata", nil, false, false)
 		num := ch.Number
 		if num == "" {
@@ -516,14 +516,14 @@ func tvChannelNodes(pm *propcore.PropManager, nodes *propcore.Prop,
 // tvPlayURL — canonical play URL for a channel. Input id goes in
 // unescaped: tvPlayPage matches it as a literal prefix, and a decoded
 // '%2F' inside it would be indistinguishable from the path separator.
-func tvPlayURL(ch tvChannel) string {
+func (bs *BackendSystem) tvPlayURL(ch tvChannel) string {
 	// Media URIs (file:///mnt/dtvfs/…, http://…) play through
 	// movian's own pipeline: wrap in video: so the video backend
 	// opens them directly — a raw file:// URL would just hit the
 	// file browser (the dvb node has no extension to sniff).
 	// Only when the channel lacks a real provider rowid: a positive
 	// id always wins the TvView tune path (proven on vendor boxes).
-	if ch.ID <= 0 && tvIsMediaURI(ch.URI) {
+	if ch.ID <= 0 && bs.tvIsFeederURI(ch.URI) {
 		return "video:" + ch.URI
 	}
 	tail := fmt.Sprintf("%d", ch.ID)
@@ -691,7 +691,7 @@ func (bs *BackendSystem) tvPlayPage(propRoot *propcore.Prop, spec string) error 
 	}
 
 	miSetChannel := func(ch tvChannel) {
-		pm.SetStringEx(miURL, nil, tvPlayURL(ch),
+		pm.SetStringEx(miURL, nil, bs.tvPlayURL(ch),
 			propcore.StringUTF8)
 		pm.SetStringEx(miFormat, nil, "Live TV",
 			propcore.StringUTF8)
@@ -1009,8 +1009,8 @@ func (bs *BackendSystem) tvPlayPage(propRoot *propcore.Prop, spec string) error 
 		if et != propcore.EventExtEvent || len(args) == 0 {
 			return
 		}
-		e, ok := args[0].(*event.Event)
-		if !ok {
+		e := event.ExtArg(args[0])
+		if e == nil {
 			return
 		}
 		switch {

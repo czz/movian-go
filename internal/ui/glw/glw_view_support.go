@@ -1,12 +1,12 @@
 package glw
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"fmt"
 	"strconv"
 	"strings"
 	"unsafe"
 
-	miscpkg "github.com/czz/movian-go/internal/misc"
 	"github.com/czz/movian-go/internal/trace"
 )
 

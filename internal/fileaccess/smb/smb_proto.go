@@ -7,6 +7,7 @@
 package smb
 
 import (
+	charset "github.com/czz/movian-go/internal/charset"
 	"crypto/des"
 	"encoding/binary"
 	"errors"
@@ -106,7 +107,7 @@ func readstring(buf []byte, pp *int, lp *int, unicode bool) (string, bool) {
 			break
 		}
 		var tmp [8]byte
-		n := misc.Utf8Put(tmp[:], int(buf[p])|int(buf[p+1])<<8)
+		n := charset.Utf8Put(tmp[:], int(buf[p])|int(buf[p+1])<<8)
 		out = append(out, tmp[:n]...)
 		p += 2
 		remain -= 2

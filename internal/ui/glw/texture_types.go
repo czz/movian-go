@@ -4,9 +4,9 @@ package glw
 // Every constant, enum, struct, inline helper and macro from the header.
 
 import (
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	backendcore "github.com/czz/movian-go/internal/backend/core"
 	imagepkg "github.com/czz/movian-go/internal/image"
-	miscpkg "github.com/czz/movian-go/internal/misc"
 )
 
 // Forward-declared element types — fields land when their C file is ported.

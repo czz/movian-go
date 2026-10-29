@@ -469,262 +469,13 @@ func (sm *SettingsManager) SettingCreate(settingType int, model any, flags int, 
 	enabled := sm.pm.CreateEx(s.root, "enabled", nil, false, false)
 	s.currentOrigin = sm.pm.CreateEx(s.root, "origin", nil, false, false)
 
-	var pc *propcore.Courier
-	var mtx any                   // C: void *mtx (SETTING_TAG_MUTEX)
-	var lockmgr *propcore.Lockmgr // C: lockmgr_fn_t *lockmgr (SETTING_TAG_LOCKMGR)
-	var initialValueProp *propcore.Prop
-	var initialInt = 0
-	var initialStr string
-	min, max := 0, 100
-	step := 1
-	var optlist []string
+	tags := sm.settingParseTags(s, title, settingType, enabled, args)
+	pc, mtx, lockmgr := tags.pc, tags.mtx, tags.lockmgr
+	initialValueProp, initialInt, initialStr := tags.initialValueProp, tags.initialInt, tags.initialStr
+	min, max, step := tags.min, tags.max, tags.step
+	optlist := tags.optlist
 
 	// C: va_arg tag loop
-	for i := 0; i < len(args); i++ {
-		tag, ok := args[i].(int)
-		if !ok {
-			break
-		}
-		if tag == 0 {
-			break
-		}
-
-		switch tag {
-		case SettingTagTitle:
-			if i+1 < len(args) {
-				if tp, ok := args[i+1].(*propcore.Prop); ok {
-					sm.pm.Link(tp, title, nil, false, false)
-				}
-				i++
-			}
-		case SettingTagTitleCStr:
-			if i+1 < len(args) {
-				if str, ok := args[i+1].(string); ok {
-					sm.pm.SetStringEx(title, nil, str, propcore.StringUTF8)
-					s.title = str
-				}
-				i++
-			}
-		case SettingTagCallback:
-			if i+2 < len(args) {
-				// C: s->s_callback is stored unconditionally — its type is
-				// setting_callback_t (void (*)(void *, const char *)). The Go
-				// port's canonical callback shape is func(any,
-				// any); some callers (i18n, upgrade) pass
-				// func(any, string) — accept and wrap it.
-				switch cb := args[i+1].(type) {
-				case func(any, any):
-					s.callback = cb
-				case func(any, string):
-					s.callback = func(o, v any) {
-						if str, ok := v.(string); ok {
-							cb(o, str)
-						}
-					}
-				}
-				s.opaque = args[i+2]
-				i += 2
-			}
-		case SettingTagCourier:
-			if i+1 < len(args) {
-				pc, _ = args[i+1].(*propcore.Courier)
-				i++
-			}
-		case SettingTagMutex:
-			if i+1 < len(args) {
-				mtx = args[i+1] // C: PROP_TAG_MUTEX — s->hps_lock
-				i++
-			}
-		case SettingTagLockMgr:
-			if i+1 < len(args) {
-				lockmgr, _ = args[i+1].(*propcore.Lockmgr) // C: PROP_TAG_LOCKMGR
-				i++
-			}
-		case SettingTagStore:
-			if i+2 < len(args) {
-				s.storeType = SettingStoreTypeSimple
-				if str, ok := args[i+1].(string); ok {
-					s.storeName = str
-				}
-				if str, ok := args[i+2].(string); ok {
-					s.id = str
-				}
-				i += 2
-			}
-		case SettingTagValue:
-			if i+1 < len(args) {
-				switch settingType {
-				case SettingInt, SettingBool:
-					if v, ok := args[i+1].(int); ok {
-						initialInt = v
-					}
-				case SettingString, SettingMultiOpt:
-					if v, ok := args[i+1].(string); ok {
-						initialStr = v
-					}
-				}
-				i++
-			}
-		case SettingTagValueProp:
-			if i+1 < len(args) {
-				initialValueProp, _ = args[i+1].(*propcore.Prop)
-				i++
-			}
-		case SettingTagRange:
-			if i+2 < len(args) {
-				if v, ok := args[i+1].(int); ok {
-					min = v
-				}
-				if v, ok := args[i+2].(int); ok {
-					max = v
-				}
-				s.minVal = min
-				s.maxVal = max
-				// C: prop_set_int_clipping_range(s_val, min, max)
-				i += 2
-			}
-		case SettingTagStep:
-			if i+1 < len(args) {
-				if v, ok := args[i+1].(int); ok {
-					step = v
-					s.step = step
-				}
-				i++
-			}
-		case SettingTagUnitCStr:
-			if i+1 < len(args) {
-				if str, ok := args[i+1].(string); ok {
-					s.unit = str
-					if s.root != nil {
-						if u := sm.pm.CreateEx(s.root, "unit", nil, false, false); u != nil {
-							sm.pm.SetStringEx(u, nil, str, propcore.StringUTF8)
-						}
-					}
-				}
-				i++
-			}
-		case SettingTagOption:
-			if i+2 < len(args) {
-				if id, ok := args[i+1].(string); ok && id != "" {
-					if tp, ok := args[i+2].(*propcore.Prop); ok {
-						if s.val != nil {
-							if o := sm.pm.CreateEx(s.val, id, nil, false, false); o != nil {
-								sm.pm.Link(tp, sm.pm.CreateEx(o, "title", nil, false, false), nil, false, false)
-							}
-						}
-					}
-				}
-				i += 2
-			}
-		case SettingTagOptionCStr:
-			if i+2 < len(args) {
-				if id, ok := args[i+1].(string); ok {
-					if str, ok := args[i+2].(string); ok {
-						if s.val != nil {
-							if o := sm.pm.CreateEx(s.val, id, nil, false, false); o != nil {
-								if t := sm.pm.CreateEx(o, "title", nil, false, false); t != nil {
-									sm.pm.SetStringEx(t, nil, str, propcore.StringUTF8)
-								}
-							}
-						}
-					}
-				}
-				i += 2
-			}
-		case SettingTagOptionList:
-			if i+1 < len(args) {
-				if ol, ok := args[i+1].([]string); ok {
-					optlist = ol
-				}
-				i++
-			}
-		case SettingTagWriteInt:
-			if i+1 < len(args) {
-				s.opaque = args[i+1]
-				switch settingType {
-				case SettingInt, SettingBool:
-					s.callback = func(opaque any, value any) {
-						if p, ok := opaque.(*int); ok {
-							if v, ok := value.(int); ok {
-								*p = v
-							}
-						}
-					}
-				case SettingString, SettingMultiOpt:
-					s.callback = func(opaque any, value any) {
-						if p, ok := opaque.(*int); ok {
-							if str, ok := value.(string); ok {
-								*p = misc.Atoi(str)
-							}
-						}
-					}
-				}
-				i++
-			}
-		case SettingTagZeroText:
-			if i+1 < len(args) {
-				if zt, ok := args[i+1].(*propcore.Prop); ok {
-					if s.root != nil {
-						if z := sm.pm.CreateEx(s.root, "zerotext", nil, false, false); z != nil {
-							sm.pm.Link(zt, z, nil, false, false)
-						}
-					}
-				}
-				i++
-			}
-		case SettingTagWriteProp:
-			if i+1 < len(args) {
-				if ep, ok := args[i+1].(*propcore.Prop); ok {
-					s.extValue = sm.pm.RefInc(ep)
-				}
-				i++
-			}
-		case SettingTagKVStore:
-			if i+2 < len(args) {
-				s.storeType = SettingStoreTypeKVStore
-				if str, ok := args[i+1].(string); ok {
-					s.storeName = str
-				}
-				if str, ok := args[i+2].(string); ok {
-					s.id = str
-				}
-				i += 2
-			}
-		case SettingTagPropEnabler:
-			if i+1 < len(args) {
-				if ep, ok := args[i+1].(*propcore.Prop); ok {
-					sm.pm.Link(ep, enabled, nil, false, false)
-					enabled = nil
-				}
-				i++
-			}
-		case SettingTagValueOrigin:
-			if i+1 < len(args) {
-				if str, ok := args[i+1].(string); ok {
-					s.origin = str
-				}
-				i++
-			}
-		case SettingTagGroup:
-			if i+1 < len(args) {
-				s.onGroupList = true
-				// C: SETTING_GROUP(&list) — LIST_INSERT_HEAD into the
-				// caller-owned group list.
-				if lp, ok := args[i+1].(*[]*Setting); ok && lp != nil {
-					*lp = append([]*Setting{s}, *lp...)
-				}
-				i++
-			}
-		case SettingTagInherit:
-			if i+1 < len(args) {
-				if p, ok := args[i+1].(*Setting); ok {
-					s.parent = p
-					initialInt = -2147483648 // INT32_MIN
-				}
-				i++
-			}
-		}
-	}
 
 	// C: SETTING_TAG_OPTION_LIST — prop_setv(s_val, id, "title", NULL, STR, title)
 	if optlist != nil {
@@ -1206,4 +957,270 @@ func (sm *SettingsManager) settingsAddDirSup(root *propcore.Prop, url string, ic
 		iconProp := sm.pm.CreateEx(metadataProp, "icon", nil, false, false)
 		sm.pm.SetStringEx(iconProp, nil, icon, propcore.StringUTF8)
 	}
+}
+
+// settingTags — the parsed va_arg tag values consumed by the
+// per-type init tail in SettingCreate (C: the loop's locals).
+type settingTags struct {
+	pc               *propcore.Courier
+	mtx              any
+	lockmgr          *propcore.Lockmgr
+	initialValueProp *propcore.Prop
+	initialInt       int
+	initialStr       string
+	min, max         int
+	step             int
+	optlist          []string
+}
+
+// settingParseTags — C: the va_arg tag loop of setting_create.
+// Populates s fields and returns the parsed values used below.
+func (sm *SettingsManager) settingParseTags(s *Setting, title *propcore.Prop, settingType int, enabled *propcore.Prop, args []any) *settingTags {
+	t := &settingTags{min: 0, max: 100, step: 1}
+	for i := 0; i < len(args); i++ {
+		tag, ok := args[i].(int)
+		if !ok {
+			break
+		}
+		if tag == 0 {
+			break
+		}
+
+		switch tag {
+		case SettingTagTitle:
+			if i+1 < len(args) {
+				if tp, ok := args[i+1].(*propcore.Prop); ok {
+					sm.pm.Link(tp, title, nil, false, false)
+				}
+				i++
+			}
+		case SettingTagTitleCStr:
+			if i+1 < len(args) {
+				if str, ok := args[i+1].(string); ok {
+					sm.pm.SetStringEx(title, nil, str, propcore.StringUTF8)
+					s.title = str
+				}
+				i++
+			}
+		case SettingTagCallback:
+			if i+2 < len(args) {
+				// C: s->s_callback is stored unconditionally — its type is
+				// setting_callback_t (void (*)(void *, const char *)). The Go
+				// port's canonical callback shape is func(any,
+				// any); some callers (i18n, upgrade) pass
+				// func(any, string) — accept and wrap it.
+				switch cb := args[i+1].(type) {
+				case func(any, any):
+					s.callback = cb
+				case func(any, string):
+					s.callback = func(o, v any) {
+						if str, ok := v.(string); ok {
+							cb(o, str)
+						}
+					}
+				}
+				s.opaque = args[i+2]
+				i += 2
+			}
+		case SettingTagCourier:
+			if i+1 < len(args) {
+				t.pc, _ = args[i+1].(*propcore.Courier)
+				i++
+			}
+		case SettingTagMutex:
+			if i+1 < len(args) {
+				t.mtx = args[i+1] // C: PROP_TAG_MUTEX — s->hps_lock
+				i++
+			}
+		case SettingTagLockMgr:
+			if i+1 < len(args) {
+				t.lockmgr, _ = args[i+1].(*propcore.Lockmgr) // C: PROP_TAG_LOCKMGR
+				i++
+			}
+		case SettingTagStore:
+			if i+2 < len(args) {
+				s.storeType = SettingStoreTypeSimple
+				if str, ok := args[i+1].(string); ok {
+					s.storeName = str
+				}
+				if str, ok := args[i+2].(string); ok {
+					s.id = str
+				}
+				i += 2
+			}
+		case SettingTagValue:
+			if i+1 < len(args) {
+				switch settingType {
+				case SettingInt, SettingBool:
+					if v, ok := args[i+1].(int); ok {
+						t.initialInt = v
+					}
+				case SettingString, SettingMultiOpt:
+					if v, ok := args[i+1].(string); ok {
+						t.initialStr = v
+					}
+				}
+				i++
+			}
+		case SettingTagValueProp:
+			if i+1 < len(args) {
+				t.initialValueProp, _ = args[i+1].(*propcore.Prop)
+				i++
+			}
+		case SettingTagRange:
+			if i+2 < len(args) {
+				if v, ok := args[i+1].(int); ok {
+					t.min = v
+				}
+				if v, ok := args[i+2].(int); ok {
+					t.max = v
+				}
+				s.minVal = t.min
+				s.maxVal = t.max
+				// C: prop_set_int_clipping_range(s_val, t.min, t.max)
+				i += 2
+			}
+		case SettingTagStep:
+			if i+1 < len(args) {
+				if v, ok := args[i+1].(int); ok {
+					t.step = v
+					s.step = t.step
+				}
+				i++
+			}
+		case SettingTagUnitCStr:
+			if i+1 < len(args) {
+				if str, ok := args[i+1].(string); ok {
+					s.unit = str
+					if s.root != nil {
+						if u := sm.pm.CreateEx(s.root, "unit", nil, false, false); u != nil {
+							sm.pm.SetStringEx(u, nil, str, propcore.StringUTF8)
+						}
+					}
+				}
+				i++
+			}
+		case SettingTagOption:
+			if i+2 < len(args) {
+				if id, ok := args[i+1].(string); ok && id != "" {
+					if tp, ok := args[i+2].(*propcore.Prop); ok {
+						if s.val != nil {
+							if o := sm.pm.CreateEx(s.val, id, nil, false, false); o != nil {
+								sm.pm.Link(tp, sm.pm.CreateEx(o, "title", nil, false, false), nil, false, false)
+							}
+						}
+					}
+				}
+				i += 2
+			}
+		case SettingTagOptionCStr:
+			if i+2 < len(args) {
+				if id, ok := args[i+1].(string); ok {
+					if str, ok := args[i+2].(string); ok {
+						if s.val != nil {
+							if o := sm.pm.CreateEx(s.val, id, nil, false, false); o != nil {
+								if t := sm.pm.CreateEx(o, "title", nil, false, false); t != nil {
+									sm.pm.SetStringEx(t, nil, str, propcore.StringUTF8)
+								}
+							}
+						}
+					}
+				}
+				i += 2
+			}
+		case SettingTagOptionList:
+			if i+1 < len(args) {
+				if ol, ok := args[i+1].([]string); ok {
+					t.optlist = ol
+				}
+				i++
+			}
+		case SettingTagWriteInt:
+			if i+1 < len(args) {
+				s.opaque = args[i+1]
+				switch settingType {
+				case SettingInt, SettingBool:
+					s.callback = func(opaque any, value any) {
+						if p, ok := opaque.(*int); ok {
+							if v, ok := value.(int); ok {
+								*p = v
+							}
+						}
+					}
+				case SettingString, SettingMultiOpt:
+					s.callback = func(opaque any, value any) {
+						if p, ok := opaque.(*int); ok {
+							if str, ok := value.(string); ok {
+								*p = misc.Atoi(str)
+							}
+						}
+					}
+				}
+				i++
+			}
+		case SettingTagZeroText:
+			if i+1 < len(args) {
+				if zt, ok := args[i+1].(*propcore.Prop); ok {
+					if s.root != nil {
+						if z := sm.pm.CreateEx(s.root, "zerotext", nil, false, false); z != nil {
+							sm.pm.Link(zt, z, nil, false, false)
+						}
+					}
+				}
+				i++
+			}
+		case SettingTagWriteProp:
+			if i+1 < len(args) {
+				if ep, ok := args[i+1].(*propcore.Prop); ok {
+					s.extValue = sm.pm.RefInc(ep)
+				}
+				i++
+			}
+		case SettingTagKVStore:
+			if i+2 < len(args) {
+				s.storeType = SettingStoreTypeKVStore
+				if str, ok := args[i+1].(string); ok {
+					s.storeName = str
+				}
+				if str, ok := args[i+2].(string); ok {
+					s.id = str
+				}
+				i += 2
+			}
+		case SettingTagPropEnabler:
+			if i+1 < len(args) {
+				if ep, ok := args[i+1].(*propcore.Prop); ok {
+					sm.pm.Link(ep, enabled, nil, false, false)
+					enabled = nil
+				}
+				i++
+			}
+		case SettingTagValueOrigin:
+			if i+1 < len(args) {
+				if str, ok := args[i+1].(string); ok {
+					s.origin = str
+				}
+				i++
+			}
+		case SettingTagGroup:
+			if i+1 < len(args) {
+				s.onGroupList = true
+				// C: SETTING_GROUP(&list) — LIST_INSERT_HEAD into the
+				// caller-owned group list.
+				if lp, ok := args[i+1].(*[]*Setting); ok && lp != nil {
+					*lp = append([]*Setting{s}, *lp...)
+				}
+				i++
+			}
+		case SettingTagInherit:
+			if i+1 < len(args) {
+				if p, ok := args[i+1].(*Setting); ok {
+					s.parent = p
+					t.initialInt = -2147483648 // INT32_MIN
+				}
+				i++
+			}
+		}
+	}
+	return t
 }

@@ -5,6 +5,8 @@ package glw
 // src/ui/glw/glw_text_bitmap.c.
 
 import (
+	charsetpkg "github.com/czz/movian-go/internal/charset"
+	miscpkg "github.com/czz/movian-go/internal/misc"
 	"math"
 	"unsafe"
 
@@ -12,7 +14,6 @@ import (
 	eventpkg "github.com/czz/movian-go/internal/event"
 	facore "github.com/czz/movian-go/internal/fileaccess"
 	imagepkg "github.com/czz/movian-go/internal/image"
-	miscpkg "github.com/czz/movian-go/internal/misc"
 	propcore "github.com/czz/movian-go/internal/prop"
 	textpkg "github.com/czz/movian-go/internal/text"
 	tracepkg "github.com/czz/movian-go/internal/trace"
@@ -498,7 +499,7 @@ func glwTextBitmapCallback(w *Glw, opaque any, signal glwSignal,
 func insertStr(gtb *GlwTextBitmap, str string) {
 	b := []byte(str)
 	for {
-		uc := miscpkg.Utf8Get(&b)
+		uc := charsetpkg.Utf8Get(&b)
 		if uc == 0 {
 			break
 		}
@@ -1109,13 +1110,13 @@ func gtbCaptionRefresh(gtb *GlwTextBitmap) {
 
 	length := 0
 	for i := range int(gtb.gtbUcLen) {
-		length += miscpkg.Utf8Put(nil, int(gtb.gtbUcBuffer[i]))
+		length += charsetpkg.Utf8Put(nil, int(gtb.gtbUcBuffer[i]))
 	}
 
 	s := make([]byte, length)
 	pos := 0
 	for i := range int(gtb.gtbUcLen) {
-		pos += miscpkg.Utf8Put(s[pos:], int(gtb.gtbUcBuffer[i]))
+		pos += charsetpkg.Utf8Put(s[pos:], int(gtb.gtbUcBuffer[i]))
 	}
 	gtb.gtbCaption = string(s[:pos])
 	gtb.gtbCaptionSet = true

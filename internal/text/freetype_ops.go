@@ -1,8 +1,8 @@
 package text
 
 import (
-	backendcore "github.com/czz/movian-go/internal/backend/core"
 	miscpkg "github.com/czz/movian-go/internal/misc"
+	backendcore "github.com/czz/movian-go/internal/backend/core"
 )
 
 // freetypeOps implements backendcore.FreetypeOps over the canonical

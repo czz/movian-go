@@ -19,6 +19,7 @@
 package core
 
 import (
+	charset "github.com/czz/movian-go/internal/charset"
 	"slices"
 	"strconv"
 	"strings"
@@ -27,7 +28,6 @@ import (
 
 	"github.com/czz/movian-go/internal/db/kvstore"
 	"github.com/czz/movian-go/internal/event"
-	"github.com/czz/movian-go/internal/misc"
 	propcore "github.com/czz/movian-go/internal/prop"
 )
 
@@ -46,12 +46,12 @@ const (
 type LangScorer interface {
 	AudioScore(str string) int
 	SubtitleScore(str string) int
-	GetDefaultCharset() *misc.Charset
+	GetDefaultCharset() *charset.Charset
 }
 
 // DefaultCharsetSrc — C: i18n_get_default_charset() (i18n.c), resolved
 // through the per-instance LangScorer (i18n instance). Nil until wired.
-func (ms *MediaSystem) DefaultCharsetSrc() misc.CharsetDefaultSrc { return ms.LangScorer }
+func (ms *MediaSystem) DefaultCharsetSrc() charset.CharsetDefaultSrc { return ms.LangScorer }
 
 // mediaTrack — C: media_track_t
 type mediaTrack struct {
@@ -187,7 +187,7 @@ func MpAddTrackR(pm *propcore.PropManager, parent *propcore.Prop,
 	}
 
 	if isolang != "" {
-		if il := misc.IsolangFind(isolang); il != nil {
+		if il := charset.IsolangFind(isolang); il != nil {
 			if l := pm.CreateEx(p, "language", nil, false, false); l != nil {
 				l.SetString(il.Fullname)
 			}
