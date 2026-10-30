@@ -398,7 +398,7 @@ func (bs *BackendSystem) tvChannelsPage(propRoot *propcore.Prop) error {
 	// (set() + delay() on focusedIndex); drives the live preview.
 	focusProp := pm.CreateEx(model, "focusIdx", nil, false, false)
 
-	chEv := tvChannelNodes(pm, nodes, chans)
+	chEv := tvChannelNodes(bs, pm, nodes, chans)
 	if g := bs.tvGuideGet(chans, func(g *epg.Guide) {
 		tvFillChannelEvents(pm, chEv, chans, g)
 	}); g != nil {
@@ -481,7 +481,7 @@ type chanEvProps struct {
 // tvChannelNodes — one browsable item per channel, shared by the
 // channel-list page and the play page OSD cloner. Returns the
 // per-channel metadata.events props so the play page can fill them.
-func tvChannelNodes(pm *propcore.PropManager, nodes *propcore.Prop,
+func tvChannelNodes(bs *BackendSystem, pm *propcore.PropManager, nodes *propcore.Prop,
 	chans []tvChannel) []chanEvProps {
 	ev := make([]chanEvProps, len(chans))
 	for i, ch := range chans {
@@ -701,7 +701,7 @@ func (bs *BackendSystem) tvPlayPage(propRoot *propcore.Prop, spec string) error 
 	}
 
 	// Channel list for the OSD cloner (zap by pick).
-	chEv := tvChannelNodes(pm, pm.CreateEx(model, "channels", nil,
+	chEv := tvChannelNodes(bs, pm, pm.CreateEx(model, "channels", nil,
 		false, false), chans)
 
 	bs.traceSystem.Trace(trace.TRACE_DEBUG, "TV",
