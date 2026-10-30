@@ -162,6 +162,10 @@ type System struct {
 	// SMB2/3 sessions via go-smb2/v2 (smb2.go) — the native SMBv1
 	// machinery above stays as fallback for servers that do not
 	// speak SMB2.
+	// Go extension: test-only override of nbtTimeoutMs (0 = production
+	// value), so tests of the request-timeout paths do not wait 30 s.
+	nbtTimeoutOverrideMs int
+
 	s2mu    sync.Mutex
 	s2conns map[string]*smb2Conn
 	s2down  map[string]bool // host:port confirmed SMBv1-only

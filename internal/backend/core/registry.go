@@ -68,6 +68,11 @@ type BackendSystem struct {
 	// (video_playback.c) — injected.
 	playbackInfoFn videopkg.VPIHandler
 
+	// discoveredWatch tells the SMB discovery engine a Local network page
+	// is open and returns the call that says it closed; nil when there is
+	// no engine. Go extension: movian6 has no such engine.
+	discoveredWatch func() (release func())
+
 	// locatedbEnabled — C: static int locatedb_enabled (fa_locatedb.c:43)
 	locatedbEnabled int
 
@@ -175,6 +180,12 @@ func NewBackendSystem(pm *propcore.PropManager, ss *service.ServiceSystem, ts *t
 	// C: hts_cond_init(&imageloader_cond) — init the broadcast condition.
 	bs.imageDoneCond = sync.NewCond(&bs.imageloaderMu)
 	return bs
+}
+
+// SetDiscoveredWatch sets the call a discovered: page makes as it opens;
+// the function it returns is called once the page is destroyed.
+func (bs *BackendSystem) SetDiscoveredWatch(watch func() (release func())) {
+	bs.discoveredWatch = watch
 }
 
 // SetUpgradeMgr sets the upgrade system for the backend system
@@ -871,9 +882,60 @@ func (bs *BackendSystem) registerDiscoveredBackend() {
 			}
 		}
 
+		// Go extension: the SMB discovery engine probes while this page
+		// is the current one.
+		if watch := bs.discoveredWatch; watch != nil {
+			watchWhileCurrent(propRoot, watch)
+		}
+
 		return nil
 	}
 	bs.Register(backend)
+}
+
+// watchWhileCurrent calls watch while page is the navigator's current
+// page, and its release when another page is selected or page is
+// destroyed. The navigator keeps pages in its history, so a page that
+// exists is not a page that is shown.
+func watchWhileCurrent(page *propcore.Prop, watch func() (release func())) {
+	var mu sync.Mutex
+	var release func()
+	destroyed := false
+	set := func(current bool) {
+		mu.Lock()
+		defer mu.Unlock()
+		current = current && !destroyed
+		if current && release == nil {
+			release = watch()
+		} else if !current && release != nil {
+			release()
+			release = nil
+		}
+	}
+	parent := page.GetParent()
+	var parentSub *propcore.Subscription
+	if parent != nil {
+		parentSub = parent.Subscribe(func(o any, et propcore.EventType, args ...any) {
+			if et != propcore.EventSelectChild || len(args) == 0 {
+				return
+			}
+			sel, _ := args[0].(*propcore.Prop)
+			set(sel == page)
+		}, nil, propcore.SubNoInitialUpdate)
+	}
+	page.Subscribe(func(o any, et propcore.EventType, args ...any) {
+		if et == propcore.EventDestroyed {
+			mu.Lock()
+			destroyed = true
+			mu.Unlock()
+			set(false)
+			// The parent outlives the page.
+			parentSub.Unsubscribe()
+		}
+	}, nil, propcore.SubNoInitialUpdate|propcore.SubFlagTrackDestroy)
+	// The navigator selects the page before the backend opens it; a page
+	// without a parent (a test) counts as current.
+	set(parent == nil || parent.GetSelectedChild() == page)
 }
 
 // registerSearchBackend registers the search backend for handling search: URLs

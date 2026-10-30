@@ -136,9 +136,8 @@ func NewServiceSystem(pm *propcore.PropManager) *ServiceSystem {
 // Start initializes the service system
 func (ss *ServiceSystem) Start() {
 	ss.mutex.Lock()
-	defer ss.mutex.Unlock()
-
 	if ss.initialized {
+		ss.mutex.Unlock()
 		return
 	}
 	ss.cond = sync.NewCond(&ss.mutex)
@@ -195,11 +194,14 @@ func (ss *ServiceSystem) Start() {
 		{"showtime:discovered", "Local network", "discovered:", "network", ""},
 		{"showtime:settings", "Settings", "settings:", "setting", ""},
 	}
+	ss.initialized = true
+	ss.mutex.Unlock()
+
+	// C: service_init calls service_create0 without service_mutex held;
+	// service_create0 takes it to link the service.
 	for _, d := range sysSvcs {
 		ss.serviceCreate0(d.id, "", d.title, d.url, d.typ, d.icon, false, true, SvcOriginSystem)
 	}
-
-	ss.initialized = true
 }
 
 // Destroy destroys the service system
@@ -451,12 +453,18 @@ func (ss *ServiceSystem) serviceCreate0(id, title string, ptitle any, url, typ, 
 	originProp := ss.propMgr.CreateEx(s.root, "origin", nil, false, false)
 	ss.propMgr.SetStringEx(originProp, nil, OriginToString(origin), propcore.StringUTF8)
 
-	// C: LIST_INSERT_HEAD(&services, s, s_link)
+	// C: hts_mutex_lock(&service_mutex);
+	//    LIST_INSERT_HEAD(&services, s, s_link);
+	//    s->s_need_probe = s->s_do_probe = probe;
+	//    hts_cond_signal(&service_cond);
+	// Go: doProbe/needProbe were set when s was built; s is not shared
+	// until it is linked here.
+	ss.mutex.Lock()
 	ss.services = slices.Insert(ss.services, 0, s)
-
 	if ss.cond != nil {
 		ss.cond.Signal()
 	}
+	ss.mutex.Unlock()
 
 	return s
 }

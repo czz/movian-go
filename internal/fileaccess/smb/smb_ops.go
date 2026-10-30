@@ -24,7 +24,12 @@ func (sys *System) cifsDelete(url string, dir bool) error {
 	var ct *cifsTree
 	var cc *cifsConnection
 
-	r, rerr := sys.cifsResolve(url, filename[:], 0, &ct, &cc, true)
+	// Go extension: C cifs_delete passes &cc, so a host URL (no share)
+	// resolves to CIFS_RESOLVE_CONNECTION, which it treats as a failure
+	// without releasing the connection — smb_global_mutex stays locked.
+	// Pass no connection out-param: cifs_resolve then rejects a URL
+	// without a share up front.
+	r, rerr := sys.cifsResolve(url, filename[:], 0, &ct, nil, true)
 	if r == cifsResolveNeedAuth {
 		return facore.ErrAuthRequired
 	}
@@ -377,7 +382,7 @@ func (sf *smbFile) Read(buf []byte) (int, error) {
 		if nr == nil {
 			break
 		}
-		if sf.sys.condWaitTimeout(ct.cc.cond, nbtTimeoutMs) {
+		if sf.sys.condWaitTimeout(ct.cc.cond, sf.sys.nbtTimeout()) {
 			break
 		}
 	}

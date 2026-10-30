@@ -676,7 +676,11 @@ func smbTreeConnectAndX(cc *cifsConnection, share string) (*cifsTree, error) {
 						break again // C: goto out
 					}
 					// C NULL-derefs ct here (latent bug); deliver
-					// the error directly instead.
+					// the error directly instead. Go extension: and
+					// give back the connection, which also unlocks
+					// smb_global_mutex; callers expect it released
+					// whenever no tree is returned.
+					cifsReleaseConnection(cc)
 					return nil, errors.New("Authentication rejected by user")
 				}
 				if r == 0 && pw != krUnset {

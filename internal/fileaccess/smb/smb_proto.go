@@ -36,6 +36,15 @@ func (sys *System) condWaitTimeout(c *sync.Cond, ms int) bool {
 	return timedOut
 }
 
+// nbtTimeout — C: NBT_TIMEOUT. Go extension: tests may shorten it
+// through System.nbtTimeoutOverrideMs.
+func (sys *System) nbtTimeout() int {
+	if sys.nbtTimeoutOverrideMs > 0 {
+		return sys.nbtTimeoutOverrideMs
+	}
+	return nbtTimeoutMs
+}
+
 // nbtReq — C: nbt_req_t (fa_nativesmb.c:69-83)
 type nbtReq struct {
 	mid       uint16 // nr_mid
@@ -272,7 +281,7 @@ func nbtAsyncReqReply(cc *cifsConnection, request []byte,
 	nr := nbtAsyncReq(cc, request, isTrans2, info)
 
 	for nr.result == -1 {
-		if cc.sys.condWaitTimeout(cc.cond, nbtTimeoutMs) {
+		if cc.sys.condWaitTimeout(cc.cond, cc.sys.nbtTimeout()) {
 			cc.sys.ts.Trace(trace.TRACE_ERROR, "SMB",
 				"%s:%d request timeout (%d) on %p",
 				cc.hostname, cc.port, nr.mid, cc)

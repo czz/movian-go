@@ -37,6 +37,7 @@ import (
 	propcore "github.com/czz/movian-go/internal/prop"
 	"github.com/czz/movian-go/internal/runcontrol"
 	"github.com/czz/movian-go/internal/sd"
+	"github.com/czz/movian-go/internal/sd/smbdisc"
 	"github.com/czz/movian-go/internal/service"
 	"github.com/czz/movian-go/internal/settings"
 	"github.com/czz/movian-go/internal/subtitles"
@@ -101,6 +102,7 @@ type appContext struct {
 	netIfMgr          *ifaddr.NetIfAddrManager
 	mgppClient        *mgpp.MGPPClient
 	nmbManager        *smb.NMBManager
+	smbEngine         *smbdisc.Engine // nil with --disable-sd
 	ftpServer         *ftpserver.Server
 	mprisServer       *mpris.Server
 	ipc               *ipc.IPC

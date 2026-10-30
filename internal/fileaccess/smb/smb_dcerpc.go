@@ -57,6 +57,9 @@ func openSrvsvc(ct *cifsTree) (int, error) {
 
 	rbuf, result := nbtAsyncReqReply(cc, req, false, "opensrvsvc")
 	if result != 0 {
+		// Go extension: C open_srvsvc returns -1 here without
+		// cifs_release_tree, leaving smb_global_mutex locked.
+		cifsReleaseTree(ct, true)
 		return -1, errors.New("I/O error")
 	}
 	if err := checkSMBError(ct, rbuf, smbNTCreateAndXRespLen); err != nil {
@@ -117,6 +120,9 @@ func dcerpcBind(ct *cifsTree, fid int) error {
 
 	_, result := nbtAsyncReqReply(cc, req, false, "dcerpc_bind")
 	if result != 0 {
+		// Go extension: C dcerpc_bind returns -1 here without
+		// cifs_release_tree, leaving smb_global_mutex locked.
+		cifsReleaseTree(ct, true)
 		return errors.New("I/O error")
 	}
 	return nil
@@ -276,6 +282,9 @@ func dcerpcEnumShares(ct *cifsTree, fid int, fd *facore.Dir) error {
 
 	rbuf, result := nbtAsyncReqReply(cc, req, false, "enumshares")
 	if result != 0 {
+		// Go extension: C dcerpc_enum_shares returns -1 here without
+		// cifs_release_tree, leaving smb_global_mutex locked.
+		cifsReleaseTree(ct, true)
 		return errors.New("I/O error")
 	}
 
@@ -357,6 +366,11 @@ func smbNetServerEnum2(ct *cifsTree) ([]string, error) {
 
 	rbuf, result := nbtAsyncReqReply(cc, req, false, "NetServerEnum2")
 	if result != 0 {
+		// Go extension: C smb_NetServerEnum2 returns NULL here without
+		// cifs_release_tree, leaving smb_global_mutex locked after a
+		// request timeout or a dead connection. Release in full: the
+		// connection is broken.
+		cifsReleaseTree(ct, true)
 		return nil, errors.New("I/O error")
 	}
 	if err := checkSMBError(ct, rbuf, transReplyLen); err != nil {
@@ -399,8 +413,12 @@ func smbNetServerEnum2(ct *cifsTree) ([]string, error) {
 // SMBEnumServers — C: smb_enum_servers (fa_nativesmb.c:2865). Returns
 // flat name/workgroup string pairs for nmb's master-browser enumeration.
 func (sys *System) SMBEnumServers(hostname string) []string {
-	port := 445
+	return sys.smbEnumServers(hostname, 445)
+}
 
+// smbEnumServers is SMBEnumServers with the port exposed (Go extension,
+// so tests can aim it at a loopback fake server).
+func (sys *System) smbEnumServers(hostname string, port int) []string {
 	cc, err := sys.cifsGetConnection(hostname, port,
 		ccFAsGuest|ccFNonInteractive|ccFAnonymous)
 	if cc == sambaNeedAuthConn {
@@ -417,11 +435,15 @@ func (sys *System) SMBEnumServers(hostname string) []string {
 		return nil
 	}
 	servers, err := smbNetServerEnum2(ct)
-	if servers == nil {
+	if err != nil {
+		// smbNetServerEnum2 has released the tree on every error.
 		sys.smbTrace("Failed to enumerate network servers at %s:%d -- %s",
 			hostname, port, err)
 		return nil
 	}
+	// Go extension: C tests servers == NULL, but its result array is
+	// NULL-terminated and so never NULL on success. A Go nil slice (no
+	// servers listed) must still release the tree, or the mutex leaks.
 	cifsReleaseTree(ct, true)
 	return servers
 }

@@ -5,6 +5,7 @@ import (
 	"context"
 	"path/filepath"
 	"runtime/pprof"
+	"sync/atomic"
 	"time"
 
 	"github.com/czz/movian-go/internal/nls"
@@ -30,12 +31,14 @@ import (
 	"github.com/czz/movian-go/internal/i18n"
 	mediasettings "github.com/czz/movian-go/internal/media/settings"
 	navcore "github.com/czz/movian-go/internal/navigator"
+	netcore "github.com/czz/movian-go/internal/networking/core"
 	"github.com/czz/movian-go/internal/networking/ftpserver"
 	httpnet "github.com/czz/movian-go/internal/networking/http"
 	"github.com/czz/movian-go/internal/networking/ifaddr"
 	"github.com/czz/movian-go/internal/plugins"
 	propcore "github.com/czz/movian-go/internal/prop"
 	prophttp "github.com/czz/movian-go/internal/prop/http"
+	"github.com/czz/movian-go/internal/sd/smbdisc"
 	"github.com/czz/movian-go/internal/ui"
 
 	// C links ext_subtitles.o/video_overlay.o/sub_ass.o unconditionally;
@@ -44,6 +47,37 @@ import (
 	"github.com/czz/movian-go/internal/upnp"
 	"github.com/czz/movian-go/internal/video"
 )
+
+// sdEnabled reports whether service discovery runs. --disable-sd turns
+// off the mDNS/Bonjour backends (C: gconf.disable_sd gates sd_init) and,
+// as Go extensions, NetBIOS host discovery and the SMB discovery engine;
+// NetBIOS name resolution stays on.
+func (ctx *appContext) sdEnabled() bool { return !ctx.gconf.DisableSD }
+
+// networkChanges subscribes notify to both network-change notifications:
+// asyncio's, which Android's connectivity broadcast and asyncio's own
+// start raise, and the ifaddr manager's, which SSDP and MGPP discovery
+// follow.
+// C: asyncio_register_for_network_changes (asyncio_posix.c) runs on the
+// asyncio thread, calls back at once and has no unregister.
+// Go: unsubscribing mutes the asyncio callback instead, and drops its
+// hold on notify, which would keep a stopped engine reachable.
+func (ctx *appContext) networkChanges(notify func()) (unsubscribe func()) {
+	id, _ := ctx.netIfMgr.RegisterNetworkChangeCallback(context.Background(), notify)
+	var live atomic.Pointer[func()]
+	live.Store(&notify)
+	ctx.asyncIO.RunTask(func(any) {
+		ctx.asyncIO.RegisterForNetworkChanges(func([]netcore.NetIF) {
+			if n := live.Load(); n != nil {
+				(*n)()
+			}
+		})
+	}, nil)
+	return func() {
+		live.Store(nil)
+		ctx.netIfMgr.UnregisterNetworkChangeCallback(context.Background(), id)
+	}
+}
 
 func wireNetwork(ctx *appContext, gc *gconf.T) {
 	traceSystem := ctx.traceSystem
@@ -297,7 +331,33 @@ func wireNetwork(ctx *appContext, gc *gconf.T) {
 	//    avahi_update_hostname (settings.c:1327-1330). Under !mgos the
 	//    function still exists but its flag is never consumed.
 	settingsManager.SetAvahiUpdateHostname(ctx.sdSys.AvahiUpdateHostname)
-	ctx.sdSys.Start(ctx.serviceSystem, settingsManager, ctx.propManager, traceSystem)
+	// C: if(!gconf.disable_sd) sd_init(); (main.c)
+	if ctx.sdEnabled() {
+		ctx.sdSys.Start(ctx.serviceSystem, settingsManager, ctx.propManager, traceSystem)
+
+		// Go extension: the SMB discovery engine lists SMB servers on
+		// Local network, and probes again at once when the network
+		// changes. It runs in its own goroutines; shutdown stops it
+		// and waits for them, so it changes no service once the rest
+		// of shutdown runs. The wait is short: the stop closes the
+		// engine's sockets and ends its Gets. NetBIOS host discovery
+		// reports into it once the asyncio group runs (asyncio_start
+		// below).
+		if ctx.netIfMgr == nil {
+			ctx.netIfMgr = ifaddr.NewNetIfAddrManager(ctx.asyncIO)
+		}
+		ctx.smbEngine = smbdisc.Start(context.Background(), smbdisc.Config{
+			Services:       ctx.serviceSystem,
+			Trace:          traceSystem,
+			NetworkChanges: ctx.networkChanges,
+		})
+		ctx.initGroupSystem.RegisterInitHelper(&arch.InitHelper{
+			Group: arch.InitGroupAPI,
+			Fini:  ctx.smbEngine.Stop,
+		})
+		// The engine probes on the clock only while Local network is open.
+		bs.SetDiscoveredWatch(ctx.smbEngine.Watch)
+	}
 
 	// C: INITME(INIT_GROUP_API, tmdb_init / tvdb_init / lastfm_init, NULL, 0)
 	// — each registers a metadata source (which adds its dir + "Enabled"

@@ -11,6 +11,9 @@ import android.content.IntentFilter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.net.ConnectivityManager;
+import android.net.LinkAddress;
+import android.net.LinkProperties;
+import android.net.Network;
 import android.os.Build;
 import android.util.Log;
 
@@ -30,6 +33,26 @@ public class CoreService extends Service {
             }
         };
 
+    // CONNECTIVITY_ACTION is not delivered to the app on recent Android
+    // (seen on Android 16), so API 24+ listens for the default network
+    // instead. A reconnect brings several callbacks; the engine folds them
+    // into one round. A link with no IPv4 address yet (DHCP is still
+    // running) is skipped: onLinkPropertiesChanged fires again once it has
+    // one. Like the receiver, it is registered only once the core is ready.
+    private ConnectivityManager.NetworkCallback defaultNetworkCallback;
+
+    private static boolean hasIPv4(LinkProperties lp) {
+        if (lp == null) {
+            return false;
+        }
+        for (LinkAddress la : lp.getLinkAddresses()) {
+            if (la.getAddress() instanceof java.net.Inet4Address) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private boolean receiverRegistered;
 
     private final Runnable registerNetworkReceiver = new Runnable() {
@@ -37,7 +60,32 @@ public class CoreService extends Service {
                 if(receiverRegistered)
                     return;
                 receiverRegistered = true;
-                registerReceiver(networkCheckerAction, networkChecker);
+                ConnectivityManager cm =
+                    (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                if (Build.VERSION.SDK_INT >= 24 && cm != null) {
+                    defaultNetworkCallback = new ConnectivityManager.NetworkCallback() {
+                            @Override
+                            public void onAvailable(final Network network) {
+                                Core.networkStatusChanged();
+                            }
+
+                            @Override
+                            public void onLinkPropertiesChanged(final Network network,
+                                                                final LinkProperties lp) {
+                                if (hasIPv4(lp)) {
+                                    Core.networkStatusChanged();
+                                }
+                            }
+
+                            @Override
+                            public void onLost(final Network network) {
+                                Core.networkStatusChanged();
+                            }
+                        };
+                    cm.registerDefaultNetworkCallback(defaultNetworkCallback);
+                } else {
+                    registerReceiver(networkCheckerAction, networkChecker);
+                }
             }
         };
 
@@ -55,7 +103,20 @@ public class CoreService extends Service {
         CoreBoot.removeReadyListener(registerNetworkReceiver);
         if(receiverRegistered) {
             receiverRegistered = false;
-            unregisterReceiver(networkCheckerAction);
+            if (defaultNetworkCallback != null) {
+                ConnectivityManager cm =
+                    (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                if (cm != null) {
+                    try {
+                        cm.unregisterNetworkCallback(defaultNetworkCallback);
+                    } catch (IllegalArgumentException e) {
+                        // already unregistered
+                    }
+                }
+                defaultNetworkCallback = null;
+            } else {
+                unregisterReceiver(networkCheckerAction);
+            }
         }
         super.onDestroy();
     }
