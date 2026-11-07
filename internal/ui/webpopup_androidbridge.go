@@ -63,19 +63,35 @@ type androidBridge struct {
 	gen   uint64 // bumped by every popup start; a finished popup records its context only if still current
 	ctx   AndroidBridgeContext
 	valid bool
+	// running is set while a popup is open. Java allows one popup at a
+	// time, so a request that arrives meanwhile is refused here before it
+	// can touch the running popup's context.
+	running bool
 }
 
 func newAndroidBridge(jni androidPopupJNI) *androidBridge { return &androidBridge{jni: jni} }
 
-// begin drops the previous context: while a popup runs, and after one that
-// failed, no cookie is handed out.
-func (b *androidBridge) begin() uint64 {
+// begin starts a popup and drops the previous context: while a popup runs,
+// and after one that failed, no cookie is handed out. It reports false, and
+// changes nothing, when a popup is already open.
+func (b *androidBridge) begin() (uint64, bool) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
+	if b.running {
+		return 0, false
+	}
+	b.running = true
 	b.gen++
 	b.valid = false
 	b.ctx = AndroidBridgeContext{}
-	return b.gen
+	return b.gen, true
+}
+
+// end marks the popup over; the next request may start.
+func (b *androidBridge) end() {
+	b.mu.Lock()
+	b.running = false
+	b.mu.Unlock()
 }
 
 func (b *androidBridge) finish(gen uint64, ctx AndroidBridgeContext) {
@@ -102,12 +118,22 @@ func (b *androidBridge) current(gen uint64) bool {
 // owner comes from wr (set by WebpopupCreateFor); without one nothing is
 // opened.
 func (b *androidBridge) runPopup(uri, title, trap string, wait *WebpopupCookieWait, wr *WebpopupResult) {
-	gen := b.begin()
 	owner := wr.owner
 	if owner == "" {
 		wr.ResultCode = WebpopupLoadError
 		return
 	}
+	gen, ok := b.begin()
+	if !ok {
+		// Another popup is open. Java would refuse this one anyway; refusing
+		// it here keeps the open popup's context valid.
+		wr.ResultCode = WebpopupLoadError
+		if clearanceDebug() {
+			clearanceTrace("android popup refused: another popup is open owner=%q", owner)
+		}
+		return
+	}
+	defer b.end()
 	var waitURL, waitName string
 	var waitMs int64
 	if wait != nil {

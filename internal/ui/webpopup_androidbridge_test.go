@@ -288,23 +288,41 @@ func TestAndroidBridgeContextBookkeeping(t *testing.T) {
 			t.Fatalf("stale read delivered: %+v", got)
 		}
 	})
-	t.Run("a slow first popup cannot overwrite the second", func(t *testing.T) {
+	t.Run("a rejected second popup leaves the first usable", func(t *testing.T) {
 		f := &fakeAndroidJNI{ua: policyUA, cookies: []string{liveLine()}}
 		b := newTestBridge(f)
 		f.popupRaw = popupJSON("cookie", "", policyOrigin)
+		var second *WebpopupResult
 		f.popupHook = func() {
-			// While popup A is still open, popup B runs and finishes.
+			// While popup A is open, popup B is requested. Java rejects it
+			// (neterror); that must not touch A's bookkeeping.
 			f.popupHook = nil
-			f.popupRaw = popupJSON("userclose", "", "https://second.example")
-			runTestPopup(b, "plugin.other", nil)
+			f.popupRaw = popupJSON("neterror", "", "")
+			second = runTestPopup(b, "plugin.other", nil)
 			f.popupRaw = popupJSON("cookie", "", policyOrigin)
 		}
-		runTestPopup(b, policyOwner, cookieWait())
-		if got := readCookies(b, policyOwner, policyTarget, policyName); len(got) != 0 {
-			t.Fatalf("stale popup context won: %+v", got)
+		first := runTestPopup(b, policyOwner, cookieWait())
+		if first.ResultCode != WebpopupCookieFound {
+			t.Fatalf("first popup result=%d, want cookie found", first.ResultCode)
 		}
-		if got := readCookies(b, "plugin.other", "https://second.example/", policyName); len(got) != 1 {
-			t.Fatalf("latest popup context lost: %+v", got)
+		if second.ResultCode != WebpopupLoadError {
+			t.Fatalf("second popup result=%d, want load error", second.ResultCode)
+		}
+		if got := readCookies(b, policyOwner, policyTarget, policyName); len(got) != 1 {
+			t.Fatalf("first popup lost its context: %+v", got)
+		}
+		if got := readCookies(b, "plugin.other", "https://second.example/", policyName); len(got) != 0 {
+			t.Fatalf("rejected popup gained a context: %+v", got)
+		}
+	})
+	t.Run("a popup after the first has ended runs", func(t *testing.T) {
+		b, f := setup()
+		f.popupRaw = popupJSON("userclose", "", "https://second.example")
+		if wr := runTestPopup(b, "plugin.other", nil); wr.ResultCode != WebpopupClosedByUser {
+			t.Fatalf("later popup result=%d, want closed by user", wr.ResultCode)
+		}
+		if f.popupCalls != 2 {
+			t.Fatalf("Java popup calls=%d, want 2", f.popupCalls)
 		}
 	})
 }
