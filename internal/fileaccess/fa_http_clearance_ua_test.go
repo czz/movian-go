@@ -37,8 +37,8 @@ func (p *uaProbe) seen() (ua, cookie string) {
 // carry the record is left alone.
 func TestImportedClearanceRequestUsesBoundUA(t *testing.T) {
 	const other = "Other/2.0"
-	type run func(t *testing.T, fam *FileAccessManager, srvURL string, owner, hdrUA string)
-	h1 := func(t *testing.T, fam *FileAccessManager, srvURL, owner, hdrUA string) {
+	type run func(t *testing.T, fam *FileAccessManager, srvURL string, owner, hdrUA, hdrCookie string)
+	h1 := func(t *testing.T, fam *FileAccessManager, srvURL, owner, hdrUA, hdrCookie string) {
 		var errbuf [256]byte
 		args := []any{HTTPTagErrbuf, errbuf[:], HTTPTagMethod, "GET", HTTPTagFlags, FaImportedCookies}
 		if owner != "" {
@@ -47,14 +47,21 @@ func TestImportedClearanceRequestUsesBoundUA(t *testing.T) {
 		if hdrUA != "" {
 			args = append(args, HTTPTagRequestHeader, "User-Agent", hdrUA)
 		}
+		if hdrCookie != "" {
+			args = append(args, HTTPTagRequestHeader, "Cookie", hdrCookie)
+		}
 		if rc := fam.HTTPReqv(srvURL+"/", args, nil, nil); rc != 0 {
 			t.Fatalf("HTTPReqv rc=%d: %s", rc, misc.CStr(errbuf[:]))
 		}
 	}
-	h2 := func(t *testing.T, fam *FileAccessManager, srvURL, owner, hdrUA string) {
+	h2 := func(t *testing.T, fam *FileAccessManager, srvURL, owner, hdrUA, hdrCookie string) {
 		foe := &OpenExtra{ImportedOwner: owner}
+		foe.RequestHeaders = map[string]string{}
 		if hdrUA != "" {
-			foe.RequestHeaders = map[string]string{"User-Agent": hdrUA}
+			foe.RequestHeaders["User-Agent"] = hdrUA
+		}
+		if hdrCookie != "" {
+			foe.RequestHeaders["Cookie"] = hdrCookie
 		}
 		h, err := h2Open(&FAProtocol{fam: fam}, srvURL, FaImportedCookies, foe)
 		if err != nil {
@@ -75,14 +82,19 @@ func TestImportedClearanceRequestUsesBoundUA(t *testing.T) {
 			owner      string
 			domainUA   string
 			hdrUA      string
+			hdrCookie  string
 			wantUA     string
 			wantCookie bool
 		}{
-			{"domain UA changed after import", clrOwner, other, "", clrUA, true},
-			{"explicit header", clrOwner, "", "Caller/3.0", clrUA, true},
-			{"domain UA and explicit header", clrOwner, other, "Caller/3.0", clrUA, true},
-			{"other owner keeps the caller header", "plugin.b", other, "Caller/3.0", "Caller/3.0", false},
-			{"other owner keeps the domain UA", "plugin.b", other, "", other, false},
+			{"domain UA changed after import", clrOwner, other, "", "", clrUA, true},
+			{"explicit header", clrOwner, "", "Caller/3.0", "", clrUA, true},
+			{"domain UA and explicit header", clrOwner, other, "Caller/3.0", "", clrUA, true},
+			{"other owner keeps the caller header", "plugin.b", other, "Caller/3.0", "", "Caller/3.0", false},
+			{"other owner keeps the domain UA", "plugin.b", other, "", "", other, false},
+			// The caller's own Cookie header replaces the whole generated one, so
+			// no imported cookie is sent and its UA is not forced either.
+			{"explicit Cookie header keeps the caller UA", clrOwner, other, "Caller/3.0", "sid=caller", "Caller/3.0", false},
+			{"explicit Cookie header keeps the domain UA", clrOwner, other, "", "sid=caller", other, false},
 		} {
 			t.Run(proto.name+"/"+c.name, func(t *testing.T) {
 				p := &uaProbe{}
@@ -95,7 +107,7 @@ func TestImportedClearanceRequestUsesBoundUA(t *testing.T) {
 				if c.domainUA != "" {
 					fam.HTTPDomainSetUserAgent("127.0.0.1", c.domainUA)
 				}
-				proto.do(t, fam, srv.URL, c.owner, c.hdrUA)
+				proto.do(t, fam, srv.URL, c.owner, c.hdrUA, c.hdrCookie)
 				ua, cookie := p.seen()
 				if ua != c.wantUA {
 					t.Errorf("User-Agent = %q, want %q", ua, c.wantUA)
@@ -120,5 +132,16 @@ func TestHTTPHeadersSendForcedUA(t *testing.T) {
 	out := q.String()
 	if want := "User-Agent: " + clrUA + "\r\n"; !strings.Contains(out, want) || strings.Contains(out, "Caller/3") {
 		t.Fatalf("headers = %q", out)
+	}
+
+	// A caller Cookie header replaces the generated one: nothing is bound.
+	q.Flush()
+	var def2, user2 httpnet.HTTPHeaderList
+	def2.Add("User-Agent", "Default/1", false)
+	user2.Add("User-Agent", "Caller/3", false)
+	user2.Add("Cookie", "sid=caller", false)
+	httpHeadersSend(&q, &def2, &user2, clrUA)
+	if out := q.String(); !strings.Contains(out, "User-Agent: Caller/3\r\n") || strings.Contains(out, clrUA) {
+		t.Fatalf("headers with own Cookie = %q", out)
 	}
 }

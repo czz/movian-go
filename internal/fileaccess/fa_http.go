@@ -162,7 +162,9 @@ func httpHeadersSend(q *misc.HtsbufQueue, def *httpnet.HTTPHeaderList,
 	if user1 != nil {
 		def.Merge(user1)
 	}
-	if boundUA != "" {
+	if _, own := user1.Get("Cookie"); boundUA != "" && !own {
+		// A caller's own Cookie header replaced the generated one: no
+		// imported cookie is sent, so its UA is not forced either.
 		def.Add("User-Agent", boundUA, false)
 	}
 	for _, hh := range def.List {

@@ -108,6 +108,25 @@ func (fam *FileAccessManager) http2Client(verify bool) *http.Client {
 	return c
 }
 
+// h2CookieHeaderReplaced reports whether a Cookie header of the inspectors or
+// of the caller replaced the generated one, so that no imported cookie is
+// sent.
+func h2CookieHeaderReplaced(inspected httpnet.HTTPHeaderList, foe *OpenExtra) bool {
+	if _, ok := inspected.Get("Cookie"); ok {
+		return true
+	}
+	if foe == nil {
+		return false
+	}
+	for k := range foe.RequestHeaders {
+		if strings.EqualFold(k, "Cookie") {
+			return true
+		}
+	}
+	_, ok := foe.RequestHeadersList.Get("Cookie")
+	return ok
+}
+
 // h2CookieHeader — same matching loop as httpCookieAppend
 // (fa_http_cookie.go), flattened to a Cookie header value.
 func (hf *h2File) h2CookieHeader(host string, port int, path string,
@@ -250,7 +269,7 @@ func (hf *h2File) h2NewRequest(url, method string, start int64) (*http.Request, 
 			}
 		}
 	}
-	if boundUA != "" {
+	if boundUA != "" && !h2CookieHeaderReplaced(headers, hf.foe) {
 		// An imported cookie rides this request: its bound UA wins over the
 		// host UA, the inspectors and the caller's headers.
 		req.Header.Set("User-Agent", boundUA)
