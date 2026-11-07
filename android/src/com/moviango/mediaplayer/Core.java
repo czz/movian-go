@@ -23,7 +23,6 @@ import android.provider.Settings.Secure;
 public class Core {
 
 
-    private static Activity currentActivity;
     private static SurfaceView sv;
     private static CoreService mService;
 
@@ -95,6 +94,30 @@ public class Core {
 
     public static native void networkStatusChanged();
 
+    /**
+     * Blocking, bounded popup entry for the Go side (called off the UI thread).
+     * Returns {"result":"cookie|trapped|userclose|neterror|timeout",
+     * "url":..., "topOrigin":...}. waitTimeoutMs is the plugin's cookie wait
+     * limit; 0 means only the 30 min session limit applies.
+     */
+    public static String webPopupPrototype(String uri, String title, String trap,
+                                           String waitUrl, String waitName, String owner,
+                                           long waitTimeoutMs) {
+        Activity a = PopupHost.get();
+        if (a == null || uri == null || owner == null || owner.isEmpty())
+            return PopupRequest.json("neterror", null, null);
+        return WebPopupActivity.open(uri, title, trap, waitUrl, waitName, owner, waitTimeoutMs, a);
+    }
+
+    /** JSON array of cookie info strings for uri, or null; returns within 10 s. */
+    public static String webPopupPrototypeCookies(String uri, String owner) {
+        return WebPopupActivity.cookies(uri, owner);
+    }
+
+    public static String webPopupPrototypeUA() {
+        return WebPopupActivity.userAgent();
+    }
+
     public static void init(CoreService svc) {
 
         mService = svc;
@@ -126,7 +149,7 @@ public class Core {
 
     public static void pushBitmap(final Bitmap b) {
 
-        currentActivity.runOnUiThread(new Runnable() {
+        PopupHost.get().runOnUiThread(new Runnable() {
                 public void run() {
 
                     SurfaceHolder sh = sv.getHolder();

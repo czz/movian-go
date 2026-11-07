@@ -49,6 +49,11 @@
     <service android:name="CoreService"
              android:label="@@APPNAME@@"/>
 
+    <activity android:name=".WebPopupActivity"
+              android:label="@@APPNAME@@"
+              android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
+              android:screenOrientation="unspecified"
+              android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" />
     <activity android:name=".GLWActivity"
               android:label="@@APPNAME@@"
               android:launchMode="singleTask"

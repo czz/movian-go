@@ -80,6 +80,24 @@ for t in AAPT2 DEXER ZIPALIGN APKSIGNER; do
 done
 command -v javac >/dev/null || die "javac not found"
 
+# AndroidX WebKit: use an explicit local JAR or the checksum-pinned AAR.
+if [[ -z "${ANDROIDX_WEBKIT_JAR:-}" ]]; then
+    source "${SCRIPT_DIR}/androidx_webkit.env"
+    source "${SCRIPT_DIR}/fetch_dep.sh"
+    WEBKIT_AAR="$(dep_fetch "$ANDROIDX_WEBKIT_AAR" "$ANDROIDX_WEBKIT_URL" "$ANDROIDX_WEBKIT_SHA256")" \
+        || die "AndroidX WebKit fetch failed"
+    WEBKIT_DIR="${REPO_ROOT}/build/androidx-webkit-${ANDROIDX_WEBKIT_VERSION}"
+    mkdir -p "$WEBKIT_DIR"
+    unzip -o -q "$WEBKIT_AAR" classes.jar -d "$WEBKIT_DIR" || die "cannot extract AndroidX WebKit"
+    ANDROIDX_WEBKIT_JAR="$WEBKIT_DIR/classes.jar"
+fi
+[[ -f "$ANDROIDX_WEBKIT_JAR" ]] || die "AndroidX WebKit jar not found: $ANDROIDX_WEBKIT_JAR"
+jar tf "$ANDROIDX_WEBKIT_JAR" | grep -q '^androidx/webkit/CookieManagerCompat.class$' \
+    || die "AndroidX WebKit jar lacks CookieManagerCompat: $ANDROIDX_WEBKIT_JAR"
+jar tf "$ANDROIDX_WEBKIT_JAR" | grep -q '^androidx/webkit/WebViewFeature.class$' \
+    || die "AndroidX WebKit jar lacks WebViewFeature: $ANDROIDX_WEBKIT_JAR"
+log "AndroidX WebKit: $ANDROIDX_WEBKIT_JAR sha256=$(sha256sum "$ANDROIDX_WEBKIT_JAR" | cut -d' ' -f1)"
+
 log "SDK=$SDK platform=android-$TARGET_SDK build-tools=$BUILD_TOOLS_VER dex=$(basename "$DEXER")"
 
 # --- inputs -----------------------------------------------------------------
@@ -127,12 +145,12 @@ RJAVAS=()
 while IFS= read -r f; do RJAVAS+=("$f"); done \
     < <(find "$OUT/java" -name '*.java')
 javac -source 8 -target 8 -encoding UTF-8 \
-    -classpath "$ANDROID_JAR" \
+    -classpath "$ANDROID_JAR:$ANDROIDX_WEBKIT_JAR" \
     -d "$OUT/classes" \
     "${RJAVAS[@]}" "${JAVA_SRCS[@]}" \
     || die "javac failed"
 "$DEXER" --lib "$ANDROID_JAR" --output "$OUT/dex" \
-    $(find "$OUT/classes" -name '*.class') \
+    $(find "$OUT/classes" -name '*.class') "$ANDROIDX_WEBKIT_JAR" \
     || die "dex failed"
 log "dex done"
 
