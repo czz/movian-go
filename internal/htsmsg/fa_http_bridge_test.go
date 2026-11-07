@@ -12,13 +12,16 @@ func TestHTTPCookieStoreRoundTrip(t *testing.T) {
 		{Name: "a", Path: "/", Domain: "example.test", Value: "1", Expire: 2000000000, Secure: true, HostOnly: true},
 		{Name: "b", Path: "/x", Domain: "example.test", Value: "2", Expire: 2000000001},
 		{Name: "far", Path: "/", Domain: "example.test", Value: "3", Expire: 1 << 40},
+		{Name: "cf", Path: "/", Domain: "example.test", Value: "4", Expire: 2000000002,
+			Secure: true, HostOnly: true, Imported: true, UA: "UA/1",
+			ScopeOrigin: "https://example.test", ScopeOwner: "plugin.a"},
 	}
 	HTTPCookieStoreSave(s, in)
 	out := HTTPCookieStoreLoad(s)
-	if len(out) != 3 {
-		t.Fatalf("loaded %d records, want 3", len(out))
+	if len(out) != 4 {
+		t.Fatalf("loaded %d records, want 4", len(out))
 	}
-	if out[0] != in[0] || out[1] != in[1] {
+	if out[0] != in[0] || out[1] != in[1] || out[3] != in[3] {
 		t.Fatalf("round trip changed records: %+v", out)
 	}
 	if out[2].Expire != 2147483647 {
