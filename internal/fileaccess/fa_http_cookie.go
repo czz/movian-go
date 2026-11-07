@@ -55,7 +55,7 @@ type HTTPCookieRecord struct {
 // validateCookie — C: validate_cookie (RFC 2109 §4.3.2).
 func validateCookie(reqHost, reqPath, domain, path string) int {
 	// The value for the Path attribute is not a prefix of the request-URI.
-	if !strings.HasPrefix(reqPath, path) {
+	if !cookiePathMatch(reqPath, path) {
 		return 1
 	}
 
@@ -78,6 +78,22 @@ func validateCookie(reqHost, reqPath, domain, path string) int {
 		return 3
 	}
 	return 0
+}
+
+// cookiePathMatch is the RFC 6265 §5.1.4 path-match: the cookie path equals
+// the request path, or is a prefix that ends at a "/" boundary, so /forum
+// matches /forum and /forum/x but not /forumx. A query or fragment on the
+// request path is not part of the path.
+func cookiePathMatch(reqPath, cookiePath string) bool {
+	if i := strings.IndexAny(reqPath, "?#"); i >= 0 {
+		reqPath = reqPath[:i]
+	}
+	if !strings.HasPrefix(reqPath, cookiePath) {
+		return false
+	}
+	return len(reqPath) == len(cookiePath) ||
+		strings.HasSuffix(cookiePath, "/") ||
+		reqPath[len(cookiePath)] == '/'
 }
 
 // cookieDomainMatch reports whether reqHost equals domain or is a
