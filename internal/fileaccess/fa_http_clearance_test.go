@@ -41,12 +41,12 @@ func clrFAM(t *testing.T) *FileAccessManager {
 func clrSend(fam *FileAccessManager, target, owner string) (string, string) {
 	u, _ := url.Parse(target)
 	var extra, headers httpnet.HTTPHeaderList
-	httpCookieAppend(u.Hostname(), &httpFile{
+	httpCookieAppend(u.Hostname(), urlPortNum(u), &httpFile{
 		fam: fam, path: u.EscapedPath(), url: target, importedOwner: owner,
 	}, &headers, &extra)
 	h1, _ := headers.Get("Cookie")
 	h2 := (&h2File{fam: fam, url: target, importedOwner: owner}).
-		h2CookieHeader(u.Hostname(), u.EscapedPath(), &extra)
+		h2CookieHeader(u.Hostname(), urlPortNum(u), u.EscapedPath(), &extra)
 	return h1, h2
 }
 
@@ -463,11 +463,7 @@ func TestImportedClearanceOverTLSOpen(t *testing.T) {
 	defer srv.Close()
 
 	fam := &FileAccessManager{}
-	// The import API rejects IP literals; plant the record as a loaded jar would.
-	fam.cookieJarPut(httpCookie{name: "cf_clearance", value: "synthetic-value",
-		domain: "127.0.0.1", path: "/", expire: time.Now().Add(time.Hour).Unix(),
-		secure: true, hostOnly: true, imported: true, ua: clrUA,
-		scopeOrigin: "https://127.0.0.1", scopeOwner: clrOwner})
+	clrPlant(fam, srv.URL)
 	for _, c := range []struct {
 		name  string
 		flags int
@@ -536,12 +532,19 @@ func TestImportedClearanceUAPinHostCase(t *testing.T) {
 	}
 }
 
-func clrPlant(fam *FileAccessManager) {
-	// The import API rejects IP literals; plant the record as a loaded jar would.
+// clrPlant puts an imported record for the loopback host of srvURL into the
+// jar. The import API rejects IP literals and non-default ports, so the
+// record is planted directly, bound to the test server's own origin.
+func clrPlant(fam *FileAccessManager, srvURL string) {
 	fam.cookieJarPut(httpCookie{name: "cf_clearance", value: "synthetic-value",
 		domain: "127.0.0.1", path: "/", expire: time.Now().Add(time.Hour).Unix(),
 		secure: true, hostOnly: true, imported: true, ua: clrUA,
-		scopeOrigin: "https://127.0.0.1", scopeOwner: clrOwner})
+		scopeOrigin: "https://127.0.0.1:" + srvPort(srvURL), scopeOwner: clrOwner})
+}
+
+func srvPort(srvURL string) string {
+	u, _ := url.Parse(srvURL)
+	return u.Port()
 }
 
 // The HTTP/1 request engine parses the flag and the owner tag.
@@ -553,7 +556,7 @@ func TestImportedClearanceHTTPReqvTags(t *testing.T) {
 	defer srv.Close()
 
 	fam := NewFileAccessManager(nil, nil)
-	clrPlant(fam)
+	clrPlant(fam, srv.URL)
 	for _, c := range []struct {
 		name string
 		args []any
@@ -593,5 +596,26 @@ func TestImportedClearanceExpiryReleasesPinOnRequest(t *testing.T) {
 	}
 	if n := len(fam.httpCookies.list); n != 0 {
 		t.Fatalf("expired record kept (%d)", n)
+	}
+}
+
+// An imported record is bound to the exact origin it was solved for: the
+// same host on another port is a different origin and gets nothing.
+func TestImportedClearanceNotSentToOtherPort(t *testing.T) {
+	fam := clrFAM(t)
+	for _, c := range []struct {
+		target string
+		want   bool
+	}{
+		{"https://example.test/", true},
+		{"https://example.test:443/", true},
+		{"https://example.test:8443/", false},
+	} {
+		h1, h2 := clrSend(fam, c.target, clrOwner)
+		for proto, got := range map[string]string{"h1": h1, "h2": h2} {
+			if sent := hasCookie(got, "cf_clearance=synthetic-value"); sent != c.want {
+				t.Errorf("%s send to %s: sent=%v, want %v", proto, c.target, sent, c.want)
+			}
+		}
 	}
 }

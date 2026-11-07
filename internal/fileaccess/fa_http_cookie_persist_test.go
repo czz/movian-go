@@ -174,7 +174,7 @@ func TestCookieSecureFollowsHTTP1Connection(t *testing.T) {
 		path: "/", expire: -1, secure: true, hostOnly: true})
 	send := func(ssl bool) string {
 		var extra, headers httpnet.HTTPHeaderList
-		httpCookieAppend("example.test", &httpFile{fam: fam, path: "/",
+		httpCookieAppend("example.test", 0, &httpFile{fam: fam, path: "/",
 			url:        "https://example.test/",
 			connection: &httpConnection{hostname: "example.test", ssl: ssl}},
 			&headers, &extra)

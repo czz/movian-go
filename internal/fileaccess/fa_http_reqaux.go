@@ -303,7 +303,7 @@ retry:
 			}
 		}
 
-		httpCookieAppend(hc.hostname, hf, &headers, &cookies)
+		httpCookieAppend(hc.hostname, hc.port, hf, &headers, &cookies)
 		cookies.Free()
 
 		hf.hfTrace("Sending request for %s (cid=%d)", hf.url, hc.id)

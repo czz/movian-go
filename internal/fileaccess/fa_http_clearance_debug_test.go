@@ -93,7 +93,7 @@ func dbgRequest(t *testing.T, fam *FileAccessManager, extra ...any) {
 	srv.TLS = &tls.Config{NextProtos: []string{"http/1.1"}}
 	srv.StartTLS()
 	t.Cleanup(srv.Close)
-	clrPlant(fam)
+	clrPlant(fam, srv.URL)
 	var errbuf [256]byte
 	args := append([]any{HTTPTagErrbuf, errbuf[:], HTTPTagMethod, "GET",
 		HTTPTagFlags, FaImportedCookies, HTTPTagImportedOwner, clrOwner}, extra...)
@@ -118,7 +118,7 @@ func TestClearanceDebugOnRequestFlag(t *testing.T) {
 	srv.TLS = &tls.Config{NextProtos: []string{"http/1.1"}}
 	srv.StartTLS()
 	defer srv.Close()
-	clrPlant(fam)
+	clrPlant(fam, srv.URL)
 	var errbuf [256]byte
 	args := []any{HTTPTagErrbuf, errbuf[:], HTTPTagMethod, "GET",
 		HTTPTagFlags, FaImportedCookies | FaDebug, HTTPTagImportedOwner, clrOwner}
@@ -169,7 +169,7 @@ func TestClearanceDebugOnSendSkipped(t *testing.T) {
 		{"http://example.test/", clrOwner, "insecure-request"},
 	} {
 		fam.selectCookies(strings.TrimPrefix(strings.TrimPrefix(c.target, "https://"), "http://"),
-			"/", strings.HasPrefix(c.target, "https:"), c.owner, true, func(string) bool { return false })
+			0, "/", strings.HasPrefix(c.target, "https:"), c.owner, true, func(string) bool { return false })
 		mustContain(t, logs(), "send skipped ("+c.reason+")")
 	}
 }
@@ -183,7 +183,7 @@ func TestClearanceDebugOnSendOverridden(t *testing.T) {
 	if err := fam.HTTPImportClearance(clrCookie()); err != nil {
 		t.Fatal(err)
 	}
-	got := fam.selectCookies("example.test", "/", true, clrOwner, true,
+	got := fam.selectCookies("example.test", 0, "/", true, clrOwner, true,
 		func(name string) bool { return name == "cf_clearance" })
 	if len(got) != 0 {
 		t.Fatalf("override still sent the record: %v", got)

@@ -352,7 +352,7 @@ type cookiePair struct{ name, value string }
 // that owner and replaces a same-named generic one. HTTP/1 and HTTP/2/3
 // build their Cookie header from it so the rules cannot drift. dbg is the
 // request's debug flag: it traces each imported record's fate.
-func (fam *FileAccessManager) selectCookies(host, path string, secureReq bool,
+func (fam *FileAccessManager) selectCookies(host string, port int, path string, secureReq bool,
 	importedOwner string, dbg bool, extra func(name string) bool) []cookiePair {
 	now := time.Now().Unix()
 	fam.httpCookies.mu.Lock()
@@ -364,7 +364,7 @@ func (fam *FileAccessManager) selectCookies(host, path string, secureReq bool,
 		if !hc.imported {
 			continue
 		}
-		reason := cookieSkipReason(hc, host, path, secureReq, importedOwner, now)
+		reason := cookieSkipReason(hc, host, port, path, secureReq, importedOwner, now)
 		if reason == "" {
 			if sentImported == nil {
 				sentImported = map[string]bool{}
@@ -379,7 +379,7 @@ func (fam *FileAccessManager) selectCookies(host, path string, secureReq bool,
 		}
 	}
 	for _, hc := range fam.httpCookies.list {
-		if !cookieSendable(hc, host, path, secureReq, importedOwner, now) {
+		if !cookieSendable(hc, host, port, path, secureReq, importedOwner, now) {
 			continue
 		}
 		if !hc.imported && sentImported[hc.name] {

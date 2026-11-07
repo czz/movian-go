@@ -5,8 +5,6 @@ import (
 	"net/url"
 	"testing"
 	"time"
-
-	httpnet "github.com/czz/movian-go/internal/networking/http"
 )
 
 func testCookieSemanticsSet(t *testing.T, origin, header string) *FileAccessManager {
@@ -33,14 +31,7 @@ func testCookieSemanticsSetH2(fam *FileAccessManager, u *url.URL, header string)
 }
 
 func testCookieSemanticsSend(fam *FileAccessManager, target string) (string, string) {
-	u, _ := url.Parse(target)
-	var extra, headers httpnet.HTTPHeaderList
-	httpCookieAppend(u.Hostname(), &httpFile{
-		fam: fam, path: u.EscapedPath(), url: target,
-	}, &headers, &extra)
-	h1, _ := headers.Get("Cookie")
-	h2 := (&h2File{fam: fam, url: target}).h2CookieHeader(u.Hostname(), u.EscapedPath(), &extra)
-	return h1, h2
+	return clrSend(fam, target, "")
 }
 
 func TestCookieSemanticsRejectLookalikeDomain(t *testing.T) {

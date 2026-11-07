@@ -110,20 +110,21 @@ func (fam *FileAccessManager) http2Client(verify bool) *http.Client {
 
 // h2CookieHeader — same matching loop as httpCookieAppend
 // (fa_http_cookie.go), flattened to a Cookie header value.
-func (hf *h2File) h2CookieHeader(host, path string,
+func (hf *h2File) h2CookieHeader(host string, port int, path string,
 	extra *httpnet.HTTPHeaderList) string {
-	return hf.h2CookieHeaderFor(host, path, cookieURLSecure(hf.url), extra)
+	return hf.h2CookieHeaderFor(host, port, path, cookieURLSecure(hf.url), extra)
 }
 
 // h2CookieHeaderFor builds the Cookie header for a request whose own
 // scheme is known: after a redirect the request URL differs from hf.url,
-// so Secure must be judged on the URL actually being sent.
-func (hf *h2File) h2CookieHeaderFor(host, path string, secureReq bool,
+// so Secure must be judged on the URL actually being sent. port is the
+// destination port, 0 for the scheme's default.
+func (hf *h2File) h2CookieHeaderFor(host string, port int, path string, secureReq bool,
 	extra *httpnet.HTTPHeaderList) string {
 	fam := hf.fam
 	var b strings.Builder
 	s := ""
-	for _, c := range fam.selectCookies(host, path, secureReq, hf.importedOwner, hf.debug,
+	for _, c := range fam.selectCookies(host, port, path, secureReq, hf.importedOwner, hf.debug,
 		func(name string) bool { return extraCookieOverrides(extra, name) }) {
 		b.WriteString(s)
 		b.WriteString(c.name)
@@ -229,7 +230,7 @@ func (hf *h2File) h2NewRequest(url, method string, start int64) (*http.Request, 
 	}
 	req.Header.Set("Accept", "*/*")
 
-	if ck := hf.h2CookieHeaderFor(u.Hostname(), path, cookieURLSecure(url), &cookies); ck != "" {
+	if ck := hf.h2CookieHeaderFor(u.Hostname(), urlPortNum(u), path, cookieURLSecure(url), &cookies); ck != "" {
 		req.Header.Set("Cookie", ck)
 	}
 	for _, hh := range headers.List {

@@ -24,7 +24,7 @@ func TestHTTPCookieBaselineInspectorOverride(t *testing.T) {
 	var explicit, out httpnet.HTTPHeaderList
 	explicit.Add("session", "explicit-value", false)
 	hf := &httpFile{fam: fam, url: "https://example.test/path", path: "/path"}
-	httpCookieAppend("example.test", hf, &out, &explicit)
+	httpCookieAppend("example.test", 0, hf, &out, &explicit)
 	got, ok := out.Get("Cookie")
 	if !ok || got != "session=explicit-value" {
 		t.Fatalf("inspector override broken (present=%t); expected one explicit cookie", ok)
@@ -38,9 +38,9 @@ func TestHTTPCookieBaselineSharedH1H2Jar(t *testing.T) {
 	}
 	var extra, headers httpnet.HTTPHeaderList
 	hf := &httpFile{fam: fam, path: "/", url: "https://example.test/"}
-	httpCookieAppend("example.test", hf, &headers, &extra)
+	httpCookieAppend("example.test", 0, hf, &headers, &extra)
 	gotH1, _ := headers.Get("Cookie")
-	gotH2 := (&h2File{fam: fam, url: "https://example.test/"}).h2CookieHeader("example.test", "/", &extra)
+	gotH2 := (&h2File{fam: fam, url: "https://example.test/"}).h2CookieHeader("example.test", 0, "/", &extra)
 	if gotH1 != "shared=synthetic" || gotH2 != gotH1 {
 		t.Fatalf("shared-jar mismatch: http1=%q http2=%q", gotH1, gotH2)
 	}

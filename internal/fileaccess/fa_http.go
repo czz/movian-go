@@ -640,7 +640,7 @@ again:
 		return err
 	}
 
-	httpCookieAppend(hf.connection.hostname, hf, &headers, &cookies)
+	httpCookieAppend(hf.connection.hostname, hf.connection.port, hf, &headers, &cookies)
 	cookies.Free()
 
 	hf.hfTrace("Sending open request for %s (cid=%d)",
@@ -938,7 +938,7 @@ func httpReadI(hf *httpFile, buf []byte) int {
 				q.QPrintf("Range: %s\r\n", rangestr)
 			}
 
-			httpCookieAppend(hc.hostname, hf, &headers, &cookies)
+			httpCookieAppend(hc.hostname, hc.port, hf, &headers, &cookies)
 			cookies.Free()
 			hf.hfTrace("Read issuing new request for %s (cid=%d)",
 				hf.url, hc.id)

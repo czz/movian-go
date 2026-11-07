@@ -12,6 +12,7 @@ package fileaccess
 import (
 	"math"
 	"net/http"
+	"net/url"
 	"slices"
 	"strconv"
 	"strings"
@@ -383,18 +384,19 @@ func cookieExpiry(now int64, expires time.Time, maxAge int64, hasMaxAge bool) in
 }
 
 // cookieSendable reports whether hc may be attached to a request for
-// host/path now. HTTP/1 and HTTP/2/3 senders share it so the rules cannot
-// drift. secureReq is true when the request goes over TLS. importedOwner
-// is the owner of a request that opted in with FaImportedCookies; an
-// imported record is sent to that owner only.
-func cookieSendable(hc *httpCookie, host, path string, secureReq bool,
+// host:port/path now. HTTP/1 and HTTP/2/3 senders share it so the rules
+// cannot drift. port is the destination port, 0 or negative for the
+// scheme's default. secureReq is true when the request goes over TLS.
+// importedOwner is the owner of a request that opted in with
+// FaImportedCookies; an imported record is sent to that owner only.
+func cookieSendable(hc *httpCookie, host string, port int, path string, secureReq bool,
 	importedOwner string, now int64) bool {
-	return cookieSkipReason(hc, host, path, secureReq, importedOwner, now) == ""
+	return cookieSkipReason(hc, host, port, path, secureReq, importedOwner, now) == ""
 }
 
 // cookieSkipReason is "" when hc may be sent, else why not. It holds the
 // rules; cookieSendable and the clearance debug trace both use it.
-func cookieSkipReason(hc *httpCookie, host, path string, secureReq bool,
+func cookieSkipReason(hc *httpCookie, host string, port int, path string, secureReq bool,
 	importedOwner string, now int64) string {
 	if hc.expire != -1 && now > hc.expire {
 		return "expired"
@@ -409,6 +411,8 @@ func cookieSkipReason(hc *httpCookie, host, path string, secureReq bool,
 			return "insecure-request"
 		case !strings.EqualFold(host, hc.domain):
 			return "host-mismatch"
+		case !importedPortMatch(hc.scopeOrigin, port):
+			return "port-mismatch"
 		}
 	}
 	if hc.secure && !secureReq {
@@ -421,6 +425,28 @@ func cookieSkipReason(hc *httpCookie, host, path string, secureReq bool,
 		return "domain-or-path-mismatch"
 	}
 	return ""
+}
+
+// importedPortMatch reports whether a request to port is for the origin an
+// imported record was solved for. An origin without a port is the https
+// default; port 0 or negative means the scheme's default.
+func importedPortMatch(scopeOrigin string, port int) bool {
+	want := 443
+	if u, err := url.Parse(scopeOrigin); err == nil && u.Port() != "" {
+		if p, err := strconv.Atoi(u.Port()); err == nil {
+			want = p
+		}
+	}
+	if port <= 0 {
+		port = 443
+	}
+	return port == want
+}
+
+// urlPortNum is the explicit port of u, or 0 when it names none.
+func urlPortNum(u *url.URL) int {
+	p, _ := strconv.Atoi(u.Port())
+	return p
 }
 
 // cookieURLSecure reports whether a request URL is TLS-protected.
@@ -542,7 +568,7 @@ func (fam *FileAccessManager) HTTPDeleteCookies(host, path string, names map[str
 }
 
 // httpCookieAppend — C: http_cookie_append.
-func httpCookieAppend(reqHost string, hf *httpFile,
+func httpCookieAppend(reqHost string, reqPort int, hf *httpFile,
 	headers, extraCookies *httpnet.HTTPHeaderList) {
 	fam := hf.fam
 	if hf.noCookies {
@@ -560,7 +586,7 @@ func httpCookieAppend(reqHost string, hf *httpFile,
 	var hq misc.HtsbufQueue
 	hq.HtsbufQueueSetup(0)
 
-	for _, c := range fam.selectCookies(reqHost, reqPath, secureReq, hf.importedOwner, hf.debug,
+	for _, c := range fam.selectCookies(reqHost, reqPort, reqPath, secureReq, hf.importedOwner, hf.debug,
 		func(name string) bool { return extraCookieOverrides(extraCookies, name) }) {
 		hq.Append([]byte(s))
 		hq.Append([]byte(c.name))
