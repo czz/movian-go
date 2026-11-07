@@ -39,6 +39,14 @@ type httpCookie struct {
 	secure bool  // Secure attribute: only sent over https
 	// hostOnly: no Domain attribute, so only the exact host gets it.
 	hostOnly bool
+
+	// Imported records (HTTPImportClearance) are never sent by the generic
+	// jar; see cookieSendable.
+	imported    bool
+	ua          string // User-Agent the cookie is bound to
+	scopeOrigin string // https://host the record was solved for
+	scopeOwner  string // context that imported it
+	uaPinned    bool   // this record set the host's User-Agent pin
 }
 
 // HTTPCookieRecord — persisted cookie fields (C: htsmsg map entries in
@@ -50,6 +58,11 @@ type HTTPCookieRecord struct {
 	// HostOnly is false for records written before this field existed,
 	// which keeps their earlier domain-wide behaviour.
 	HostOnly bool
+	// Imported clearance record fields (optional; absent in older records).
+	Imported    bool
+	UA          string
+	ScopeOrigin string
+	ScopeOwner  string
 }
 
 // validateCookie — C: validate_cookie (RFC 2109 §4.3.2).
@@ -115,6 +128,7 @@ func (fam *FileAccessManager) cookiePersist(c *callout.Callout, opaque any) {
 	now := time.Now().Unix()
 	var records []HTTPCookieRecord
 	fam.httpCookies.mu.Lock()
+	fam.purgeExpiredImportedLocked(now)
 	for _, hc := range fam.httpCookies.list {
 		if hc.expire == -1 || now > hc.expire {
 			continue
@@ -122,7 +136,8 @@ func (fam *FileAccessManager) cookiePersist(c *callout.Callout, opaque any) {
 		records = append(records, HTTPCookieRecord{
 			Name: hc.name, Path: hc.path, Domain: hc.domain,
 			Value: hc.value, Expire: hc.expire, Secure: hc.secure,
-			HostOnly: hc.hostOnly,
+			HostOnly: hc.hostOnly, Imported: hc.imported, UA: hc.ua,
+			ScopeOrigin: hc.scopeOrigin, ScopeOwner: hc.scopeOwner,
 		})
 	}
 	fam.httpCookies.mu.Unlock()
@@ -138,6 +153,20 @@ func (fam *FileAccessManager) loadCookies() {
 	for _, r := range fam.httpCookies.cookieLoad(fam.httpCookies.cookieStore) {
 		if r.Name == "" || r.Path == "" || r.Domain == "" ||
 			r.Value == "" || r.Expire < now {
+			continue
+		}
+		if r.Imported {
+			hc, ok := validLoadedImported(r, now)
+			if !ok || fam.findImportedLocked(hc.scopeOrigin, hc.name) >= 0 {
+				continue
+			}
+			if ua := fam.importedHostUALocked(hc.domain, -1); ua != "" && ua != hc.ua {
+				continue // a host has one pinned UA
+			}
+			prior := fam.httpDomainUAGet(hc.domain)
+			hc.uaPinned = prior != hc.ua
+			fam.HTTPDomainSetUserAgent(hc.domain, hc.ua)
+			fam.httpCookies.list = append([]*httpCookie{&hc}, fam.httpCookies.list...)
 			continue
 		}
 		fam.httpCookies.list = append([]*httpCookie{{
@@ -310,9 +339,16 @@ func cookieExpiry(now int64, expires time.Time, maxAge int64, hasMaxAge bool) in
 
 // cookieSendable reports whether hc may be attached to a request for
 // host/path now. HTTP/1 and HTTP/2/3 senders share it so the rules cannot
-// drift. secureReq is true when the request goes over TLS.
-func cookieSendable(hc *httpCookie, host, path string, secureReq bool, now int64) bool {
+// drift. secureReq is true when the request goes over TLS. importedOwner
+// is the owner of a request that opted in with FaImportedCookies; an
+// imported record is sent to that owner only.
+func cookieSendable(hc *httpCookie, host, path string, secureReq bool,
+	importedOwner string, now int64) bool {
 	if hc.expire != -1 && now > hc.expire {
+		return false
+	}
+	if hc.imported && (importedOwner == "" || hc.scopeOwner != importedOwner ||
+		!secureReq || !strings.EqualFold(host, hc.domain)) {
 		return false
 	}
 	if hc.secure && !secureReq {
@@ -346,6 +382,11 @@ func (fam *FileAccessManager) cookieJarPut(nc httpCookie) {
 	idx := -1
 	for i, x := range fam.httpCookies.list {
 		if x.name == nc.name && x.path == nc.path && x.domain == nc.domain {
+			if x.imported {
+				// An imported record is only changed through its own API.
+				fam.httpCookies.mu.Unlock()
+				return
+			}
 			idx = i
 			break
 		}
@@ -377,11 +418,16 @@ func (fam *FileAccessManager) HTTPInjectCookies(host, path string, cookies map[s
 	fam.httpCookies.mu.Lock()
 	for name, value := range cookies {
 		var hc *httpCookie
+		protected := false
 		for _, x := range fam.httpCookies.list {
 			if x.name == name && x.path == path && x.domain == host {
 				hc = x
+				protected = x.imported
 				break
 			}
+		}
+		if protected {
+			continue
 		}
 		if hc == nil {
 			hc = &httpCookie{name: name, path: path, domain: host}
@@ -409,7 +455,7 @@ func (fam *FileAccessManager) HTTPDeleteCookies(host, path string, names map[str
 	n := 0
 	kept := fam.httpCookies.list[:0]
 	for _, x := range fam.httpCookies.list {
-		if (len(names) == 0 || names[x.name]) &&
+		if !x.imported && (len(names) == 0 || names[x.name]) &&
 			(!x.hostOnly || strings.EqualFold(host, x.domain)) &&
 			validateCookie(host, path, x.domain, x.path) == 0 {
 			n++
@@ -445,40 +491,18 @@ func httpCookieAppend(reqHost string, hf *httpFile,
 		secureReq = hf.connection.ssl
 	}
 	s := ""
-	now := time.Now().Unix()
 
 	var hq misc.HtsbufQueue
 	hq.HtsbufQueueSetup(0)
 
-	fam.httpCookies.mu.Lock()
-	for _, hc := range fam.httpCookies.list {
-		if !cookieSendable(hc, reqHost, reqPath, secureReq, now) {
-			continue
-		}
-		// C: http_header_get(extra_cookies, hc->hc_name) — presence
-		// check only (even an empty value suppresses the cookie).
-		if _, ok := extraCookies.Get(hc.name); ok {
-			continue
-		}
-		// Skip overridden headers — C: LIST_FOREACH + strcmp
-		// (case-sensitive)
-		skip := false
-		for _, hh := range extraCookies.List {
-			if hh.Key == hc.name {
-				skip = true
-				break
-			}
-		}
-		if skip {
-			continue
-		}
+	for _, c := range fam.selectCookies(reqHost, reqPath, secureReq, hf.importedOwner,
+		func(name string) bool { return extraCookieOverrides(extraCookies, name) }) {
 		hq.Append([]byte(s))
-		hq.Append([]byte(hc.name))
+		hq.Append([]byte(c.name))
 		hq.Append([]byte("="))
-		hq.Append([]byte(hc.value))
+		hq.Append([]byte(c.value))
 		s = "; "
 	}
-	fam.httpCookies.mu.Unlock()
 
 	for _, hh := range extraCookies.List {
 		// C: if(hh->hh_value == NULL) continue; — Go values are never
@@ -494,4 +518,20 @@ func httpCookieAppend(reqHost string, hf *httpFile,
 		return
 	}
 	headers.AddAlloced("Cookie", hq.String(), false)
+}
+
+// extraCookieOverrides reports whether the request's own cookie list names
+// name. C: http_header_get(extra_cookies, hc_name) is a presence check
+// (even an empty value suppresses the jar cookie), plus a case-sensitive
+// scan of the list.
+func extraCookieOverrides(extra *httpnet.HTTPHeaderList, name string) bool {
+	if _, ok := extra.Get(name); ok {
+		return true
+	}
+	for _, hh := range extra.List {
+		if hh.Key == name {
+			return true
+		}
+	}
+	return false
 }

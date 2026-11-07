@@ -90,17 +90,22 @@ func (fam *FileAccessManager) addPermanentRedirect(from, to string) {
 
 // HTTPDomainSetUserAgent pins a User-Agent for a host ("" clears).
 func (fam *FileAccessManager) HTTPDomainSetUserAgent(host, ua string) {
+	host = strings.ToLower(host)
 	fam.httpDUA.Lock()
 	defer fam.httpDUA.Unlock()
 	if ua == "" {
 		delete(fam.httpDUA.m, host)
 	} else {
+		if fam.httpDUA.m == nil {
+			fam.httpDUA.m = map[string]string{}
+		}
 		fam.httpDUA.m[host] = ua
 	}
 }
 
 // httpDomainUAGet returns the pinned UA for host, "" if none.
 func (fam *FileAccessManager) httpDomainUAGet(host string) string {
+	host = strings.ToLower(host)
 	fam.httpDUA.Lock()
 	defer fam.httpDUA.Unlock()
 	return fam.httpDUA.m[host]
@@ -140,7 +145,7 @@ func httpHeadersSetup(l *httpnet.HTTPHeaderList, hf *httpFile) {
 	}
 	l.Add("Connection", conn, false)
 	// C: snprintf(str[200], APPNAMEUSER" %s %s", systype, appversion)
-	if ua := fam.httpDomainUAGet(hc.hostname); ua != "" {
+	if ua := fam.requestUA(hc.hostname); ua != "" {
 		l.Add("User-Agent", ua, false)
 	} else {
 		l.Add("User-Agent", snprintfN(200, "Movian Go %s %s",
@@ -717,6 +722,9 @@ func httpOpenEx(fam *FileAccessManager, url string, nonInteractive *int,
 	hf.streaming = flags&FaStreaming != 0
 	hf.noRetries = flags&FaNoRetries != 0
 	hf.noCookies = flags&FaNoCookies != 0
+	if flags&FaImportedCookies != 0 && foe != nil {
+		hf.importedOwner = foe.ImportedOwner
+	}
 	hf.sslVerify = flags&FaSSLVerify != 0
 
 	if foe != nil {
@@ -1554,6 +1562,10 @@ func (fam *FileAccessManager) HTTPReqv(url string, args []any,
 				*p = ""
 			}
 
+		case HTTPTagImportedOwner: // string
+			hra.importedOwner, _ = args[i].(string)
+			i++
+
 		case HTTPTagResponseCode: // *int
 			p, _ := args[i].(*int)
 			i++
@@ -1582,6 +1594,9 @@ func (fam *FileAccessManager) HTTPReqv(url string, args []any,
 	}
 	hf.reqCompression = hra.flags&FaCompression != 0
 	hf.noCookies = hra.flags&FaNoCookies != 0
+	if hra.flags&FaImportedCookies != 0 {
+		hf.importedOwner = hra.importedOwner
+	}
 	hf.sslVerify = hra.flags&FaSSLVerify != 0
 	hf.url = url
 

@@ -61,6 +61,8 @@ type h2File struct {
 	ranged bool // last response honored our Range (206)
 	debug  bool
 	id     int32
+	// importedOwner is the owner of a request that set FaImportedCookies.
+	importedOwner string
 }
 
 // h2Trace — same pattern as hfTrace (fa_http.go).
@@ -119,34 +121,16 @@ func (hf *h2File) h2CookieHeader(host, path string,
 func (hf *h2File) h2CookieHeaderFor(host, path string, secureReq bool,
 	extra *httpnet.HTTPHeaderList) string {
 	fam := hf.fam
-	now := time.Now().Unix()
 	var b strings.Builder
 	s := ""
-	fam.httpCookies.mu.Lock()
-	for _, hc := range fam.httpCookies.list {
-		if !cookieSendable(hc, host, path, secureReq, now) {
-			continue
-		}
-		if _, ok := extra.Get(hc.name); ok {
-			continue
-		}
-		skip := false
-		for _, hh := range extra.List {
-			if hh.Key == hc.name {
-				skip = true
-				break
-			}
-		}
-		if skip {
-			continue
-		}
+	for _, c := range fam.selectCookies(host, path, secureReq, hf.importedOwner,
+		func(name string) bool { return extraCookieOverrides(extra, name) }) {
 		b.WriteString(s)
-		b.WriteString(hc.name)
+		b.WriteString(c.name)
 		b.WriteString("=")
-		b.WriteString(hc.value)
+		b.WriteString(c.value)
 		s = "; "
 	}
-	fam.httpCookies.mu.Unlock()
 	for _, hh := range extra.List {
 		b.WriteString(s)
 		b.WriteString(hh.Key)
@@ -233,7 +217,7 @@ func (hf *h2File) h2NewRequest(url, method string, start int64) (*http.Request, 
 		return nil, err
 	}
 
-	if ua := hf.fam.httpDomainUAGet(u.Hostname()); ua != "" {
+	if ua := hf.fam.requestUA(u.Hostname()); ua != "" {
 		req.Header.Set("User-Agent", ua)
 	} else {
 		req.Header.Set("User-Agent", fmt.Sprintf("Movian Go %s %s",
@@ -422,6 +406,9 @@ func h2Open(fap *FAProtocol, url string, flags int,
 		foe:    foe,
 		id:     h2FileID.Add(1),
 		debug:  flags&FaDebug != 0 || fam.Gconf().EnableHTTPDebug.Load(),
+	}
+	if flags&FaImportedCookies != 0 && flags&FaNoCookies == 0 && foe != nil {
+		hf.importedOwner = foe.ImportedOwner
 	}
 	if c := foeCancellable(foe); c != nil {
 		hf.c = misc.CancellableRetain(c)

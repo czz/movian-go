@@ -39,6 +39,7 @@ type esHTTPRequest struct {
 	ehrHTTPArgs        []string // C: char **ehr_httpargs (strvec)
 
 	ehrFlags     int
+	ehrOwner     string // EsGet(ctx).ID(); names the owner for FaImportedCookies
 	ehrHeadreq   int
 	ehrMinExpire int
 	ehrCache     int
@@ -112,6 +113,12 @@ func disableCacheOnHTTPHeaders(list *httpnet.HTTPHeaderList) int {
 	return 0
 }
 
+// esHTTPReqv runs the request engine; a variable so a test can see the
+// tags http_req hands over.
+var esHTTPReqv = func(fam *facore.FileAccessManager, url string, args []any) int {
+	return fam.HTTPReqv(url, args, nil, nil)
+}
+
 // esHTTPDoRequest — C: es_http_do_request (es_io.c:144-195)
 func esHTTPDoRequest(ehr *esHTTPRequest) {
 	fam := esEnv.fam
@@ -161,6 +168,9 @@ func esHTTPDoRequest(ehr *esHTTPRequest) {
 			facore.HTTPTagMethod, ehr.ehrMethod,
 			facore.HTTPTagResponseCode, &ehr.ehrHTTPStatus,
 		}
+		if ehr.ehrFlags&facore.FaImportedCookies != 0 {
+			args = append(args, facore.HTTPTagImportedOwner, ehr.ehrOwner)
+		}
 		if ehr.ehrConnectTimeout > 0 {
 			args = append(args, facore.HTTPTagConnectTimeout,
 				ehr.ehrConnectTimeout)
@@ -169,7 +179,7 @@ func esHTTPDoRequest(ehr *esHTTPRequest) {
 			args = append(args, facore.HTTPTagReadTimeout,
 				ehr.ehrReadTimeout)
 		}
-		ehr.ehrError = esEnv.fam.HTTPReqv(ehr.ehrURL, args, nil, nil)
+		ehr.ehrError = esHTTPReqv(esEnv.fam, ehr.ehrURL, args)
 
 		if ehr.ehrError != 0 {
 			ehr.ehrResult = nil
@@ -282,6 +292,13 @@ func esHTTPReq(ctx *gaftape.Context) int {
 		ehr.ehrFlags |= facore.FaSSLVerify
 	}
 
+	// persistedCookies: also send the clearance cookies this plugin stored
+	// with persistWebCookie. The owner is the calling context, never an argument.
+	if EsPropIsTrue(ctx, 1, "persistedCookies") != 0 && ec != nil {
+		ehr.ehrFlags |= facore.FaImportedCookies
+		ehr.ehrOwner = ec.ID()
+	}
+
 	ehr.ehrHeadreq = EsPropIsTrue(ctx, 1, "headRequest")
 	ehr.ehrMinExpire = EsPropToInt(ctx, 1, "cacheTime", 0)
 	ehr.ehrConnectTimeout = EsPropToInt(ctx, 1, "connectTimeout", 0)
@@ -360,6 +377,13 @@ func esHTTPReq(ctx *gaftape.Context) int {
 	ctx.GetPropString(1, "method")
 	ehr.ehrMethod = ctx.GetString(-1)
 	ctx.Pop()
+
+	// The cache is keyed by URL, not by owner: a response fetched with a
+	// clearance cookie must not be served to, or from, anyone else.
+	if ehr.ehrFlags&facore.FaImportedCookies != 0 {
+		ehr.ehrCache = 0
+		ehr.ehrMinExpire = 0
+	}
 
 	// Disable caching when specific headers are present
 	if ehr.ehrCache != 0 && ehr.ehrMinExpire == 0 {

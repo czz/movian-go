@@ -35,6 +35,7 @@ var HTTPBufferInternally = &struct{ httpBufferInternally int }{}
 
 // HTTPReqAux — C: http_req_aux_t.
 type HTTPReqAux struct {
+	importedOwner  string // HTTPTagImportedOwner
 	refcount       int32
 	total          int64
 	bytesCompleted int64

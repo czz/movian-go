@@ -35,6 +35,34 @@ type httpConnection struct {
 	callout    callout.Callout
 }
 
+// redactImportedCookies drops the name=value pair of every imported
+// clearance cookie from a Cookie request line; ordinary pairs stay, as
+// they always were traced.
+func (fam *FileAccessManager) redactImportedCookies(line string) string {
+	name, val, ok := strings.Cut(line, ":")
+	if !ok || !strings.EqualFold(strings.TrimSpace(name), "cookie") {
+		return line
+	}
+	secret := map[string]bool{}
+	fam.httpCookies.mu.Lock()
+	for _, hc := range fam.httpCookies.list {
+		if hc.imported {
+			secret[hc.name+"="+hc.value] = true
+		}
+	}
+	fam.httpCookies.mu.Unlock()
+	if len(secret) == 0 {
+		return line
+	}
+	var keep []string
+	for _, pair := range strings.Split(strings.TrimSpace(val), "; ") {
+		if !secret[pair] {
+			keep = append(keep, pair)
+		}
+	}
+	return name + ": " + strings.Join(keep, "; ")
+}
+
 // traceRequest — C: trace_request.
 func traceRequest(q *misc.HtsbufQueue, hf *httpFile) {
 	fam := hf.fam
@@ -42,7 +70,7 @@ func traceRequest(q *misc.HtsbufQueue, hf *httpFile) {
 	r := q.String()
 	for line := range strings.SplitSeq(strings.ReplaceAll(r, "\r\n", "\n"), "\n") {
 		if line != "" {
-			fam.TraceSystem().Trace(trace.TRACE_DEBUG, subsys, "> %s", line)
+			fam.TraceSystem().Trace(trace.TRACE_DEBUG, subsys, "> %s", fam.redactImportedCookies(line))
 		}
 	}
 }
