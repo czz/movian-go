@@ -260,9 +260,13 @@ func httpCookieSet(cookie string, hf *httpFile) {
 	now := time.Now().Unix()
 	expire = cookieExpiry(now, expires, maxAge, hasMaxAge)
 
-	if !hostOnly && cookieDomainIsPublicSuffix(reqHost, domain) {
-		hf.hfTrace("Rejected cookie name=%s domain=%s: public suffix", name, domain)
-		return
+	if !hostOnly {
+		reject, forceHostOnly := cookiePublicSuffixScope(reqHost, domain)
+		if reject {
+			hf.hfTrace("Rejected cookie name=%s domain=%s: public suffix", name, domain)
+			return
+		}
+		hostOnly = hostOnly || forceHostOnly
 	}
 	if r := validateCookieDomain(reqHost, domain); r != 0 {
 		hf.hfTrace("Rejected cookie name=%s path=%s domain=%s value=%s error=%d",
@@ -283,17 +287,21 @@ func httpCookieSet(cookie string, hf *httpFile) {
 	})
 }
 
-// cookieDomainIsPublicSuffix reports whether a Domain attribute names a
-// public suffix (co.uk) and so must not scope a cookie to every site under
-// it. A suffix equal to the request host is not rejected: the caller keeps
-// it, host-only.
-func cookieDomainIsPublicSuffix(reqHost, domain string) bool {
-	domain = strings.ToLower(strings.TrimPrefix(domain, "."))
-	if domain == strings.ToLower(reqHost) {
-		return false
-	}
+// cookiePublicSuffixScope applies RFC 6265 §5.3 step 5 to a Domain
+// attribute. A domain that names a public suffix (co.uk) must not scope a
+// cookie to every site under it: when the suffix is not the request host
+// the cookie is rejected; when it is the request host the cookie is kept
+// but becomes host-only. A domain that is not a public suffix is left alone.
+func cookiePublicSuffixScope(reqHost, domain string) (reject, hostOnly bool) {
+	domain = cookieCanonDomain(domain)
 	suffix, _ := publicsuffix.PublicSuffix(domain)
-	return suffix == domain
+	if suffix != domain {
+		return false, false
+	}
+	if domain == strings.ToLower(reqHost) {
+		return false, true
+	}
+	return true, false
 }
 
 // cookieDefaultPath is the RFC 6265 §5.1.4 default-path: the request path
