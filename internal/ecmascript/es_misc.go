@@ -76,7 +76,7 @@ func esWebpopup(ctx *gaftape.Context) int {
 		ctx.Pop()
 	}
 
-	wr := ui.WebpopupCreate(url, title, trap, wait...)
+	wr := ui.WebpopupCreateFor(clearanceOwner(ctx), url, title, trap, wait...)
 
 	ctx.PushString(popupResultName(wr.ResultCode))
 	ctx.PutPropString(-2, "result")
@@ -157,9 +157,17 @@ func esWebUserAgent(ctx *gaftape.Context) int {
 	return 1
 }
 
+// esSupportsBrowserLogin — popup.supportsBrowserLogin(): whether the webview
+// backend is a full browser able to carry a login flow. A build-time property
+// of the backend, never derived from the OS or the UA.
+func esSupportsBrowserLogin(ctx *gaftape.Context) int {
+	ctx.PushBoolean(ui.WebpopupSupportsBrowserLogin)
+	return 1
+}
+
 // Seams for the webview, replaced by a fake in tests (no CEF).
 var (
-	webpopupCookieList = ui.WebpopupCookieList
+	webpopupCookieList = ui.WebpopupCookieListFor
 	webpopupUserAgent  = ui.WebpopupUserAgent
 )
 
@@ -214,7 +222,7 @@ func esPersistWebCookie(ctx *gaftape.Context) int {
 	}
 	var pick *ui.WebpopupCookie
 	matches := 0
-	cookies := webpopupCookieList(raw)
+	cookies := webpopupCookieList(owner, raw, name)
 	for i := range cookies {
 		if cookies[i].Name == name {
 			matches++
@@ -588,6 +596,7 @@ var fnlistPopup = []gaftape.FunctionListEntry{
 	{Key: "webbrowser", Value: esWebbrowser, Nargs: 2},
 	{Key: "webcookies", Value: esWebcookies, Nargs: 1},
 	{Key: "webuseragent", Value: esWebUserAgent, Nargs: 0},
+	{Key: "supportsBrowserLogin", Value: esSupportsBrowserLogin, Nargs: 0},
 	{Key: "injectcookies", Value: esInjectCookies, Nargs: 2},
 	{Key: "deletecookies", Value: esDeleteCookies, Nargs: -1},
 	{Key: "persistWebCookie", Value: esPersistWebCookie, Nargs: 2},

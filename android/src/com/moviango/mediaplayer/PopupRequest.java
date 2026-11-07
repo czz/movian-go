@@ -99,11 +99,21 @@ final class PopupRequest {
         }
     }
 
-    /** The user pressed Back. */
-    boolean finishBack() { return finish(json("userclose", null, null)); }
+    /**
+     * The user pressed Back. topUrl is the page the top frame showed; its
+     * origin is reported when it is https (the Go side still checks it against
+     * the cookie target), otherwise the result carries no origin.
+     */
+    boolean finishBack(String topUrl) { return finish(json("userclose", null, httpsOriginOf(topUrl))); }
 
     /** The Activity is being destroyed; no-op when a result already exists. */
-    boolean finishDestroyed() { return finish(json("userclose", null, null)); }
+    boolean finishDestroyed(String topUrl) { return finish(json("userclose", null, httpsOriginOf(topUrl))); }
+
+    /** originOf(value) for an https URL, else null. */
+    static String httpsOriginOf(String value) {
+        if (value == null || !value.regionMatches(true, 0, "https://", 0, 8)) return null;
+        return originOf(value);
+    }
 
     /** The WebView renderer process died. */
     boolean finishRendererGone() { return finish(json("neterror", null, null)); }

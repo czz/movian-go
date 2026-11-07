@@ -187,6 +187,10 @@ public final class WebPopupActivity extends Activity {
         handler.removeCallbacks(waitCookie);
         finish();
     }
+    /** The URL the top frame shows, or null. */
+    private String currentUrl() {
+        try { return webView == null ? null : webView.getUrl(); } catch (Throwable t) { return null; }
+    }
     private void flushCookies() {
         try { if (profileCookies != null) profileCookies.flush(); } catch (Throwable ignored) { }
     }
@@ -201,7 +205,7 @@ public final class WebPopupActivity extends Activity {
         if (finishingResult) return;
         finishingResult = true;
         flushCookies();
-        if (request != null) request.finishBack();
+        if (request != null) request.finishBack(currentUrl());
         handler.removeCallbacks(waitCookie);
         finish();
     }
@@ -215,7 +219,7 @@ public final class WebPopupActivity extends Activity {
         // Finish the request even if the Activity dies without Back (system
         // kill, task removal): the caller must not wait for a dead window.
         handler.removeCallbacks(waitCookie);
-        if (request != null) request.finishDestroyed();
+        if (request != null) request.finishDestroyed(currentUrl());
         finishingResult = true;
         if (webView != null) {
             webView.stopLoading();

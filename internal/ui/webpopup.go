@@ -64,6 +64,8 @@ const (
 type WebpopupResult struct {
 	ResultCode int // C: wr_resultcode
 
+	owner string // plugin that opened the popup; used by the Android backend
+
 	Trapped struct {
 		URL      string                  // C: wr_trapped.url
 		Hostname string                  // C: wr_trapped.hostname

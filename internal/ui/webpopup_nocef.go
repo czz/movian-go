@@ -1,4 +1,4 @@
-//go:build webpopup && !cef
+//go:build webpopup && !cef && !android
 
 package ui
 
@@ -9,6 +9,9 @@ package ui
 // the no-webview result — the plugin-facing contract stays intact.
 // Build with -tags "webpopup cef" (+ a cef pkg-config) for the real
 // backend.
+
+// WebpopupSupportsBrowserLogin — no browser backend is compiled in.
+const WebpopupSupportsBrowserLogin = false
 
 func wpPlatformSetup() {}
 

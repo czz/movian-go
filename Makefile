@@ -226,6 +226,13 @@ linux: check-ffmpeg
 # freetype}_android.sh. The Java shell (android/) assembles the APK —
 # see BUILDING.md for the aapt/javac/d8/zipalign/apksigner steps.
 ANDROID_NDK ?= /opt/android/android-ndk-r23b
+# Android build tags. webpopup compiles the WebPopupActivity bridge
+# (internal/ui/webpopup_android.go). android_cf_firstparty is OPT-IN: set
+# ANDROID_FIRSTPARTY=1 to accept a Partitioned clearance cookie for the exact
+# top-level origin, a restricted scenario that is verified separately. The
+# default build rejects Partitioned cookies.
+ANDROID_FIRSTPARTY ?=
+ANDROID_BUILD_TAGS ?= webpopup$(if $(ANDROID_FIRSTPARTY), android_cf_firstparty)
 ANDROID_TC := $(ANDROID_NDK)/toolchains/llvm/prebuilt/linux-x86_64/bin
 # arm32: -overlay swaps runtime/os_linux32.go for a variant that calls
 # the 32-bit futex/timer_settime syscalls directly — the app seccomp
@@ -259,16 +266,16 @@ $(ANDROID_MODFILE): go.mod go.sum | $(ANDROID_LIBC).patched
 	cp go.sum $(CURDIR)/build/android.sum
 	printf '\nreplace modernc.org/libc => %s\n' "$(ANDROID_LIBC)" >> $@
 android: $(ANDROID_SECCOMP32) $(ANDROID_MODFILE)
-	@echo "Building Movian Go libcore.so for Android (API 26)..."
+	@echo "Building Movian Go libcore.so for Android (API 26), tags: $(ANDROID_BUILD_TAGS)"
 	@echo "Version: $(GIT_DESCRIBE)"
 	GOOS=android GOARCH=arm64 CGO_ENABLED=1 \
 	  CC=$(ANDROID_TC)/aarch64-linux-android26-clang \
-	  go build -buildmode=c-shared -ldflags "$(LDFLAGS)" \
+	  go build -buildmode=c-shared -tags "$(ANDROID_BUILD_TAGS)" -ldflags "$(LDFLAGS)" \
 	  -o libcore_arm64.so ./cmd/movian-go
 	GOOS=android GOARCH=arm GOARM=7 CGO_ENABLED=1 \
 	  CC=$(ANDROID_TC)/armv7a-linux-androideabi26-clang \
 	  GOFLAGS="-overlay=$(ANDROID_SECCOMP32) -modfile=$(ANDROID_MODFILE)" \
-	  $(ANDROID_GO_TC)/bin/go build -buildmode=c-shared -ldflags "$(LDFLAGS)" \
+	  $(ANDROID_GO_TC)/bin/go build -buildmode=c-shared -tags "$(ANDROID_BUILD_TAGS)" -ldflags "$(LDFLAGS)" \
 	  -o libcore_arm.so ./cmd/movian-go
 
 # Full APK — libcore per ABI (android target) + Java shell assembly
@@ -415,30 +422,32 @@ check-all-tags:
 	fi
 	@echo "[check] windows: libcec not possible — libcec on windows is \
 	   the cgo backend (needs a Pulse-Eight libcec build), skipped"
-	@if [ -x "$(ANDROID_TC)/aarch64-linux-android26-clang" ]; then \
-	  echo "[check] android arm64 -tags 'webpopup libcec' (stub popup; no CEF on android)"; \
+	@for ATAGS in "webpopup libcec" "webpopup libcec android_cf_firstparty"; do \
+	if [ -x "$(ANDROID_TC)/aarch64-linux-android26-clang" ]; then \
+	  echo "[check] android arm64 -tags '$$ATAGS' (WebPopupActivity bridge; no CEF on android)"; \
 	  GOOS=android GOARCH=arm64 CGO_ENABLED=1 \
 	    CC=$(ANDROID_TC)/aarch64-linux-android26-clang \
-	    go build -tags "webpopup libcec" ./internal/... ; \
+	    go build -tags "$$ATAGS" ./internal/... || exit 1; \
 	  if [ -f "$(CURDIR)/ffmpeg/android/arm64/lib/libavcodec.a" ]; then \
-	    echo "[check] android arm64 cmd link"; \
+	    echo "[check] android arm64 cmd link -tags '$$ATAGS'"; \
 	    GOOS=android GOARCH=arm64 CGO_ENABLED=1 \
 	      CC=$(ANDROID_TC)/aarch64-linux-android26-clang \
-	      go build -tags "webpopup libcec" ./cmd/movian-go ; \
+	      go build -tags "$$ATAGS" ./cmd/movian-go || exit 1; \
 	  else \
 	    echo "[check] SKIP android cmd link — run scripts/build_ffmpeg_android.sh + build_libxml2_android.sh first (or 'make android')"; \
 	  fi ; \
 	else \
 	  echo "[check] SKIP android arm64 — NDK toolchain not found"; \
-	fi
-	@if [ -x "$(ANDROID_TC)/armv7a-linux-androideabi26-clang" ]; then \
-	  echo "[check] android arm -tags 'webpopup libcec'"; \
+	fi; \
+	if [ -x "$(ANDROID_TC)/armv7a-linux-androideabi26-clang" ]; then \
+	  echo "[check] android arm -tags '$$ATAGS'"; \
 	  GOOS=android GOARCH=arm GOARM=7 CGO_ENABLED=1 \
 	    CC=$(ANDROID_TC)/armv7a-linux-androideabi26-clang \
-	    go build -tags "webpopup libcec" ./internal/... ; \
+	    go build -tags "$$ATAGS" ./internal/... || exit 1; \
 	else \
 	  echo "[check] SKIP android arm — NDK toolchain not found"; \
-	fi
+	fi; \
+	done
 	@echo "[check] rpi: real build is 'make rpi' (armv6 cross+sysroot); \
 	   cef NOT possible on armv6 — no CEF builds exist"
 	@echo "check-all-tags: OK"

@@ -73,8 +73,15 @@ func wpGetJSCookies(uri string) map[string]string {
 // (WebpopupCookieTimeout). The optional wait keeps every three-argument
 // caller source-compatible; an invalid wait does not start the popup.
 func WebpopupCreate(uri, title, trap string, waits ...WebpopupCookieWait) *WebpopupResult {
+	return WebpopupCreateFor("", uri, title, trap, waits...)
+}
+
+// WebpopupCreateFor is WebpopupCreate on behalf of the plugin owner. The
+// Android backend binds its WebView profile and the cookie it later hands
+// out to that owner and refuses an empty one; the CEF backend ignores it.
+func WebpopupCreateFor(owner, uri, title, trap string, waits ...WebpopupCookieWait) *WebpopupResult {
 	wpEnsure()
-	wr := &WebpopupResult{}
+	wr := &WebpopupResult{owner: owner}
 	if !wpPlatformOK() {
 		wr.ResultCode = WebpopupLoadError
 		WebpopupFinalizeResult(wr)
@@ -118,11 +125,19 @@ func WebbrowserOpen(uri, title string) {
 // the result (nil if unsupported) on done. Cookies of other CHIPS
 // partitions are never returned: CEF does not label them.
 func WebpopupCookieList(uri string) []WebpopupCookie {
+	return WebpopupCookieListFor("", uri, "")
+}
+
+// WebpopupCookieListFor is WebpopupCookieList for one cookie name on behalf
+// of a plugin owner. The CEF backend ignores both; the Android backend
+// returns only the clearance cookie its policy accepts for that owner.
+func WebpopupCookieListFor(owner, uri, name string) []WebpopupCookie {
 	wpEnsure()
 	if !wpPlatformOK() {
 		return nil
 	}
 	r := newCookieRead()
+	r.owner, r.name = owner, name
 	wpPlatformDispatch(func() { wpPlatformCookies(uri, r) })
 	select {
 	case cookies := <-r.done:

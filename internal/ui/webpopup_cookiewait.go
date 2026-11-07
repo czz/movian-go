@@ -132,6 +132,8 @@ func (w *cookieWaiter) Fire(code int) bool {
 // callback does nothing and no state outlives the call.
 type cookieRead struct {
 	done      chan []WebpopupCookie // buffered (1)
+	owner     string                // requesting plugin ("" = none); Android only
+	name      string                // wanted cookie name; Android only
 	mu        sync.Mutex
 	abandoned bool
 	cancel    func()
