@@ -58,7 +58,7 @@ extern void cefOnPaint(void *browser, void *data, void *buf,
     int w, int h);
 extern void cefOnLoadStart(void *data, char *url);
 extern void cefOnLoadEnd(void *data);
-extern void cefOnAddressChange(void *data, char *url);
+extern void cefOnAddressChange(void *data, char *url, int is_main);
 extern void cefOnField(void *data, char *msg);
 extern void cefOnConsole(void *data, char *msg);
 extern int cefCookieVisit(void *data, char *name, char *value,
@@ -227,7 +227,7 @@ static void CEF_CALLBACK dh_on_address_change(
     const cef_string_t *url) {
 	char u[2048];
 	cef_go_str(u, sizeof u, url);
-	cefOnAddressChange(((dh_t *)self)->ud, u);
+	cefOnAddressChange(((dh_t *)self)->ud, u, f ? f->is_main(f) : 0);
 }
 
 static int CEF_CALLBACK dh_on_console_message(
@@ -1048,6 +1048,9 @@ type cefSession struct {
 	wr       *WebpopupResult
 	done     chan<- *WebpopupResult
 	finished bool
+	// topURL is the last https page the main frame showed (UI thread
+	// only); the popup's owner may read the jar for its origin afterwards.
+	topURL string
 
 	// popup cookie wait (nil wait = none); UI thread only except waiter
 	wait               *WebpopupCookieWait
@@ -1067,6 +1070,9 @@ type cefSession struct {
 	oskPassword bool
 	oskValue    string
 }
+
+// cefOwnerCtx says which plugin may read the shared CEF jar for which origin.
+var cefOwnerCtx popupOwnerContexts
 
 var cefSessions sync.Map // unsafe.Pointer -> *cefSession
 
@@ -1160,6 +1166,7 @@ func cefOnLoadStart(data unsafe.Pointer, url *C.char) {
 	s.oskField = false
 	s.oskValue = ""
 	s.oskMu.Unlock()
+	s.noteURL(C.GoString(url)) // load start is main frame only
 	s.checkTrapURI(C.GoString(url))
 }
 
@@ -1176,8 +1183,11 @@ func cefOnLoadEnd(data unsafe.Pointer) {
 }
 
 //export cefOnAddressChange
-func cefOnAddressChange(data unsafe.Pointer, url *C.char) {
+func cefOnAddressChange(data unsafe.Pointer, url *C.char, isMain C.int) {
 	if s := cefSessionOf(data); s != nil {
+		if isMain != 0 {
+			s.noteURL(C.GoString(url)) // a subframe never moves the popup's origin
+		}
 		s.checkTrapURI(C.GoString(url))
 	}
 }
@@ -1365,6 +1375,13 @@ func cefCookiesDeleted(data unsafe.Pointer, n C.int) {
 // session lifecycle (main thread)
 // ------------------------------------------------------------------
 
+// noteURL remembers the main frame's latest https page.
+func (s *cefSession) noteURL(uri string) {
+	if httpsOriginOf(uri) != "" {
+		s.topURL = uri
+	}
+}
+
 func (s *cefSession) checkTrapURI(uri string) {
 	if uri != "" && s.trap != "" && strings.HasPrefix(uri, s.trap) &&
 		s.wr.Trapped.URL == "" {
@@ -1452,6 +1469,7 @@ func (s *cefSession) finish(code int) {
 	}
 	s.finished = true
 	s.wr.ResultCode = code
+	cefOwnerCtx.record(s.wr.owner, popupContextURL(code, s.topURL, s.wait))
 	if s.cookieCancel != nil {
 		s.cookieCancel()
 		s.cookieQuery, s.cookieCancel = nil, nil
@@ -1710,6 +1728,7 @@ func cefUAPlatform() string {
 func wpNewSession(uri, trap string, wait *WebpopupCookieWait, wr *WebpopupResult,
 	done chan<- *WebpopupResult) *cefSession {
 	s := &cefSession{trap: trap, wait: wait, wr: wr, done: done}
+	cefOwnerCtx.begin(wr.owner)
 	s.key = cefTokenNew()
 	cefSessions.Store(s.key, s)
 	if wait != nil {
@@ -1779,12 +1798,19 @@ func wpPlatformStorage(dir string) {
 }
 
 // wpPlatformCookies — URL-scoped cookie read via the global cookie
-// manager. Runs on the UI thread and only starts the query; the result goes
+// manager, for an owner only on the origin its own popup ended on (the
+// ownerless legacy read of webcookies() is not restricted). Runs on the UI thread and only starts the query; the result goes
 // to done. A URL CEF cannot parse answers at once with an empty list, and
 // a CEF that cannot start with nil (unsupported).
 func wpPlatformCookies(uri string, r *cookieRead) {
 	if cefEnsureInit() != 1 {
 		r.done <- nil
+		return
+	}
+	if !cefOwnerCtx.readAllowed(r.owner, uri) {
+		// The jar is shared by all plugins: an owner gets a cookie only
+		// from the origin its own popup ended on.
+		r.done <- []WebpopupCookie{}
 		return
 	}
 	u, ok := cefCanonURL(uri)

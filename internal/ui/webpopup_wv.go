@@ -129,8 +129,11 @@ func WebpopupCookieList(uri string) []WebpopupCookie {
 }
 
 // WebpopupCookieListFor is WebpopupCookieList for one cookie name on behalf
-// of a plugin owner. The CEF backend ignores both; the Android backend
-// returns only the clearance cookie its policy accepts for that owner.
+// of a plugin owner. For a non-empty owner both backends answer only for
+// the https origin that owner's own popup ended on: the Android backend
+// returns only the clearance cookie its policy accepts, the CEF backend
+// the URL-scoped cookies of that origin. An empty owner is the legacy
+// ownerless read, which CEF still answers from the whole shared jar.
 func WebpopupCookieListFor(owner, uri, name string) []WebpopupCookie {
 	wpEnsure()
 	if !wpPlatformOK() {
