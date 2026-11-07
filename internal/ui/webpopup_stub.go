@@ -45,6 +45,11 @@ func WebpopupDeleteCookies(host, path string, names map[string]bool) int {
 	return 0
 }
 
+// WebpopupDeleteCookiesFor returns 0 without a webview.
+func WebpopupDeleteCookiesFor(owner, host, path string, names map[string]bool) int {
+	return 0
+}
+
 // WpMainCheck — C: linux_webpopup_check() slot; nothing to drain.
 func WpMainCheck() {}
 

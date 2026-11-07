@@ -180,6 +180,15 @@ var wpDelCookiesMu sync.Mutex
 // the native visitor walks the whole store. An empty jar reports 0 via
 // the wait timeout, like the read path.
 func WebpopupDeleteCookies(host, path string, names map[string]bool) int {
+	return WebpopupDeleteCookiesFor("", host, path, names)
+}
+
+// WebpopupDeleteCookiesFor is WebpopupDeleteCookies on behalf of a plugin
+// owner. The Android backend deletes only in that owner's own WebView
+// profile (and nothing for an empty owner); the count never includes other
+// profiles. CEF has a single cookie store shared by all plugins, so it
+// ignores the owner and deletes from it as before.
+func WebpopupDeleteCookiesFor(owner, host, path string, names map[string]bool) int {
 	wpEnsure()
 	if !wpPlatformOK() {
 		return 0
@@ -187,7 +196,7 @@ func WebpopupDeleteCookies(host, path string, names map[string]bool) int {
 	done := make(chan int, 1)
 	wpDelCookiesMu.Lock()
 	defer wpDelCookiesMu.Unlock()
-	wpPlatformDispatch(func() { wpPlatformDeleteCookies(host, path, names, done) })
+	wpPlatformDispatch(func() { wpPlatformDeleteCookies(owner, host, path, names, done) })
 	select {
 	case n := <-done:
 		return n

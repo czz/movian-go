@@ -32,7 +32,7 @@ func wpPlatformCookies(uri string, r *cookieRead) {
 	r.done <- nil
 }
 
-func wpPlatformDeleteCookies(host, path string, names map[string]bool,
+func wpPlatformDeleteCookies(owner, host, path string, names map[string]bool,
 	done chan int) {
 	done <- 0
 }

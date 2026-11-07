@@ -258,12 +258,14 @@ public final class WebPopupActivity extends Activity {
         return out[0];
     }
     /**
-     * Removes the matching cookies from every clearance profile (one per
-     * plugin) by setting expired twins, then flushes. Bounded by
+     * Removes the matching cookies from the owner's own clearance profile
+     * (one per plugin) by setting expired twins, then flushes. Another
+     * plugin's profile is never read, changed or counted. Bounded by
      * COOKIE_DELETE_TIMEOUT_MS; null on failure or timeout.
      */
-    static String deleteCookies(final String host, final String path, final String namesJson) {
-        if (host == null || host.isEmpty() || Looper.myLooper() == Looper.getMainLooper()) return null;
+    static String deleteCookies(final String owner, final String host, final String path, final String namesJson) {
+        if (owner == null || owner.isEmpty() || host == null || host.isEmpty() ||
+            Looper.myLooper() == Looper.getMainLooper()) return null;
         final java.util.Set<String> names = new java.util.HashSet<String>();
         try {
             if (namesJson != null && !namesJson.isEmpty()) {
@@ -282,22 +284,25 @@ public final class WebPopupActivity extends Activity {
                 String queryUrl = "https://" + host + (reqPath.startsWith("/") ? reqPath : "/" + reqPath);
                 CookieDelete.Plan total = new CookieDelete.Plan();
                 java.util.List<String> deleted = new java.util.ArrayList<String>();
-                for (String name : ProfileStore.getInstance().getAllProfileNames()) {
-                    if (!name.startsWith("clearance-")) continue;
+                // Only the caller's own profile: another plugin's session is
+                // neither deleted nor counted.
+                String name = profileName(owner);
+                if (name != null) {
                     Profile profile = ProfileStore.getInstance().getProfile(name);
-                    if (profile == null) continue;
-                    CookieManager cm = profile.getCookieManager();
-                    List<String> info = CookieManagerCompat.getCookieInfo(cm, queryUrl);
-                    CookieDelete.Plan p = CookieDelete.plan(info, host, reqPath, names, now);
-                    for (CookieDelete.Expiry e : p.expire) {
-                        cm.setCookie(e.url, e.setCookie);
-                        deleted.add(e.name);
+                    if (profile != null) {
+                        CookieManager cm = profile.getCookieManager();
+                        List<String> info = CookieManagerCompat.getCookieInfo(cm, queryUrl);
+                        CookieDelete.Plan p = CookieDelete.plan(info, host, reqPath, names, now);
+                        for (CookieDelete.Expiry e : p.expire) {
+                            cm.setCookie(e.url, e.setCookie);
+                            deleted.add(e.name);
+                        }
+                        if (!p.expire.isEmpty()) cm.flush();
+                        total.expired += p.expired;
+                        total.otherHost += p.otherHost;
+                        total.otherPath += p.otherPath;
+                        total.filtered += p.filtered;
                     }
-                    if (!p.expire.isEmpty()) cm.flush();
-                    total.expired += p.expired;
-                    total.otherHost += p.otherHost;
-                    total.otherPath += p.otherPath;
-                    total.filtered += p.filtered;
                 }
                 out[0] = CookieDelete.resultJson(deleted, total);
             } catch (Throwable ignored) { out[0] = null; }

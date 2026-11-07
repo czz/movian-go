@@ -1842,8 +1842,10 @@ var cefDelNames map[string]bool
 
 // wpPlatformDeleteCookies — deletion via visit_all_cookies with the
 // *del flag; each cookie is filtered Go-side in cefCookieDelMatch
-// (domain/path/name). done receives the number of deleted cookies.
-func wpPlatformDeleteCookies(host, path string, names map[string]bool,
+// (domain/path/name). done receives the number of deleted cookies. CEF has
+// one cookie store shared by every plugin, so the owner cannot scope the
+// deletion: it only keeps the signature the Android backend needs.
+func wpPlatformDeleteCookies(owner, host, path string, names map[string]bool,
 	done chan int) {
 	if cefEnsureInit() != 1 {
 		done <- 0

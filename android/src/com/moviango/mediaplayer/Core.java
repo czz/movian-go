@@ -120,8 +120,8 @@ public class Core {
      * Returns {"deleted":[names],"skipped":{...}}, or null on failure; returns
      * within 8 s.
      */
-    public static String webPopupPrototypeDeleteCookies(String host, String path, String namesJson) {
-        return WebPopupActivity.deleteCookies(host, path, namesJson);
+    public static String webPopupPrototypeDeleteCookies(String owner, String host, String path, String namesJson) {
+        return WebPopupActivity.deleteCookies(owner, host, path, namesJson);
     }
 
     public static String webPopupPrototypeUA() {

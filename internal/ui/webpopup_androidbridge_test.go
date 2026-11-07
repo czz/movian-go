@@ -25,17 +25,24 @@ type fakeAndroidJNI struct {
 	cookieHook func()
 
 	delRaw   string
-	delHost  string
-	delPath  string
-	delNames []string
-	delCalls int
+	delOwner string
+	// delByOwner models the per-owner WebView profiles: an owner's answer
+	// when set, else delRaw.
+	delByOwner map[string]string
+	delHost    string
+	delPath    string
+	delNames   []string
+	delCalls   int
 }
 
-func (f *fakeAndroidJNI) DeleteCookies(host, path string, names []string) string {
+func (f *fakeAndroidJNI) DeleteCookies(owner, host, path string, names []string) string {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.delCalls++
-	f.delHost, f.delPath, f.delNames = host, path, names
+	f.delOwner, f.delHost, f.delPath, f.delNames = owner, host, path, names
+	if raw, ok := f.delByOwner[owner]; ok {
+		return raw
+	}
 	return f.delRaw
 }
 

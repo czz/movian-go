@@ -13,7 +13,7 @@ func delJSON(deleted string) string {
 func TestAndroidDeleteCookiesCountsDeleted(t *testing.T) {
 	f := &fakeAndroidJNI{delRaw: delJSON(`"cf_clearance","bb_session"`)}
 	b := newTestBridge(f)
-	got := b.deleteCookies("Tracker.Example", "/forum", map[string]bool{"cf_clearance": true, "bb_session": true})
+	got := b.deleteCookies("plugin-a", "Tracker.Example", "/forum", map[string]bool{"cf_clearance": true, "bb_session": true})
 	if got != 2 {
 		t.Fatalf("count = %d, want 2", got)
 	}
@@ -28,7 +28,7 @@ func TestAndroidDeleteCookiesCountsDeleted(t *testing.T) {
 func TestAndroidDeleteCookiesNoNamesMeansAll(t *testing.T) {
 	f := &fakeAndroidJNI{delRaw: delJSON(`"a"`)}
 	b := newTestBridge(f)
-	if got := b.deleteCookies("tracker.example", "", nil); got != 1 {
+	if got := b.deleteCookies("plugin-a", "tracker.example", "", nil); got != 1 {
 		t.Fatalf("count = %d", got)
 	}
 	if len(f.delNames) != 0 {
@@ -42,7 +42,7 @@ func TestAndroidDeleteCookiesNoNamesMeansAll(t *testing.T) {
 func TestAndroidDeleteCookiesFailureIsZero(t *testing.T) {
 	for _, raw := range []string{"", "not json", `{"deleted":"x"}`, `[]`} {
 		f := &fakeAndroidJNI{delRaw: raw}
-		if got := newTestBridge(f).deleteCookies("tracker.example", "/", nil); got != 0 {
+		if got := newTestBridge(f).deleteCookies("plugin-a", "tracker.example", "/", nil); got != 0 {
 			t.Errorf("raw %q: count = %d, want 0", raw, got)
 		}
 	}
@@ -50,7 +50,7 @@ func TestAndroidDeleteCookiesFailureIsZero(t *testing.T) {
 
 func TestAndroidDeleteCookiesEmptyHostSkipsJNI(t *testing.T) {
 	f := &fakeAndroidJNI{delRaw: delJSON(`"a"`)}
-	if got := newTestBridge(f).deleteCookies("", "/", nil); got != 0 || f.delCalls != 0 {
+	if got := newTestBridge(f).deleteCookies("plugin-a", "", "/", nil); got != 0 || f.delCalls != 0 {
 		t.Fatalf("count=%d calls=%d", got, f.delCalls)
 	}
 }
@@ -58,7 +58,7 @@ func TestAndroidDeleteCookiesEmptyHostSkipsJNI(t *testing.T) {
 func TestAndroidDeleteCookiesDebugOffLogsNothing(t *testing.T) {
 	logs := clearanceLogSetup(t, false)
 	f := &fakeAndroidJNI{delRaw: delJSON(`"cf_clearance"`)}
-	newTestBridge(f).deleteCookies("tracker.example", "/", nil)
+	newTestBridge(f).deleteCookies("plugin-a", "tracker.example", "/", nil)
 	if got := logs(); got != "" {
 		t.Fatalf("debug off logged:\n%s", got)
 	}
@@ -67,7 +67,7 @@ func TestAndroidDeleteCookiesDebugOffLogsNothing(t *testing.T) {
 func TestAndroidDeleteCookiesDebugOnLogsWhatWasDeleted(t *testing.T) {
 	logs := clearanceLogSetup(t, true)
 	f := &fakeAndroidJNI{delRaw: delJSON(`"cf_clearance","bb_session"`)}
-	newTestBridge(f).deleteCookies("tracker.example", "/forum", map[string]bool{"cf_clearance": true})
+	newTestBridge(f).deleteCookies("plugin-a", "tracker.example", "/forum", map[string]bool{"cf_clearance": true})
 	out := logs()
 	for _, want := range []string{
 		"clearance", "android deletecookies", `host="tracker.example"`, `path="/forum"`,
@@ -85,7 +85,7 @@ func TestAndroidDeleteCookiesDebugOnLogsWhatWasDeleted(t *testing.T) {
 func TestAndroidDeleteCookiesDebugOnLogsFailure(t *testing.T) {
 	logs := clearanceLogSetup(t, true)
 	f := &fakeAndroidJNI{delRaw: ""}
-	newTestBridge(f).deleteCookies("tracker.example", "/", nil)
+	newTestBridge(f).deleteCookies("plugin-a", "tracker.example", "/", nil)
 	if out := logs(); !strings.Contains(out, "android deletecookies failed") {
 		t.Errorf("log lacks failure line:\n%s", out)
 	}
@@ -98,5 +98,37 @@ func TestAndroidDeleteOutcome(t *testing.T) {
 	}
 	if _, ok := androidDeleteOutcome(""); ok {
 		t.Error("empty accepted")
+	}
+}
+
+// Each plugin owns one WebView profile. A delete on behalf of one owner
+// reaches the Java side with that owner only, so the other profile keeps its
+// cookies, and the count is the caller's own.
+func TestAndroidDeleteCookiesIsOwnerScoped(t *testing.T) {
+	f := &fakeAndroidJNI{delByOwner: map[string]string{
+		"plugin-a": delJSON(`"session"`),
+		"plugin-b": delJSON(`"session","cf_clearance"`),
+	}}
+	b := newTestBridge(f)
+	if got := b.deleteCookies("plugin-a", "tracker.example", "/", map[string]bool{"session": true}); got != 1 {
+		t.Fatalf("plugin-a count = %d, want 1 (its own profile only)", got)
+	}
+	if f.delOwner != "plugin-a" {
+		t.Fatalf("Java was asked for owner %q, want plugin-a", f.delOwner)
+	}
+	if got := b.deleteCookies("plugin-b", "tracker.example", "/", nil); got != 2 {
+		t.Fatalf("plugin-b count = %d, want 2", got)
+	}
+	if f.delOwner != "plugin-b" {
+		t.Fatalf("Java was asked for owner %q, want plugin-b", f.delOwner)
+	}
+}
+
+// Without an owner there is no profile to delete from: nothing is asked and
+// nothing is reported, as with the popup itself.
+func TestAndroidDeleteCookiesEmptyOwnerSkipsJNI(t *testing.T) {
+	f := &fakeAndroidJNI{delRaw: delJSON(`"a"`)}
+	if got := newTestBridge(f).deleteCookies("", "tracker.example", "/", nil); got != 0 || f.delCalls != 0 {
+		t.Fatalf("got %d, calls %d", got, f.delCalls)
 	}
 }

@@ -318,3 +318,22 @@ func TestPersistWebCookieDebugLog(t *testing.T) {
 		}
 	})
 }
+
+// deletecookies hands the calling plugin's owner to the webview backend, so
+// an owner-scoped backend (Android) never deletes another plugin's cookies.
+func TestDeleteCookiesPassesCallerOwner(t *testing.T) {
+	clrSetup(t, nil, "")
+	old := webpopupDeleteCookies
+	t.Cleanup(func() { webpopupDeleteCookies = old })
+	var got []string
+	webpopupDeleteCookies = func(owner, host, path string, _ map[string]bool) int {
+		got = append(got, owner+"|"+host+"|"+path)
+		return 1
+	}
+	runNative(esDeleteCookies, "plugin-a", "https://example.test/forum")
+	runNative(esDeleteCookies, "plugin-b", "https://example.test/")
+	want := []string{"plugin-a|example.test|/forum", "plugin-b|example.test|/"}
+	if len(got) != 2 || got[0] != want[0] || got[1] != want[1] {
+		t.Fatalf("backend saw %v, want %v", got, want)
+	}
+}

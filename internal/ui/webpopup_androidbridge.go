@@ -22,10 +22,10 @@ type androidPopupJNI interface {
 	// Cookies returns a JSON array of Set-Cookie strings, or "".
 	Cookies(uri, owner string) string
 	UserAgent() string
-	// DeleteCookies expires the matching cookies in the clearance profiles
-	// and returns {"deleted":[names],...} (see androidDeleteOutcome), or "".
+	// DeleteCookies expires the matching cookies in the owner's clearance
+	// profile only and returns {"deleted":[names],...} (see androidDeleteOutcome), or "".
 	// names empty means every cookie the request would carry.
-	DeleteCookies(host, path string, names []string) string
+	DeleteCookies(owner, host, path string, names []string) string
 }
 
 // androidPopupOutcome maps the Java result JSON to a webpopup result code.
@@ -223,11 +223,13 @@ func androidDeleteOutcome(raw string) (deleted []string, ok bool) {
 }
 
 // deleteCookies is wpPlatformDeleteCookies: it asks Java to expire the
-// WebView cookies a request to host/path would carry (only the listed names
-// when names is not empty) and returns how many it expired.
-func (b *androidBridge) deleteCookies(host, path string, names map[string]bool) int {
+// cookies a request to host/path would carry (only the listed names when
+// names is not empty) in the owner's own WebView profile and returns how
+// many it expired. Another owner's profile is never touched, nor counted. An
+// empty owner has no profile, so nothing is deleted.
+func (b *androidBridge) deleteCookies(owner, host, path string, names map[string]bool) int {
 	host = strings.ToLower(host)
-	if host == "" {
+	if host == "" || owner == "" {
 		return 0
 	}
 	if path == "" {
@@ -238,7 +240,7 @@ func (b *androidBridge) deleteCookies(host, path string, names map[string]bool) 
 		list = append(list, n)
 	}
 	sort.Strings(list)
-	raw := b.jni.DeleteCookies(host, path, list)
+	raw := b.jni.DeleteCookies(owner, host, path, list)
 	deleted, ok := androidDeleteOutcome(raw)
 	if clearanceDebug() {
 		if !ok {

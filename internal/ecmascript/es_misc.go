@@ -169,6 +169,9 @@ func esSupportsBrowserLogin(ctx *gaftape.Context) int {
 var (
 	webpopupCookieList = ui.WebpopupCookieListFor
 	webpopupUserAgent  = ui.WebpopupUserAgent
+	// webpopupDeleteCookies is owner-scoped on Android; CEF's single store
+	// ignores the owner.
+	webpopupDeleteCookies = ui.WebpopupDeleteCookiesFor
 )
 
 // pushClearance pushes the plugin-visible shape of an imported record:
@@ -352,7 +355,9 @@ func esInjectCookies(ctx *gaftape.Context) int {
 // HTTP jar + webview store) so a plugin can finish a logout for real.
 // Optional second arg limits deletion to the listed names (array of
 // strings, or an object whose keys are the names). Returns the total
-// number of cookies removed.
+// number of cookies removed. The webview part is scoped to the calling
+// plugin's own profile where the backend has one (Android); CEF has a single
+// store, so there it removes the matching cookies of every plugin.
 func esDeleteCookies(ctx *gaftape.Context) int {
 	url := ctx.SafeToString(0)
 	var hbuf [256]byte
@@ -385,7 +390,7 @@ func esDeleteCookies(ctx *gaftape.Context) int {
 		ctx.Pop()
 	}
 	n := esEnv.fam.HTTPDeleteCookies(host, path, names)
-	n += ui.WebpopupDeleteCookies(host, path, names)
+	n += webpopupDeleteCookies(clearanceOwner(ctx), host, path, names)
 	ctx.PushInt(n)
 	return 1
 }

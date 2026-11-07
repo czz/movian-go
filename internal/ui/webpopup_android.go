@@ -73,7 +73,7 @@ var androidBridgeInst = newAndroidBridge(androidJNI{})
 const (
 	sigPopup   = "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;J)Ljava/lang/String;"
 	sigCookies = "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"
-	sigDelete  = "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"
+	sigDelete  = "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"
 	sigUA      = "()Ljava/lang/String;"
 )
 
@@ -85,12 +85,12 @@ func (androidJNI) Cookies(uri, owner string) string {
 	return androidPopupCall("webPopupPrototypeCookies", sigCookies, 0, false, uri, owner)
 }
 
-func (androidJNI) DeleteCookies(host, path string, names []string) string {
+func (androidJNI) DeleteCookies(owner, host, path string, names []string) string {
 	if names == nil {
 		names = []string{} // marshal as [], not null
 	}
 	list, _ := json.Marshal(names)
-	return androidPopupCall("webPopupPrototypeDeleteCookies", sigDelete, 0, false, host, path, string(list))
+	return androidPopupCall("webPopupPrototypeDeleteCookies", sigDelete, 0, false, owner, host, path, string(list))
 }
 
 func (androidJNI) UserAgent() string {
@@ -168,10 +168,11 @@ func wpPlatformStorage(dir string) {}
 
 func wpPlatformCookies(uri string, r *cookieRead) { androidBridgeInst.readCookies(uri, r) }
 
-// wpPlatformDeleteCookies expires the matching WebView cookies of every
-// clearance profile. Java bounds the call at 8 s; the caller waits 10 s.
-func wpPlatformDeleteCookies(host, path string, names map[string]bool, done chan int) {
-	done <- androidBridgeInst.deleteCookies(host, path, names)
+// wpPlatformDeleteCookies expires the matching WebView cookies of the
+// owner's clearance profile only. Java bounds the call at 8 s; the caller
+// waits 10 s.
+func wpPlatformDeleteCookies(owner, host, path string, names map[string]bool, done chan int) {
+	done <- androidBridgeInst.deleteCookies(owner, host, path, names)
 }
 
 func wpPlatformUserAgent() string { return androidBridgeInst.userAgent() }
