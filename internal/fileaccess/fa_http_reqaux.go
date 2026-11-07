@@ -303,11 +303,11 @@ retry:
 			}
 		}
 
-		httpCookieAppend(hc.hostname, hc.port, hf, &headers, &cookies)
+		boundUA := httpCookieAppend(hc.hostname, hc.port, hf, &headers, &cookies)
 		cookies.Free()
 
 		hf.hfTrace("Sending request for %s (cid=%d)", hf.url, hc.id)
-		httpHeadersSend(&q, &headers, &hra.headersIn)
+		httpHeadersSend(&q, &headers, &hra.headersIn, boundUA)
 
 		if hf.debug {
 			traceRequest(&q, hf)

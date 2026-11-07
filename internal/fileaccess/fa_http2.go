@@ -112,20 +112,23 @@ func (fam *FileAccessManager) http2Client(verify bool) *http.Client {
 // (fa_http_cookie.go), flattened to a Cookie header value.
 func (hf *h2File) h2CookieHeader(host string, port int, path string,
 	extra *httpnet.HTTPHeaderList) string {
-	return hf.h2CookieHeaderFor(host, port, path, cookieURLSecure(hf.url), extra)
+	ck, _ := hf.h2CookieHeaderFor(host, port, path, cookieURLSecure(hf.url), extra)
+	return ck
 }
 
 // h2CookieHeaderFor builds the Cookie header for a request whose own
 // scheme is known: after a redirect the request URL differs from hf.url,
 // so Secure must be judged on the URL actually being sent. port is the
-// destination port, 0 for the scheme's default.
+// destination port, 0 for the scheme's default. boundUA is the User-Agent an
+// imported cookie in the header requires ("" if none; see selectCookies).
 func (hf *h2File) h2CookieHeaderFor(host string, port int, path string, secureReq bool,
-	extra *httpnet.HTTPHeaderList) string {
+	extra *httpnet.HTTPHeaderList) (header, boundUA string) {
 	fam := hf.fam
 	var b strings.Builder
 	s := ""
-	for _, c := range fam.selectCookies(host, port, path, secureReq, hf.importedOwner, hf.debug,
-		func(name string) bool { return extraCookieOverrides(extra, name) }) {
+	pairs, boundUA := fam.selectCookies(host, port, path, secureReq, hf.importedOwner, hf.debug,
+		func(name string) bool { return extraCookieOverrides(extra, name) })
+	for _, c := range pairs {
 		b.WriteString(s)
 		b.WriteString(c.name)
 		b.WriteString("=")
@@ -139,7 +142,7 @@ func (hf *h2File) h2CookieHeaderFor(host string, port int, path string, secureRe
 		b.WriteString(hh.Value)
 		s = "; "
 	}
-	return b.String()
+	return b.String(), boundUA
 }
 
 // h2SetCookies harvests Set-Cookie response headers into the shared jar
@@ -230,7 +233,8 @@ func (hf *h2File) h2NewRequest(url, method string, start int64) (*http.Request, 
 	}
 	req.Header.Set("Accept", "*/*")
 
-	if ck := hf.h2CookieHeaderFor(u.Hostname(), urlPortNum(u), path, cookieURLSecure(url), &cookies); ck != "" {
+	ck, boundUA := hf.h2CookieHeaderFor(u.Hostname(), urlPortNum(u), path, cookieURLSecure(url), &cookies)
+	if ck != "" {
 		req.Header.Set("Cookie", ck)
 	}
 	for _, hh := range headers.List {
@@ -245,6 +249,11 @@ func (hf *h2File) h2NewRequest(url, method string, start int64) (*http.Request, 
 				req.Header.Set(hh.Key, hh.Value)
 			}
 		}
+	}
+	if boundUA != "" {
+		// An imported cookie rides this request: its bound UA wins over the
+		// host UA, the inspectors and the caller's headers.
+		req.Header.Set("User-Agent", boundUA)
 	}
 	if start > 0 {
 		req.Header.Set("Range",

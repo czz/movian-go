@@ -572,11 +572,13 @@ func (fam *FileAccessManager) HTTPDeleteCookies(host, path string, names map[str
 }
 
 // httpCookieAppend — C: http_cookie_append.
+// The returned boundUA, when not empty, is the User-Agent the request must
+// send (see selectCookies); pass it to httpHeadersSend.
 func httpCookieAppend(reqHost string, reqPort int, hf *httpFile,
-	headers, extraCookies *httpnet.HTTPHeaderList) {
+	headers, extraCookies *httpnet.HTTPHeaderList) (boundUA string) {
 	fam := hf.fam
 	if hf.noCookies {
-		return
+		return ""
 	}
 	reqPath := hf.path
 	// The live connection is authoritative: a cached permanent redirect can
@@ -590,8 +592,9 @@ func httpCookieAppend(reqHost string, reqPort int, hf *httpFile,
 	var hq misc.HtsbufQueue
 	hq.HtsbufQueueSetup(0)
 
-	for _, c := range fam.selectCookies(reqHost, reqPort, reqPath, secureReq, hf.importedOwner, hf.debug,
-		func(name string) bool { return extraCookieOverrides(extraCookies, name) }) {
+	pairs, boundUA := fam.selectCookies(reqHost, reqPort, reqPath, secureReq, hf.importedOwner, hf.debug,
+		func(name string) bool { return extraCookieOverrides(extraCookies, name) })
+	for _, c := range pairs {
 		hq.Append([]byte(s))
 		hq.Append([]byte(c.name))
 		hq.Append([]byte("="))
@@ -610,9 +613,10 @@ func httpCookieAppend(reqHost string, reqPort int, hf *httpFile,
 	}
 
 	if hq.Len() == 0 {
-		return
+		return boundUA
 	}
 	headers.AddAlloced("Cookie", hq.String(), false)
+	return boundUA
 }
 
 // extraCookieOverrides reports whether the request's own cookie list names

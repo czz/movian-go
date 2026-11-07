@@ -211,12 +211,12 @@ func davPropfind(hf *httpFile, fd *Dir,
 			return err
 		}
 
-		httpCookieAppend(hf.connection.hostname, hf.connection.port, hf, &headers, &cookies)
+		boundUA := httpCookieAppend(hf.connection.hostname, hf.connection.port, hf, &headers, &cookies)
 		cookies.Free()
 
 		hf.hfTrace("Webdav sending request for %s (cid=%d)",
 			hf.url, hf.connection.id)
-		httpHeadersSend(&q, &headers, hf.userReqHeaders)
+		httpHeadersSend(&q, &headers, hf.userReqHeaders, boundUA)
 
 		if hf.debug {
 			traceRequest(&q, hf)

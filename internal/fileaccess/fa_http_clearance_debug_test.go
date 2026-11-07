@@ -168,7 +168,7 @@ func TestClearanceDebugOnSendSkipped(t *testing.T) {
 		{"https://other.test/", clrOwner, "host-mismatch"},
 		{"http://example.test/", clrOwner, "insecure-request"},
 	} {
-		fam.selectCookies(strings.TrimPrefix(strings.TrimPrefix(c.target, "https://"), "http://"),
+		_, _ = fam.selectCookies(strings.TrimPrefix(strings.TrimPrefix(c.target, "https://"), "http://"),
 			0, "/", strings.HasPrefix(c.target, "https:"), c.owner, true, func(string) bool { return false })
 		mustContain(t, logs(), "send skipped ("+c.reason+")")
 	}
@@ -183,10 +183,10 @@ func TestClearanceDebugOnSendOverridden(t *testing.T) {
 	if err := fam.HTTPImportClearance(clrCookie()); err != nil {
 		t.Fatal(err)
 	}
-	got := fam.selectCookies("example.test", 0, "/", true, clrOwner, true,
+	got, ua := fam.selectCookies("example.test", 0, "/", true, clrOwner, true,
 		func(name string) bool { return name == "cf_clearance" })
-	if len(got) != 0 {
-		t.Fatalf("override still sent the record: %v", got)
+	if len(got) != 0 || ua != "" {
+		t.Fatalf("override still sent the record: %v, bound UA %q", got, ua)
 	}
 	out := logs()
 	mustContain(t, out, "send skipped (explicit-cookie-override)")

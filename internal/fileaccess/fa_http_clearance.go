@@ -361,12 +361,20 @@ type cookiePair struct{ name, value string }
 // that owner and replaces a same-named generic one. HTTP/1 and HTTP/2/3
 // build their Cookie header from it so the rules cannot drift. dbg is the
 // request's debug flag: it traces each imported record's fate.
+//
+// boundUA is the User-Agent the request must carry: that of the imported
+// record(s) it sends ("" when it sends none). An imported cookie is bound to
+// the browser that solved the challenge, so the record's UA wins over a later
+// HTTPDomainSetUserAgent and over a User-Agent header of the caller. The
+// alternative, withholding the record from a request that forces another UA,
+// would only turn the request into one the server rejects anyway. One host
+// holds one bound UA (importClearance refuses a second), so the records sent
+// together agree.
 func (fam *FileAccessManager) selectCookies(host string, port int, path string, secureReq bool,
-	importedOwner string, dbg bool, extra func(name string) bool) []cookiePair {
+	importedOwner string, dbg bool, extra func(name string) bool) (out []cookiePair, boundUA string) {
 	now := time.Now().Unix()
 	fam.httpCookies.mu.Lock()
 	defer fam.httpCookies.mu.Unlock()
-	var out []cookiePair
 	var sentImported map[string]bool
 	trace := dbg && importedOwner != "" // only a request that opted in
 	for _, hc := range fam.httpCookies.list {
@@ -379,6 +387,9 @@ func (fam *FileAccessManager) selectCookies(host string, port int, path string, 
 				sentImported = map[string]bool{}
 			}
 			sentImported[hc.name] = true
+			if boundUA == "" && !extra(hc.name) {
+				boundUA = hc.ua // not when the caller's own cookie replaces it
+			}
 		}
 		if trace {
 			if reason == "" && extra(hc.name) {
@@ -399,7 +410,7 @@ func (fam *FileAccessManager) selectCookies(host string, port int, path string, 
 		}
 		out = append(out, cookiePair{hc.name, hc.value})
 	}
-	return out
+	return out, boundUA
 }
 
 // validLoadedImported re-checks a persisted imported record. Anything that
