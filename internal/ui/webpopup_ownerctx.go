@@ -17,6 +17,9 @@ import (
 type popupOwnerContexts struct {
 	mu      sync.Mutex
 	byOwner map[string]string
+	// gen is the newest popup generation per owner. Popups of one owner may
+	// overlap; only the newest one may record its end.
+	gen map[string]uint64
 }
 
 // httpsOriginOf is the scheme://host[:port] of an https URL, lowercased and
@@ -38,24 +41,35 @@ func httpsOriginOf(raw string) string {
 }
 
 // begin drops owner's previous context: while a popup runs, and after one
-// that failed, nothing is handed out for it.
-func (c *popupOwnerContexts) begin(owner string) {
+// that failed, nothing is handed out for it. It returns the generation of the
+// new popup, which record needs; 0 for an empty owner.
+func (c *popupOwnerContexts) begin(owner string) uint64 {
 	if owner == "" {
-		return
+		return 0
 	}
 	c.mu.Lock()
+	defer c.mu.Unlock()
 	delete(c.byOwner, owner)
-	c.mu.Unlock()
+	if c.gen == nil {
+		c.gen = map[string]uint64{}
+	}
+	c.gen[owner]++
+	return c.gen[owner]
 }
 
-// record stores the origin owner's popup ended on. An empty owner or an
-// origin that is not https records nothing.
-func (c *popupOwnerContexts) record(owner, topURL string) {
+// record stores the origin the popup of generation gen ended on. An empty
+// owner, an origin that is not https, or a popup that a newer one of the same
+// owner superseded records nothing.
+func (c *popupOwnerContexts) record(owner string, gen uint64, topURL string) {
 	origin := httpsOriginOf(topURL)
 	if owner == "" || origin == "" {
 		return
 	}
 	c.mu.Lock()
+	if c.gen[owner] != gen {
+		c.mu.Unlock()
+		return
+	}
 	if c.byOwner == nil {
 		c.byOwner = map[string]string{}
 	}

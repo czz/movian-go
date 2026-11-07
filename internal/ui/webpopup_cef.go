@@ -1051,6 +1051,9 @@ type cefSession struct {
 	// topURL is the last https page the main frame showed (UI thread
 	// only); the popup's owner may read the jar for its origin afterwards.
 	topURL string
+	// ownerGen is this popup's generation in cefOwnerCtx: a popup that a
+	// newer one of the same owner superseded records nothing.
+	ownerGen uint64
 
 	// popup cookie wait (nil wait = none); UI thread only except waiter
 	wait               *WebpopupCookieWait
@@ -1469,7 +1472,7 @@ func (s *cefSession) finish(code int) {
 	}
 	s.finished = true
 	s.wr.ResultCode = code
-	cefOwnerCtx.record(s.wr.owner, popupContextURL(code, s.topURL, s.wait))
+	cefOwnerCtx.record(s.wr.owner, s.ownerGen, popupContextURL(code, s.topURL, s.wait))
 	if s.cookieCancel != nil {
 		s.cookieCancel()
 		s.cookieQuery, s.cookieCancel = nil, nil
@@ -1728,7 +1731,7 @@ func cefUAPlatform() string {
 func wpNewSession(uri, trap string, wait *WebpopupCookieWait, wr *WebpopupResult,
 	done chan<- *WebpopupResult) *cefSession {
 	s := &cefSession{trap: trap, wait: wait, wr: wr, done: done}
-	cefOwnerCtx.begin(wr.owner)
+	s.ownerGen = cefOwnerCtx.begin(wr.owner)
 	s.key = cefTokenNew()
 	cefSessions.Store(s.key, s)
 	if wait != nil {

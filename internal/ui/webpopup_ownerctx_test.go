@@ -5,7 +5,8 @@ import "testing"
 func TestPopupOwnerContexts(t *testing.T) {
 	const origin = "https://example.test/"
 	var c popupOwnerContexts
-	c.record("plugin.a", "https://example.test/challenge?x=1")
+	gen := c.begin("plugin.a")
+	c.record("plugin.a", gen, "https://example.test/challenge?x=1")
 
 	for _, tc := range []struct {
 		name, owner, uri string
@@ -28,12 +29,12 @@ func TestPopupOwnerContexts(t *testing.T) {
 		}
 	}
 
-	c.begin("plugin.a")
+	gen = c.begin("plugin.a")
 	if c.readAllowed("plugin.a", origin) {
 		t.Error("a new popup must drop the previous context")
 	}
-	c.record("plugin.a", "app://done")
-	c.record("", origin)
+	c.record("plugin.a", gen, "app://done")
+	c.record("", 0, origin)
 	if c.readAllowed("plugin.a", origin) || c.readAllowed("plugin.b", origin) {
 		t.Error("a non-https end or an empty owner must record nothing")
 	}
@@ -83,6 +84,46 @@ func TestCookieWaitPort(t *testing.T) {
 	} {
 		if got := cookieWaitPort(tc.url); got != tc.want {
 			t.Errorf("%q: %q, want %q", tc.url, got, tc.want)
+		}
+	}
+}
+
+// Two popups of one owner may overlap on CEF. Only the newest one decides the
+// context, whichever finishes last: an older popup that ends late must not
+// replace it, nor restore its own origin after a newer popup failed.
+func TestPopupOwnerContextsOverlappingPopups(t *testing.T) {
+	const a, b = "https://a.test/", "https://b.test/"
+	for _, tc := range []struct {
+		name   string
+		finish func(c *popupOwnerContexts, genA, genB uint64)
+		wantA  bool
+		wantB  bool
+	}{
+		{"newest finishes first, oldest last", func(c *popupOwnerContexts, genA, genB uint64) {
+			c.record("plugin.a", genB, b)
+			c.record("plugin.a", genA, a)
+		}, false, true},
+		{"oldest finishes first", func(c *popupOwnerContexts, genA, genB uint64) {
+			c.record("plugin.a", genA, a)
+			c.record("plugin.a", genB, b)
+		}, false, true},
+		{"newest ends nowhere, oldest finishes after", func(c *popupOwnerContexts, genA, genB uint64) {
+			c.record("plugin.a", genB, "app://done")
+			c.record("plugin.a", genA, a)
+		}, false, false},
+	} {
+		var c popupOwnerContexts
+		genA := c.begin("plugin.a")
+		genB := c.begin("plugin.a")
+		if genA == genB {
+			t.Fatalf("%s: generations must differ", tc.name)
+		}
+		tc.finish(&c, genA, genB)
+		if got := c.readAllowed("plugin.a", a); got != tc.wantA {
+			t.Errorf("%s: read a = %v, want %v", tc.name, got, tc.wantA)
+		}
+		if got := c.readAllowed("plugin.a", b); got != tc.wantB {
+			t.Errorf("%s: read b = %v, want %v", tc.name, got, tc.wantB)
 		}
 	}
 }
