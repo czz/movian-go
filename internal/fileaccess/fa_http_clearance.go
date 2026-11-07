@@ -299,6 +299,16 @@ func (fam *FileAccessManager) importClearance(icp *ImportedCookie) error {
 		}
 		fam.httpCookies.list = append([]*httpCookie{&nc}, fam.httpCookies.list...)
 	}
+	if nc.uaPinned {
+		// One host holds one UA to give back. Another record that already
+		// pins it must hand back the same, newest setting: whichever record
+		// leaves last restores it.
+		for _, x := range fam.httpCookies.list {
+			if x.imported && x.uaPinned && x.domain == host && x.ua == ic.UA {
+				x.uaPrev = nc.uaPrev
+			}
+		}
+	}
 	fam.HTTPDomainSetUserAgent(host, ic.UA)
 	fam.httpCookies.mu.Unlock()
 	fam.armCookiePersist()

@@ -694,6 +694,21 @@ func TestImportedClearanceRestoresPriorUserAgent(t *testing.T) {
 		fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, "cf_clearance")
 		want(t, fam, "Newer/2.0")
 	})
+	// An external change between two imports is the newest setting to give
+	// back, whichever record leaves first.
+	for _, order := range [][2]string{{"first", "second"}, {"second", "first"}} {
+		t.Run("external change between two imports, delete "+order[0]+" first", func(t *testing.T) {
+			fam := &FileAccessManager{}
+			fam.HTTPDomainSetUserAgent(host, "Old/1.0")
+			imp(t, fam, "first")
+			fam.HTTPDomainSetUserAgent(host, "Newer/2.0")
+			imp(t, fam, "second")
+			fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, order[0])
+			want(t, fam, clrUA)
+			fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, order[1])
+			want(t, fam, "Newer/2.0")
+		})
+	}
 	t.Run("no prior UA clears the pin", func(t *testing.T) {
 		fam := &FileAccessManager{}
 		imp(t, fam, "cf_clearance")
