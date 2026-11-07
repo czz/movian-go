@@ -49,11 +49,19 @@
     <service android:name="CoreService"
              android:label="@@APPNAME@@"/>
 
+    <!-- The popup holds an in-flight challenge in its WebView; if Android
+         recreated the Activity, onDestroy would end the request as a user
+         close and the replacement could not claim it. So it handles every
+         configuration change itself (locale, font scale, density, layout
+         direction, navigation, UI mode, size and orientation, keyboard) and
+         is not recreated. A kill or task removal still ends the request
+         through onDestroy, which stays bounded. The list is checked by
+         android/test/.../ManifestConfigChangesTest.java. -->
     <activity android:name=".WebPopupActivity"
               android:label="@@APPNAME@@"
               android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
               android:screenOrientation="unspecified"
-              android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" />
+              android:configChanges="locale|layoutDirection|fontScale|density|navigation|keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" />
     <activity android:name=".GLWActivity"
               android:label="@@APPNAME@@"
               android:launchMode="singleTask"
