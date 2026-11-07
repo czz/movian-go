@@ -89,30 +89,52 @@ func (c *popupOwnerContexts) readAllowed(owner, uri string) bool {
 	return origin != "" && c.byOwner[owner] == origin
 }
 
-// mainFrameURL is the page a popup counts as showing after an address change
-// of uri: the main frame's latest https page. A subframe or a non-https
-// address leaves prev alone.
+// mainFrameURL is the https page the main frame shows after an address
+// change of uri: that page, or "" when the main frame is at an address that
+// is not https (nothing is remembered for it, so no earlier page counts as
+// where the popup is). A subframe address leaves prev alone.
 func mainFrameURL(prev, uri string, isMain bool) string {
-	if isMain && httpsOriginOf(uri) != "" {
+	if !isMain {
+		return prev
+	}
+	if httpsOriginOf(uri) != "" {
 		return uri
 	}
-	return prev
+	return ""
 }
 
-// popupContextURL is the page a finished popup counts as ended on. A popup
-// that found its cookie ended on the wait target: that is where the cookie
-// was seen, and it can happen before any page callback ran (the cookie was
-// already in the jar). Otherwise it is the last https page of the main
-// frame. A timeout or an error ends nowhere.
+// waitOrigin is the https origin of a cookie wait's target, in the form
+// httpsOriginOf gives ("" without a target).
+func waitOrigin(wait *WebpopupCookieWait) string {
+	if wait == nil || wait.target.host == "" {
+		return ""
+	}
+	host := wait.target.host
+	if wait.port != "" {
+		host += ":" + wait.port
+	}
+	return httpsOriginOf(wait.target.scheme + "://" + host + "/")
+}
+
+// cookieWaitMayComplete reports whether a visitor result for the awaited
+// cookie may complete the wait: only while the main frame currently shows the
+// wait target's own https origin. The cookie jar is shared by all plugins, so
+// a cookie that is already there says nothing about the page, and a result
+// that arrives after the main frame moved on belongs to another page.
+func cookieWaitMayComplete(topURL string, wait *WebpopupCookieWait) bool {
+	want := waitOrigin(wait)
+	return want != "" && httpsOriginOf(topURL) == want
+}
+
+// popupContextURL is the page a finished popup counts as ended on: the main
+// frame's actual last https page, never the wait target. A popup that found
+// its cookie counts only if the main frame still shows the wait target's
+// origin. A timeout or an error ends nowhere.
 func popupContextURL(code int, topURL string, wait *WebpopupCookieWait) string {
 	switch code {
 	case WebpopupCookieFound:
-		if wait != nil && wait.target.host != "" {
-			host := wait.target.host
-			if wait.port != "" {
-				host += ":" + wait.port
-			}
-			return wait.target.scheme + "://" + host + wait.target.path
+		if wait != nil && !cookieWaitMayComplete(topURL, wait) {
+			return ""
 		}
 		return topURL
 	case WebpopupTrappedURL, WebpopupClosedByUser:

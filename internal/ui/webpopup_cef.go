@@ -1048,8 +1048,9 @@ type cefSession struct {
 	wr       *WebpopupResult
 	done     chan<- *WebpopupResult
 	finished bool
-	// topURL is the last https page the main frame showed (UI thread
-	// only); the popup's owner may read the jar for its origin afterwards.
+	// topURL is the https page the main frame shows now, "" while it is at
+	// a non-https address or has not navigated yet (UI thread only); the
+	// popup's owner may read the jar for its origin afterwards.
 	topURL string
 	// ownerGen is this popup's generation in cefOwnerCtx: a popup that a
 	// newer one of the same owner superseded records nothing.
@@ -1447,7 +1448,10 @@ func (s *cefSession) cookieQueryDone(q *cookieQuery, visits []cookieVisit) {
 	if s.finished {
 		return
 	}
-	if cookieWaitSatisfied(visits, q.url, s.wait.Name) {
+	// The jar is shared: the cookie completes the wait only while the main
+	// frame shows the wait origin, judged now and not when the read started.
+	// Otherwise the poll and the next page load ask again.
+	if cookieWaitSatisfied(visits, q.url, s.wait.Name) && cookieWaitMayComplete(s.topURL, s.wait) {
 		s.waiter.Fire(WebpopupCookieFound)
 		return
 	}
@@ -1759,7 +1763,7 @@ func wpNewSession(uri, trap string, wait *WebpopupCookieWait, wr *WebpopupResult
 		s.waiter = startCookieWaiter(wait.Timeout, cookieWaitPollEvery,
 			func() { wpPlatformDispatch(s.checkCookie) },
 			func(code int) { wpPlatformDispatch(func() { s.finish(code) }) })
-		s.checkCookie() // includes cookies that existed before the popup opened
+		s.checkCookie() // the first page load asks again if no page is shown yet
 	}
 	return s
 }
