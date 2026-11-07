@@ -48,6 +48,7 @@ type httpCookie struct {
 	scopeOrigin string // https://host the record was solved for
 	scopeOwner  string // context that imported it
 	uaPinned    bool   // this record set the host's User-Agent pin
+	uaPrev      string // the host UA the pin replaced, restored when the last pin leaves
 }
 
 // HTTPCookieRecord — persisted cookie fields (C: htsmsg map entries in
@@ -178,6 +179,9 @@ func (fam *FileAccessManager) loadCookies() {
 			}
 			prior := fam.httpDomainUAGet(hc.domain)
 			hc.uaPinned = prior != hc.ua
+			if hc.uaPinned {
+				hc.uaPrev = prior
+			}
 			fam.HTTPDomainSetUserAgent(hc.domain, hc.ua)
 			fam.httpCookies.list = append([]*httpCookie{&hc}, fam.httpCookies.list...)
 			continue

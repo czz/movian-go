@@ -619,3 +619,85 @@ func TestImportedClearanceNotSentToOtherPort(t *testing.T) {
 		}
 	}
 }
+
+// An import pins the host's User-Agent. When the last pin leaves, the UA
+// the host had before the import comes back, unless something else changed
+// it meanwhile.
+func TestImportedClearanceRestoresPriorUserAgent(t *testing.T) {
+	const host = "example.test"
+	imp := func(t *testing.T, fam *FileAccessManager, name string) {
+		t.Helper()
+		c := clrCookie()
+		c.Name = name
+		if err := fam.HTTPImportClearance(c); err != nil {
+			t.Fatal(err)
+		}
+	}
+	want := func(t *testing.T, fam *FileAccessManager, ua string) {
+		t.Helper()
+		if got := fam.httpDomainUAGet(host); got != ua {
+			t.Fatalf("host UA=%q, want %q", got, ua)
+		}
+	}
+
+	t.Run("delete restores", func(t *testing.T) {
+		fam := &FileAccessManager{}
+		fam.HTTPDomainSetUserAgent(host, "Old/1.0")
+		imp(t, fam, "cf_clearance")
+		want(t, fam, clrUA)
+		if !fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, "cf_clearance") {
+			t.Fatal("record not deleted")
+		}
+		want(t, fam, "Old/1.0")
+	})
+	t.Run("expiry restores", func(t *testing.T) {
+		fam := &FileAccessManager{}
+		fam.HTTPDomainSetUserAgent(host, "Old/1.0")
+		imp(t, fam, "cf_clearance")
+		fam.httpCookies.list[0].expire = time.Now().Unix() - 1
+		if got := fam.requestUA(host); got != "Old/1.0" {
+			t.Fatalf("request UA=%q, want the prior one", got)
+		}
+	})
+	t.Run("the last of two pins restores", func(t *testing.T) {
+		fam := &FileAccessManager{}
+		fam.HTTPDomainSetUserAgent(host, "Old/1.0")
+		imp(t, fam, "first")
+		imp(t, fam, "second")
+		fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, "first")
+		want(t, fam, clrUA)
+		fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, "second")
+		want(t, fam, "Old/1.0")
+	})
+	t.Run("deleting the pin setter first still restores at the end", func(t *testing.T) {
+		fam := &FileAccessManager{}
+		fam.HTTPDomainSetUserAgent(host, "Old/1.0")
+		imp(t, fam, "first")
+		imp(t, fam, "second")
+		fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, "second")
+		fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, "first")
+		want(t, fam, "Old/1.0")
+	})
+	t.Run("re-import keeps the prior UA", func(t *testing.T) {
+		fam := &FileAccessManager{}
+		fam.HTTPDomainSetUserAgent(host, "Old/1.0")
+		imp(t, fam, "cf_clearance")
+		imp(t, fam, "cf_clearance")
+		fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, "cf_clearance")
+		want(t, fam, "Old/1.0")
+	})
+	t.Run("a later external change is kept", func(t *testing.T) {
+		fam := &FileAccessManager{}
+		fam.HTTPDomainSetUserAgent(host, "Old/1.0")
+		imp(t, fam, "cf_clearance")
+		fam.HTTPDomainSetUserAgent(host, "Newer/2.0")
+		fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, "cf_clearance")
+		want(t, fam, "Newer/2.0")
+	})
+	t.Run("no prior UA clears the pin", func(t *testing.T) {
+		fam := &FileAccessManager{}
+		imp(t, fam, "cf_clearance")
+		fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, "cf_clearance")
+		want(t, fam, "")
+	})
+}

@@ -190,12 +190,14 @@ func (fam *FileAccessManager) unpinImportedUALocked(idx int) {
 	}
 	for i, x := range fam.httpCookies.list {
 		if i != idx && x.imported && x.domain == hc.domain && x.ua == hc.ua {
-			x.uaPinned = true
+			x.uaPinned, x.uaPrev = true, hc.uaPrev
 			return
 		}
 	}
+	// Give the host back the UA it had before the import, unless someone
+	// else changed it since: that newer setting is not ours to undo.
 	if fam.httpDomainUAGet(hc.domain) == hc.ua {
-		fam.HTTPDomainSetUserAgent(hc.domain, "")
+		fam.HTTPDomainSetUserAgent(hc.domain, hc.uaPrev)
 	}
 }
 
@@ -284,10 +286,17 @@ func (fam *FileAccessManager) importClearance(icp *ImportedCookie) error {
 	prior := fam.httpDomainUAGet(host)
 	if idx >= 0 {
 		old := fam.httpCookies.list[idx]
-		nc.uaPinned = old.uaPinned || prior != ic.UA
+		switch {
+		case old.uaPinned && prior == old.ua:
+			nc.uaPinned, nc.uaPrev = true, old.uaPrev // still our pin
+		case prior != ic.UA:
+			nc.uaPinned, nc.uaPrev = true, prior
+		}
 		*old = nc
 	} else {
-		nc.uaPinned = prior != ic.UA
+		if prior != ic.UA {
+			nc.uaPinned, nc.uaPrev = true, prior
+		}
 		fam.httpCookies.list = append([]*httpCookie{&nc}, fam.httpCookies.list...)
 	}
 	fam.HTTPDomainSetUserAgent(host, ic.UA)
