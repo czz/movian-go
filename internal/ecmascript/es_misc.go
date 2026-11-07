@@ -207,16 +207,31 @@ func clearanceOrigin(raw string) string {
 	return "https://" + strings.ToLower(u.Host)
 }
 
+// persistTrace logs, in debug mode only, what persistWebCookie did with the
+// webview's cookie, value included.
+func persistTrace(owner, origin, name, outcome string, c *ui.WebpopupCookie) {
+	if !esEnv.fam.ClearanceDebug() {
+		return
+	}
+	if c == nil {
+		esEnv.fam.ClearanceTrace("persistWebCookie %s owner=%q origin=%q name=%q", outcome, owner, origin, name)
+		return
+	}
+	esEnv.fam.ClearanceTrace("persistWebCookie %s owner=%q origin=%q name=%q value=%q domain=%q path=%q expire=%d secure=%t",
+		outcome, owner, origin, name, c.Value, c.Domain, c.Path, c.Expires, c.Secure)
+}
+
 // esPersistWebCookie — persistWebCookie(url, name): copy the webview's
 // cookie `name` for url into the Core jar as an imported record of the
 // calling plugin, together with the webview User-Agent. Returns
 // {value, ua, expires, path, origin} or null. Only a Secure cookie with an
 // expiry, and only when the webview reports exactly one cookie of that
-// name, is taken; the cookie value is never logged.
+// name, is taken; the cookie value is logged only in debug mode.
 func esPersistWebCookie(ctx *gaftape.Context) int {
 	raw, name := ctx.SafeToString(0), ctx.SafeToString(1)
 	owner, origin := clearanceOwner(ctx), clearanceOrigin(raw)
 	if owner == "" || origin == "" || name == "" || esEnv.fam == nil {
+		persistTrace(owner, origin, name, "bad-arguments", nil)
 		ctx.PushNull()
 		return 1
 	}
@@ -234,6 +249,14 @@ func esPersistWebCookie(ctx *gaftape.Context) int {
 	// ui.scopeCookies). A list that still holds two of one name leaves no
 	// safe choice, so refuse it too.
 	if matches != 1 || !pick.Secure || pick.Expires <= time.Now().Unix() {
+		reason := "webview-cookie-count-not-1"
+		if matches == 1 {
+			reason = "not-secure"
+			if pick.Secure {
+				reason = "expired"
+			}
+		}
+		persistTrace(owner, origin, name, reason, pick)
 		ctx.PushNull()
 		return 1
 	}
@@ -241,6 +264,7 @@ func esPersistWebCookie(ctx *gaftape.Context) int {
 		Owner: owner, Origin: origin, Name: name, Value: pick.Value,
 		UA: webpopupUserAgent(), Path: pick.Path, Expire: pick.Expires,
 	}
+	persistTrace(owner, origin, name, "webview-cookie-taken", pick)
 	if esEnv.fam.HTTPImportClearance(ic) != nil {
 		ctx.PushNull()
 		return 1

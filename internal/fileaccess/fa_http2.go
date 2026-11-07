@@ -123,7 +123,7 @@ func (hf *h2File) h2CookieHeaderFor(host, path string, secureReq bool,
 	fam := hf.fam
 	var b strings.Builder
 	s := ""
-	for _, c := range fam.selectCookies(host, path, secureReq, hf.importedOwner,
+	for _, c := range fam.selectCookies(host, path, secureReq, hf.importedOwner, hf.debug,
 		func(name string) bool { return extraCookieOverrides(extra, name) }) {
 		b.WriteString(s)
 		b.WriteString(c.name)

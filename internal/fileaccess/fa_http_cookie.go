@@ -344,20 +344,38 @@ func cookieExpiry(now int64, expires time.Time, maxAge int64, hasMaxAge bool) in
 // imported record is sent to that owner only.
 func cookieSendable(hc *httpCookie, host, path string, secureReq bool,
 	importedOwner string, now int64) bool {
+	return cookieSkipReason(hc, host, path, secureReq, importedOwner, now) == ""
+}
+
+// cookieSkipReason is "" when hc may be sent, else why not. It holds the
+// rules; cookieSendable and the clearance debug trace both use it.
+func cookieSkipReason(hc *httpCookie, host, path string, secureReq bool,
+	importedOwner string, now int64) string {
 	if hc.expire != -1 && now > hc.expire {
-		return false
+		return "expired"
 	}
-	if hc.imported && (importedOwner == "" || hc.scopeOwner != importedOwner ||
-		!secureReq || !strings.EqualFold(host, hc.domain)) {
-		return false
+	if hc.imported {
+		switch {
+		case importedOwner == "":
+			return "request-not-opted-in"
+		case hc.scopeOwner != importedOwner:
+			return "owner-mismatch"
+		case !secureReq:
+			return "insecure-request"
+		case !strings.EqualFold(host, hc.domain):
+			return "host-mismatch"
+		}
 	}
 	if hc.secure && !secureReq {
-		return false
+		return "secure-required"
 	}
 	if hc.hostOnly && !strings.EqualFold(host, hc.domain) {
-		return false
+		return "host-mismatch"
 	}
-	return validateCookie(host, path, hc.domain, hc.path) == 0
+	if validateCookie(host, path, hc.domain, hc.path) != 0 {
+		return "domain-or-path-mismatch"
+	}
+	return ""
 }
 
 // cookieURLSecure reports whether a request URL is TLS-protected.
@@ -495,7 +513,7 @@ func httpCookieAppend(reqHost string, hf *httpFile,
 	var hq misc.HtsbufQueue
 	hq.HtsbufQueueSetup(0)
 
-	for _, c := range fam.selectCookies(reqHost, reqPath, secureReq, hf.importedOwner,
+	for _, c := range fam.selectCookies(reqHost, reqPath, secureReq, hf.importedOwner, hf.debug,
 		func(name string) bool { return extraCookieOverrides(extraCookies, name) }) {
 		hq.Append([]byte(s))
 		hq.Append([]byte(c.name))

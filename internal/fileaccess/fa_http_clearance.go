@@ -32,7 +32,7 @@ const (
 )
 
 // ImportedCookie is a clearance cookie handed over by a plugin. Value is a
-// secret: never log it.
+// secret: it is logged only in debug mode (see clearanceTrace).
 type ImportedCookie struct {
 	Owner  string // plugin/context ID; set by Core from the caller, not by a plugin
 	Origin string // https://host of the site it was solved for
@@ -229,11 +229,30 @@ func (fam *FileAccessManager) requestUA(host string) string {
 // origin and name is rejected, as is a UA that differs from the one another
 // imported record on the host already needs.
 func (fam *FileAccessManager) HTTPImportClearance(ic ImportedCookie) error {
+	in := ic
+	err := fam.importClearance(&ic)
+	if fam.ClearanceDebug() {
+		if err != nil {
+			fam.ClearanceTrace("import rejected: %v owner=%q origin=%q name=%q value=%q ua=%q path=%q expire=%d",
+				err, in.Owner, in.Origin, in.Name, in.Value, in.UA, in.Path, in.Expire)
+		} else {
+			fam.ClearanceTrace("import accepted owner=%q origin=%q name=%q value=%q ua=%q path=%q expire=%d->%d clamped=%t",
+				ic.Owner, ic.Origin, ic.Name, ic.Value, ic.UA, ic.Path, in.Expire, ic.Expire, in.Expire != ic.Expire)
+		}
+	}
+	return err
+}
+
+// importClearance does the work of HTTPImportClearance; on success *icp
+// holds the normalized record.
+func (fam *FileAccessManager) importClearance(icp *ImportedCookie) error {
 	now := time.Now().Unix()
+	ic := *icp
 	ic, err := validateImportedCookie(ic, now, true)
 	if err != nil {
 		return fmt.Errorf("import clearance: %w", err)
 	}
+	*icp = ic
 	host := strings.TrimPrefix(ic.Origin, "https://")
 	nc := httpCookie{
 		name: ic.Name, path: ic.Path, domain: host, value: ic.Value,
@@ -331,20 +350,32 @@ type cookiePair struct{ name, value string }
 // importedOwner is the owner of a request that opted in with
 // FaImportedCookies ("" = no opt-in); an imported cookie is sent only to
 // that owner and replaces a same-named generic one. HTTP/1 and HTTP/2/3
-// build their Cookie header from it so the rules cannot drift.
+// build their Cookie header from it so the rules cannot drift. dbg is the
+// request's debug flag: it traces each imported record's fate.
 func (fam *FileAccessManager) selectCookies(host, path string, secureReq bool,
-	importedOwner string, extra func(name string) bool) []cookiePair {
+	importedOwner string, dbg bool, extra func(name string) bool) []cookiePair {
 	now := time.Now().Unix()
 	fam.httpCookies.mu.Lock()
 	defer fam.httpCookies.mu.Unlock()
 	var out []cookiePair
 	var sentImported map[string]bool
+	trace := dbg && importedOwner != "" // only a request that opted in
 	for _, hc := range fam.httpCookies.list {
-		if hc.imported && cookieSendable(hc, host, path, secureReq, importedOwner, now) {
+		if !hc.imported {
+			continue
+		}
+		reason := cookieSkipReason(hc, host, path, secureReq, importedOwner, now)
+		if reason == "" {
 			if sentImported == nil {
 				sentImported = map[string]bool{}
 			}
 			sentImported[hc.name] = true
+		}
+		if trace {
+			if reason == "" && extra(hc.name) {
+				reason = "explicit-cookie-override"
+			}
+			fam.traceImportedSend(hc, host, path, importedOwner, reason)
 		}
 	}
 	for _, hc := range fam.httpCookies.list {

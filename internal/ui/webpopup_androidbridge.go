@@ -113,7 +113,11 @@ func (b *androidBridge) runPopup(uri, title, trap string, wait *WebpopupCookieWa
 			waitMs = 1
 		}
 	}
-	code, trapped, top := androidPopupOutcome(b.jni.Popup(uri, title, trap, waitURL, waitName, owner, waitMs))
+	raw := b.jni.Popup(uri, title, trap, waitURL, waitName, owner, waitMs)
+	code, trapped, top := androidPopupOutcome(raw)
+	if clearanceDebug() {
+		clearanceTrace("android popup result code=%d url=%q topOrigin=%q owner=%q raw=%q", code, trapped, top, owner, raw)
+	}
 	wr.ResultCode = code
 	if code == WebpopupTrappedURL {
 		wr.Trapped.URL = trapped
@@ -145,14 +149,27 @@ func (b *androidBridge) cookies(uri, owner, name string) []WebpopupCookie {
 	none := []WebpopupCookie{}
 	ctx, gen, ok := b.snapshot()
 	if !ok || owner == "" || name == "" || ctx.Owner != owner {
+		if clearanceDebug() {
+			clearanceTrace("android cookie read refused: no matching popup context (have=%t ctx-owner=%q owner=%q name=%q)", ok, ctx.Owner, owner, name)
+		}
 		return none
 	}
 	var lines []string
-	if json.Unmarshal([]byte(b.jni.Cookies(uri, owner)), &lines) != nil {
+	rawCookies := b.jni.Cookies(uri, owner)
+	if json.Unmarshal([]byte(rawCookies), &lines) != nil {
+		if clearanceDebug() {
+			clearanceTrace("android cookies unreadable owner=%q uri=%q raw=%q", owner, uri, rawCookies)
+		}
 		return none
 	}
 	ua := b.jni.UserAgent()
-	clr, _ := SelectAndroidClearance(lines, uri, ctx, owner, name, ua)
+	clr, reason := SelectAndroidClearance(lines, uri, ctx, owner, name, ua)
+	if clearanceDebug() {
+		for i, l := range lines {
+			clearanceTrace("android cookie-info[%d] owner=%q uri=%q line=%q", i, owner, uri, l)
+		}
+		traceClearanceOutcome(clr, reason)
+	}
 	// A popup that started meanwhile replaced the context: the answer
 	// belongs to the old one.
 	if clr == nil || clr.Cookie == nil || !b.current(gen) {
