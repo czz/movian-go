@@ -26,6 +26,12 @@ func testCookieSemanticsSet(t *testing.T, origin, header string) *FileAccessMana
 	return fam
 }
 
+// testCookieSemanticsSetH2 feeds one Set-Cookie header to the HTTP/2 path.
+func testCookieSemanticsSetH2(fam *FileAccessManager, u *url.URL, header string) {
+	(&h2File{fam: fam}).h2SetCookies(&http.Response{Header: http.Header{
+		"Set-Cookie": {header}}}, u)
+}
+
 func testCookieSemanticsSend(fam *FileAccessManager, target string) (string, string) {
 	u, _ := url.Parse(target)
 	var extra, headers httpnet.HTTPHeaderList
@@ -304,4 +310,197 @@ func TestCookieSemanticsPathBoundary(t *testing.T) {
 			t.Errorf("cookie path %q vs request %q: match=%v, want %v", tc.cookie, tc.req, got, tc.want)
 		}
 	}
+}
+
+// A record persisted with a leading-dot Domain (".example.test") names the
+// same cookie as a Set-Cookie with Domain=example.test: replacing or deleting
+// it must not leave the stale record behind.
+func TestCookieLoadedLeadingDotDomainReplacedAndDeleted(t *testing.T) {
+	load := func(recs ...HTTPCookieRecord) *FileAccessManager {
+		fam := &FileAccessManager{}
+		fam.httpCookies.cookieLoad = func(any) []HTTPCookieRecord { return recs }
+		fam.loadCookies()
+		return fam
+	}
+	rec := func(domain, value string) HTTPCookieRecord {
+		return HTTPCookieRecord{Name: "sid", Path: "/", Domain: domain, Value: value,
+			Expire: time.Now().Add(time.Hour).Unix()}
+	}
+	const origin = "https://www.example.test/"
+
+	t.Run("replace", func(t *testing.T) {
+		fam := load(rec(".example.test", "old"))
+		testCookieSetOn(fam, origin, "sid=new; Domain=example.test; Path=/; Max-Age=3600")
+		if n := len(fam.httpCookies.list); n != 1 {
+			t.Fatalf("jar has %d cookies, want 1", n)
+		}
+		if v := fam.httpCookies.list[0].value; v != "new" {
+			t.Fatalf("value=%q, want new", v)
+		}
+	})
+	t.Run("delete", func(t *testing.T) {
+		fam := load(rec(".example.test", "old"))
+		testCookieSetOn(fam, origin, "sid=; Domain=.example.test; Path=/; Max-Age=0")
+		if n := len(fam.httpCookies.list); n != 0 {
+			t.Fatalf("deletion left %d cookies", n)
+		}
+	})
+	t.Run("duplicate records collapse", func(t *testing.T) {
+		fam := load(rec("example.test", "newer"), rec(".example.test", "stale"))
+		if n := len(fam.httpCookies.list); n != 1 {
+			t.Fatalf("jar has %d cookies, want 1", n)
+		}
+		if v := fam.httpCookies.list[0].value; v != "newer" {
+			t.Fatalf("kept %q, want the first (newest) record", v)
+		}
+	})
+}
+
+// RFC 6265 §5.3: a Set-Cookie whose Path does not match the request path is
+// still stored; the path only limits where the cookie is sent. HTTP/1 and
+// HTTP/2 must agree.
+func TestCookieSetPathNeedNotMatchRequestPath(t *testing.T) {
+	const origin = "https://example.test/forumx"
+	u, _ := url.Parse(origin)
+	for name, set := range map[string]func(*FileAccessManager){
+		"h1": func(fam *FileAccessManager) {
+			testCookieSetOn(fam, origin, "session=v; Path=/forum")
+		},
+		"h2": func(fam *FileAccessManager) {
+			testCookieSemanticsSetH2(fam, u, "session=v; Path=/forum")
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			fam := &FileAccessManager{}
+			set(fam)
+			if n := len(fam.httpCookies.list); n != 1 {
+				t.Fatalf("jar has %d cookies, want 1", n)
+			}
+			for target, want := range map[string]bool{
+				"https://example.test/forum":   true,
+				"https://example.test/forum/x": true,
+				"https://example.test/forumx":  false,
+			} {
+				h1, h2 := testCookieSemanticsSend(fam, target)
+				if got := hasCookie(h1, "session=v"); got != want {
+					t.Errorf("h1 send to %s: sent=%v, want %v", target, got, want)
+				}
+				if got := hasCookie(h2, "session=v"); got != want {
+					t.Errorf("h2 send to %s: sent=%v, want %v", target, got, want)
+				}
+			}
+			// A later response from the matching path replaces it.
+			testCookieSetOn(fam, "https://example.test/forum/", "session=; Path=/forum; Max-Age=0")
+			if n := len(fam.httpCookies.list); n != 0 {
+				t.Fatalf("deletion left %d cookies", n)
+			}
+		})
+	}
+}
+
+// A host-only cookie set from a mixed-case URL is stored under the lowercase
+// host, so a persisted one is found again by a response from the same URL.
+func TestCookieHostOnlyMixedCaseReplacedAndDeleted(t *testing.T) {
+	const origin = "https://Example.test/"
+	load := func() *FileAccessManager {
+		fam := &FileAccessManager{}
+		fam.httpCookies.cookieLoad = func(any) []HTTPCookieRecord {
+			return []HTTPCookieRecord{{Name: "sid", Path: "/", Domain: "Example.test",
+				Value: "old", Expire: time.Now().Add(time.Hour).Unix(), HostOnly: true}}
+		}
+		fam.loadCookies()
+		return fam
+	}
+	u, _ := url.Parse(origin)
+	for name, set := range map[string]func(*FileAccessManager, string){
+		"h1": func(fam *FileAccessManager, hdr string) { testCookieSetOn(fam, origin, hdr) },
+		"h2": func(fam *FileAccessManager, hdr string) { testCookieSemanticsSetH2(fam, u, hdr) },
+	} {
+		t.Run(name+" replace", func(t *testing.T) {
+			fam := load()
+			set(fam, "sid=new; Path=/; Max-Age=3600")
+			if n := len(fam.httpCookies.list); n != 1 || fam.httpCookies.list[0].value != "new" {
+				t.Fatalf("jar has %d cookies after replacement", n)
+			}
+		})
+		t.Run(name+" delete", func(t *testing.T) {
+			fam := load()
+			set(fam, "sid=; Path=/; Max-Age=0")
+			if n := len(fam.httpCookies.list); n != 0 {
+				t.Fatalf("deletion left %d cookies", n)
+			}
+		})
+	}
+}
+
+// A host-only cookie for a mixed-case single-label host (http://NAS/) is
+// stored lowercase and must still be sent back to that same URL.
+func TestCookieHostOnlyMixedCaseSingleLabelHostIsSent(t *testing.T) {
+	const origin = "http://NAS/"
+	u, _ := url.Parse(origin)
+	for name, set := range map[string]func(*FileAccessManager){
+		"h1": func(fam *FileAccessManager) { testCookieSetOn(fam, origin, "sid=v; Path=/") },
+		"h2": func(fam *FileAccessManager) { testCookieSemanticsSetH2(fam, u, "sid=v; Path=/") },
+	} {
+		t.Run(name, func(t *testing.T) {
+			fam := &FileAccessManager{}
+			set(fam)
+			h1, h2 := testCookieSemanticsSend(fam, origin)
+			if !hasCookie(h1, "sid=v") || !hasCookie(h2, "sid=v") {
+				t.Fatalf("cookie not sent back: h1=%q h2=%q", h1, h2)
+			}
+		})
+	}
+}
+
+// RFC 6265 §5.3 step 5: a Domain attribute that is a public suffix equal to
+// the request host makes the cookie host-only, so the suffix host cannot
+// scope a cookie to its subdomains. It also survives persistence.
+func TestCookiePublicSuffixEqualToHostIsHostOnly(t *testing.T) {
+	const origin = "https://github.io/"
+	u, _ := url.Parse(origin)
+	for name, set := range map[string]func(*FileAccessManager, string){
+		"h1": func(fam *FileAccessManager, hdr string) { testCookieSetOn(fam, origin, hdr) },
+		"h2": func(fam *FileAccessManager, hdr string) { testCookieSemanticsSetH2(fam, u, hdr) },
+	} {
+		for _, domain := range []string{"github.io", ".github.io"} {
+			t.Run(name+" "+domain, func(t *testing.T) {
+				fam := &FileAccessManager{}
+				set(fam, "session=secret; Domain="+domain+"; Path=/; Max-Age=3600")
+				var saved []HTTPCookieRecord
+				fam.httpCookies.cookieSave = func(_ any, r []HTTPCookieRecord) { saved = r }
+				fam.cookiePersist(nil, nil)
+				reload := &FileAccessManager{}
+				reload.httpCookies.cookieLoad = func(any) []HTTPCookieRecord { return saved }
+				reload.loadCookies()
+				for label, f := range map[string]*FileAccessManager{"live": fam, "reloaded": reload} {
+					own1, own2 := testCookieSemanticsSend(f, origin)
+					if !hasCookie(own1, "session=secret") || !hasCookie(own2, "session=secret") {
+						t.Errorf("%s: the suffix host lost its own cookie: %q %q", label, own1, own2)
+					}
+					sub1, sub2 := testCookieSemanticsSend(f, "https://attacker.github.io/")
+					if sub1 != "" || sub2 != "" {
+						t.Errorf("%s: cookie of a public-suffix host sent to a subdomain: %q %q", label, sub1, sub2)
+					}
+				}
+			})
+		}
+	}
+	t.Run("a suffix that is not the request host is still rejected", func(t *testing.T) {
+		fam := &FileAccessManager{}
+		testCookieSetOn(fam, "https://a.github.io/", "s=1; Domain=github.io; Path=/")
+		testCookieSemanticsSetH2(fam, mustParseURL(t, "https://a.github.io/"), "s=1; Domain=github.io; Path=/")
+		if n := len(fam.httpCookies.list); n != 0 {
+			t.Fatalf("jar has %d cookies", n)
+		}
+	})
+}
+
+func mustParseURL(t *testing.T, raw string) *url.URL {
+	t.Helper()
+	u, err := url.Parse(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return u
 }
