@@ -224,6 +224,19 @@ func validPort(port string) bool {
 	return err == nil && n > 0 && n <= 65535
 }
 
+// cookieWaitPort is the explicit non-default port of a wait URL that
+// cookieWaitURL accepted, "" otherwise.
+func cookieWaitPort(waitURL string) string {
+	u, err := url.Parse(waitURL)
+	if err != nil || !validHTTPSOrigin(u) {
+		return ""
+	}
+	if p := originPort(u); p != "443" {
+		return p
+	}
+	return ""
+}
+
 func originPort(u *url.URL) string {
 	if p := u.Port(); p != "" {
 		return p

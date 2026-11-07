@@ -97,6 +97,7 @@ func WebpopupCreateFor(owner, uri, title, trap string, waits ...WebpopupCookieWa
 			return wr
 		}
 		w.target = target
+		w.port = cookieWaitPort(w.URL)
 		wait = &w
 	}
 	done := make(chan *WebpopupResult, 1)

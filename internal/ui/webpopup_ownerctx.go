@@ -84,7 +84,11 @@ func popupContextURL(code int, topURL string, wait *WebpopupCookieWait) string {
 	switch code {
 	case WebpopupCookieFound:
 		if wait != nil && wait.target.host != "" {
-			return wait.target.scheme + "://" + wait.target.host + wait.target.path
+			host := wait.target.host
+			if wait.port != "" {
+				host += ":" + wait.port
+			}
+			return wait.target.scheme + "://" + host + wait.target.path
 		}
 		return topURL
 	case WebpopupTrappedURL, WebpopupClosedByUser:

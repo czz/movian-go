@@ -32,6 +32,10 @@ type WebpopupCookieWait struct {
 	Timeout time.Duration // 0 = DefaultCookieWaitTimeout; capped at Max
 
 	target cookieURL // set by WebpopupCreate
+	// port is the non-default port of the validated URL ("" for 443). The
+	// target's host is canonical and carries no port; the owner context needs
+	// the port to name the origin the popup ended on.
+	port string
 }
 
 // cookieWaitTimeout clamps a requested wait to (0, Max]; <=0 → default.

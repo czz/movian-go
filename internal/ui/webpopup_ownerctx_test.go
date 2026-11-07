@@ -44,6 +44,7 @@ func TestPopupOwnerContexts(t *testing.T) {
 // wait target's origin, and a late iframe navigation never replaces it.
 func TestPopupContextURL(t *testing.T) {
 	wait := &WebpopupCookieWait{target: cookieURL{scheme: "https", host: "example.test", path: "/"}}
+	portWait := &WebpopupCookieWait{port: "8443", target: cookieURL{scheme: "https", host: "example.test", path: "/"}}
 	for _, tc := range []struct {
 		name string
 		code int
@@ -56,12 +57,32 @@ func TestPopupContextURL(t *testing.T) {
 		{"trapped uses the last page", WebpopupTrappedURL, "https://example.test/ch", wait, "https://example.test/ch"},
 		{"user close uses the last page", WebpopupClosedByUser, "https://example.test/ch", nil, "https://example.test/ch"},
 		{"user close before any page", WebpopupClosedByUser, "", wait, ""},
+		{"cookie found on a non-default port", WebpopupCookieFound, "", portWait, "https://example.test:8443/"},
+		{"cookie found on a non-default port after its page", WebpopupCookieFound, "https://example.test:8443/ch", portWait, "https://example.test:8443/"},
 		{"cookie found without a wait", WebpopupCookieFound, "https://example.test/ch", nil, "https://example.test/ch"},
 		{"timeout records nothing", WebpopupCookieTimeout, "https://example.test/ch", wait, ""},
 		{"load error records nothing", WebpopupLoadError, "https://example.test/ch", wait, ""},
 	} {
 		if got := popupContextURL(tc.code, tc.top, tc.wait); got != tc.want {
 			t.Errorf("%s: %q, want %q", tc.name, got, tc.want)
+		}
+	}
+}
+
+// The wait target keeps its host in canonical form, without the port; the
+// non-default port of the validated wait URL is carried on its own, so the
+// owner context names the origin the popup really ended on.
+func TestCookieWaitPort(t *testing.T) {
+	for _, tc := range []struct{ url, want string }{
+		{"https://example.test/", ""},
+		{"https://example.test:443/x", ""},
+		{"https://example.test:8443/x", "8443"},
+		{"https://[2001:db8::1]:8443/", "8443"},
+		{"https://example.test:0/", ""},
+		{"::bad", ""},
+	} {
+		if got := cookieWaitPort(tc.url); got != tc.want {
+			t.Errorf("%q: %q, want %q", tc.url, got, tc.want)
 		}
 	}
 }
