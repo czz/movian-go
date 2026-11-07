@@ -110,16 +110,21 @@ func (fam *FileAccessManager) http2Client(verify bool) *http.Client {
 // (fa_http_cookie.go), flattened to a Cookie header value.
 func (hf *h2File) h2CookieHeader(host, path string,
 	extra *httpnet.HTTPHeaderList) string {
+	return hf.h2CookieHeaderFor(host, path, cookieURLSecure(hf.url), extra)
+}
+
+// h2CookieHeaderFor builds the Cookie header for a request whose own
+// scheme is known: after a redirect the request URL differs from hf.url,
+// so Secure must be judged on the URL actually being sent.
+func (hf *h2File) h2CookieHeaderFor(host, path string, secureReq bool,
+	extra *httpnet.HTTPHeaderList) string {
 	fam := hf.fam
 	now := time.Now().Unix()
 	var b strings.Builder
 	s := ""
 	fam.httpCookies.mu.Lock()
 	for _, hc := range fam.httpCookies.list {
-		if hc.expire != -1 && now > hc.expire {
-			continue
-		}
-		if validateCookie(host, path, hc.domain, hc.path) != 0 {
+		if !cookieSendable(hc, host, path, secureReq, now) {
 			continue
 		}
 		if _, ok := extra.Get(hc.name); ok {
@@ -161,46 +166,35 @@ func (hf *h2File) h2SetCookies(resp *http.Response, u *neturl.URL) {
 		if c.Name == "" {
 			continue
 		}
-		domain := c.Domain
-		if domain == "" {
+		if c.Partitioned {
+			// Same fail-closed rule as HTTP/1: no partition context here.
+			hf.h2Trace("Ignoring Partitioned cookie name=%s", c.Name)
+			continue
+		}
+		domain := strings.ToLower(strings.TrimPrefix(c.Domain, "."))
+		hostOnly := domain == ""
+		if hostOnly {
 			domain = u.Hostname()
-		} else {
-			domain = strings.TrimPrefix(domain, ".")
 		}
 		path := c.Path
-		if path == "" {
-			path = "/"
+		if !strings.HasPrefix(path, "/") {
+			path = cookieDefaultPath(u.EscapedPath())
 		}
-		expire := int64(-1)
-		if !c.Expires.IsZero() {
-			expire = c.Expires.Unix()
-		} else if c.MaxAge > 0 {
-			expire = now + int64(c.MaxAge)
+		// net/http: MaxAge > 0 is seconds, < 0 is "Max-Age=0", 0 is unset.
+		expire := cookieExpiry(now, c.Expires, int64(c.MaxAge), c.MaxAge != 0)
+		if !hostOnly && cookieDomainIsPublicSuffix(u.Hostname(), domain) {
+			hf.h2Trace("Rejected cookie name=%s domain=%s: public suffix", c.Name, domain)
+			continue
 		}
 		if !cookieDomainMatch(u.Hostname(), domain) {
 			hf.h2Trace("Rejected cookie name=%s path=%s domain=%s: foreign domain",
 				c.Name, path, domain)
 			continue
 		}
-		fam.httpCookies.mu.Lock()
-		var hc *httpCookie
-		for _, x := range fam.httpCookies.list {
-			if x.name == c.Name && x.path == path && x.domain == domain {
-				hc = x
-				break
-			}
-		}
-		if hc == nil {
-			hc = &httpCookie{name: c.Name, path: path, domain: domain}
-			fam.httpCookies.list = append([]*httpCookie{hc},
-				fam.httpCookies.list...)
-		}
-		hc.value = c.Value
-		hc.expire = expire
-		fam.httpCookies.mu.Unlock()
-	}
-	if cs := fam.CalloutSystem(); cs != nil && len(resp.Cookies()) > 0 {
-		cs.Arm(&fam.httpCookies.persistTimer, fam.cookiePersist, nil, 5)
+		fam.cookieJarPut(httpCookie{
+			name: c.Name, path: path, domain: domain, value: c.Value, expire: expire, secure: c.Secure,
+			hostOnly: hostOnly,
+		})
 	}
 }
 
@@ -247,7 +241,7 @@ func (hf *h2File) h2NewRequest(url, method string, start int64) (*http.Request, 
 	}
 	req.Header.Set("Accept", "*/*")
 
-	if ck := hf.h2CookieHeader(u.Hostname(), path, &cookies); ck != "" {
+	if ck := hf.h2CookieHeaderFor(u.Hostname(), path, cookieURLSecure(url), &cookies); ck != "" {
 		req.Header.Set("Cookie", ck)
 	}
 	for _, hh := range headers.List {
