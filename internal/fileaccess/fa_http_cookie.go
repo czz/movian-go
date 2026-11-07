@@ -69,6 +69,8 @@ func validateCookie(reqHost, reqPath, domain, path string) int {
 // response from reqHost may set a cookie for domain, else the RFC 2109
 // error code.
 func validateCookieDomain(reqHost, domain string) int {
+	// Host names compare without regard to case.
+	reqHost, domain = strings.ToLower(reqHost), strings.ToLower(domain)
 	// The value for the Domain attribute contains no embedded dots or
 	// does not start with a dot — unless it matches req_host perfectly.
 	// C: if(*domain == '.') domain++; then strchr(domain + 1, '.')
@@ -150,12 +152,37 @@ func (fam *FileAccessManager) loadCookies() {
 			r.Value == "" || r.Expire < now {
 			continue
 		}
+		// New cookies store their domain without the leading dot; records
+		// written before that keep it. Normalize so a replacement or a
+		// deletion finds them, and drop a later duplicate of the same cookie
+		// (records are saved newest first).
+		domain := cookieCanonDomain(r.Domain)
+		if domain == "" || fam.findJarCookieLocked(r.Name, r.Path, domain) >= 0 {
+			continue
+		}
 		fam.httpCookies.list = append([]*httpCookie{{
-			name: r.Name, path: r.Path, domain: r.Domain,
+			name: r.Name, path: r.Path, domain: domain,
 			value: r.Value, expire: r.Expire, secure: r.Secure,
 			hostOnly: r.HostOnly,
 		}}, fam.httpCookies.list...)
 	}
+}
+
+// cookieCanonDomain is the form a jar domain is stored and compared in:
+// lowercase, without a leading dot.
+func cookieCanonDomain(d string) string {
+	return strings.ToLower(strings.TrimPrefix(d, "."))
+}
+
+// findJarCookieLocked returns the index of the jar cookie with this name,
+// path and domain, or -1. The caller holds the jar lock or owns the jar.
+func (fam *FileAccessManager) findJarCookieLocked(name, path, domain string) int {
+	for i, x := range fam.httpCookies.list {
+		if x.name == name && x.path == path && x.domain == domain {
+			return i
+		}
+	}
+	return -1
 }
 
 // httpCookieSet — C: http_cookie_set.
@@ -351,6 +378,7 @@ func cookieURLSecure(rawURL string) bool {
 // same name, domain and path (RFC 6265 §5.3 step 11), or deletes that
 // cookie when nc is already expired. HTTP/1 and HTTP/2/3 both end here.
 func (fam *FileAccessManager) cookieJarPut(nc httpCookie) {
+	nc.domain = cookieCanonDomain(nc.domain)
 	now := time.Now().Unix()
 	fam.httpCookies.mu.Lock()
 	idx := -1
@@ -383,6 +411,7 @@ func (fam *FileAccessManager) HTTPInjectCookies(host, path string, cookies map[s
 	if path == "" {
 		path = "/"
 	}
+	host = cookieCanonDomain(host)
 	expire := time.Now().Unix() + 86400*30
 	fam.httpCookies.mu.Lock()
 	for name, value := range cookies {
