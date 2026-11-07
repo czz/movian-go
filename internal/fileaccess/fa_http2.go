@@ -166,9 +166,13 @@ func (hf *h2File) h2SetCookies(resp *http.Response, u *neturl.URL) {
 		}
 		// net/http: MaxAge > 0 is seconds, < 0 is "Max-Age=0", 0 is unset.
 		expire := cookieExpiry(now, c.Expires, int64(c.MaxAge), c.MaxAge != 0)
-		if !hostOnly && cookieDomainIsPublicSuffix(u.Hostname(), domain) {
-			hf.h2Trace("Rejected cookie name=%s domain=%s: public suffix", c.Name, domain)
-			continue
+		if !hostOnly {
+			reject, forceHostOnly := cookiePublicSuffixScope(u.Hostname(), domain)
+			if reject {
+				hf.h2Trace("Rejected cookie name=%s domain=%s: public suffix", c.Name, domain)
+				continue
+			}
+			hostOnly = forceHostOnly
 		}
 		if !cookieDomainMatch(u.Hostname(), domain) {
 			hf.h2Trace("Rejected cookie name=%s path=%s domain=%s: foreign domain",

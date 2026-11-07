@@ -65,13 +65,25 @@ type HTTPCookieRecord struct {
 	ScopeOwner  string
 }
 
-// validateCookie — C: validate_cookie (RFC 2109 §4.3.2).
+// validateCookie — C: validate_cookie (RFC 2109 §4.3.2), for the host and
+// path of a request that would carry the cookie: the cookie's path must
+// match the request path and its domain the request host. Accepting a
+// Set-Cookie checks the domain only (validateCookieDomain): the Path
+// attribute limits where a cookie is sent, not whether it is stored.
 func validateCookie(reqHost, reqPath, domain, path string) int {
 	// The value for the Path attribute is not a prefix of the request-URI.
 	if !cookiePathMatch(reqPath, path) {
 		return 1
 	}
+	return validateCookieDomain(reqHost, domain)
+}
 
+// validateCookieDomain is the Domain part of validateCookie: 0 when a
+// response from reqHost may set a cookie for domain, else the RFC 2109
+// error code.
+func validateCookieDomain(reqHost, domain string) int {
+	// Host names compare without regard to case.
+	reqHost, domain = strings.ToLower(reqHost), strings.ToLower(domain)
 	// The value for the Domain attribute contains no embedded dots or
 	// does not start with a dot — unless it matches req_host perfectly.
 	// C: if(*domain == '.') domain++; then strchr(domain + 1, '.')
@@ -112,7 +124,7 @@ func cookiePathMatch(reqPath, cookiePath string) bool {
 // cookieDomainMatch reports whether reqHost equals domain or is a
 // subdomain of it (leading dot of domain ignored), on a label boundary.
 // It is the Set-Cookie Domain check shared by HTTP/1 (inside
-// validateCookie, together with the legacy RFC 2109 path/dot rules) and
+// validateCookieDomain, together with the legacy RFC 2109 dot rules) and
 // HTTP/2 (h2SetCookies, domain check only; HTTP/3 shares that path).
 func cookieDomainMatch(reqHost, domain string) bool {
 	reqHost = strings.ToLower(reqHost)
@@ -169,12 +181,37 @@ func (fam *FileAccessManager) loadCookies() {
 			fam.httpCookies.list = append([]*httpCookie{&hc}, fam.httpCookies.list...)
 			continue
 		}
+		// New cookies store their domain without the leading dot; records
+		// written before that keep it. Normalize so a replacement or a
+		// deletion finds them, and drop a later duplicate of the same cookie
+		// (records are saved newest first).
+		domain := cookieCanonDomain(r.Domain)
+		if domain == "" || fam.findJarCookieLocked(r.Name, r.Path, domain) >= 0 {
+			continue
+		}
 		fam.httpCookies.list = append([]*httpCookie{{
-			name: r.Name, path: r.Path, domain: r.Domain,
+			name: r.Name, path: r.Path, domain: domain,
 			value: r.Value, expire: r.Expire, secure: r.Secure,
 			hostOnly: r.HostOnly,
 		}}, fam.httpCookies.list...)
 	}
+}
+
+// cookieCanonDomain is the form a jar domain is stored and compared in:
+// lowercase, without a leading dot.
+func cookieCanonDomain(d string) string {
+	return strings.ToLower(strings.TrimPrefix(d, "."))
+}
+
+// findJarCookieLocked returns the index of the jar cookie with this name,
+// path and domain, or -1. The caller holds the jar lock or owns the jar.
+func (fam *FileAccessManager) findJarCookieLocked(name, path, domain string) int {
+	for i, x := range fam.httpCookies.list {
+		if x.name == name && x.path == path && x.domain == domain {
+			return i
+		}
+	}
+	return -1
 }
 
 // httpCookieSet — C: http_cookie_set.
@@ -252,11 +289,15 @@ func httpCookieSet(cookie string, hf *httpFile) {
 	now := time.Now().Unix()
 	expire = cookieExpiry(now, expires, maxAge, hasMaxAge)
 
-	if !hostOnly && cookieDomainIsPublicSuffix(reqHost, domain) {
-		hf.hfTrace("Rejected cookie name=%s domain=%s: public suffix", name, domain)
-		return
+	if !hostOnly {
+		reject, forceHostOnly := cookiePublicSuffixScope(reqHost, domain)
+		if reject {
+			hf.hfTrace("Rejected cookie name=%s domain=%s: public suffix", name, domain)
+			return
+		}
+		hostOnly = hostOnly || forceHostOnly
 	}
-	if r := validateCookie(reqHost, reqPath, domain, path); r != 0 {
+	if r := validateCookieDomain(reqHost, domain); r != 0 {
 		hf.hfTrace("Rejected cookie name=%s path=%s domain=%s value=%s error=%d",
 			name, path, domain, value, r)
 		return
@@ -275,17 +316,21 @@ func httpCookieSet(cookie string, hf *httpFile) {
 	})
 }
 
-// cookieDomainIsPublicSuffix reports whether a Domain attribute names a
-// public suffix (co.uk) and so must not scope a cookie to every site under
-// it. A suffix equal to the request host is not rejected: the caller keeps
-// it, host-only.
-func cookieDomainIsPublicSuffix(reqHost, domain string) bool {
-	domain = strings.ToLower(strings.TrimPrefix(domain, "."))
-	if domain == strings.ToLower(reqHost) {
-		return false
-	}
+// cookiePublicSuffixScope applies RFC 6265 §5.3 step 5 to a Domain
+// attribute. A domain that names a public suffix (co.uk) must not scope a
+// cookie to every site under it: when the suffix is not the request host
+// the cookie is rejected; when it is the request host the cookie is kept
+// but becomes host-only. A domain that is not a public suffix is left alone.
+func cookiePublicSuffixScope(reqHost, domain string) (reject, hostOnly bool) {
+	domain = cookieCanonDomain(domain)
 	suffix, _ := publicsuffix.PublicSuffix(domain)
-	return suffix == domain
+	if suffix != domain {
+		return false, false
+	}
+	if domain == strings.ToLower(reqHost) {
+		return false, true
+	}
+	return true, false
 }
 
 // cookieDefaultPath is the RFC 6265 §5.1.4 default-path: the request path
@@ -395,6 +440,7 @@ func cookieURLSecure(rawURL string) bool {
 // same name, domain and path (RFC 6265 §5.3 step 11), or deletes that
 // cookie when nc is already expired. HTTP/1 and HTTP/2/3 both end here.
 func (fam *FileAccessManager) cookieJarPut(nc httpCookie) {
+	nc.domain = cookieCanonDomain(nc.domain)
 	now := time.Now().Unix()
 	fam.httpCookies.mu.Lock()
 	idx := -1
@@ -432,6 +478,7 @@ func (fam *FileAccessManager) HTTPInjectCookies(host, path string, cookies map[s
 	if path == "" {
 		path = "/"
 	}
+	host = cookieCanonDomain(host)
 	expire := time.Now().Unix() + 86400*30
 	fam.httpCookies.mu.Lock()
 	for name, value := range cookies {
