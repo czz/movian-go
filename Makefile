@@ -227,12 +227,14 @@ linux: check-ffmpeg
 # see BUILDING.md for the aapt/javac/d8/zipalign/apksigner steps.
 ANDROID_NDK ?= /opt/android/android-ndk-r23b
 # Android build tags. webpopup compiles the WebPopupActivity bridge
-# (internal/ui/webpopup_android.go). android_cf_firstparty is OPT-IN: set
-# ANDROID_FIRSTPARTY=1 to accept a Partitioned clearance cookie for the exact
-# top-level origin, a restricted scenario that is verified separately. The
-# default build rejects Partitioned cookies.
-ANDROID_FIRSTPARTY ?=
-ANDROID_BUILD_TAGS ?= webpopup$(if $(ANDROID_FIRSTPARTY), android_cf_firstparty)
+# (internal/ui/webpopup_android.go). android_cf_firstparty is ON by default:
+# Android WebView (Google and Amazon) stores Cloudflare's cf_clearance as a
+# Partitioned cookie, so the strict policy refuses it. The first-party
+# variant accepts a Partitioned clearance cookie only for the exact top-level
+# origin and owner that opened the popup.
+# Build the strict variant with ANDROID_FIRSTPARTY=0.
+ANDROID_FIRSTPARTY ?= 1
+ANDROID_BUILD_TAGS ?= webpopup$(if $(filter 1,$(ANDROID_FIRSTPARTY)), android_cf_firstparty)
 ANDROID_TC := $(ANDROID_NDK)/toolchains/llvm/prebuilt/linux-x86_64/bin
 # arm32: -overlay swaps runtime/os_linux32.go for a variant that calls
 # the 32-bit futex/timer_settime syscalls directly — the app seccomp
