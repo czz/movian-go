@@ -127,3 +127,35 @@ func TestPopupOwnerContextsOverlappingPopups(t *testing.T) {
 		}
 	}
 }
+
+// A late address change in an iframe must not move the origin the popup ended
+// on: the main frame's last https page stays the authorized one.
+func TestMainFrameURLIgnoresSubframes(t *testing.T) {
+	top := ""
+	for _, ev := range []struct {
+		url    string
+		isMain bool
+	}{
+		{"https://site.test/login", true},
+		{"https://ads.example/frame", false},
+		{"http://site.test/plain", true}, // not https: no new origin
+		{"https://cdn.example/widget", false},
+	} {
+		top = mainFrameURL(top, ev.url, ev.isMain)
+	}
+	if top != "https://site.test/login" {
+		t.Fatalf("top = %q, want the main frame's https page", top)
+	}
+
+	var c popupOwnerContexts
+	gen := c.begin("plugin.a")
+	c.record("plugin.a", gen, popupContextURL(WebpopupClosedByUser, top, nil))
+	if !c.readAllowed("plugin.a", "https://site.test/") {
+		t.Error("the main-frame origin must be authorized")
+	}
+	for _, other := range []string{"https://ads.example/", "https://cdn.example/"} {
+		if c.readAllowed("plugin.a", other) {
+			t.Errorf("subframe origin %s must not be authorized", other)
+		}
+	}
+}

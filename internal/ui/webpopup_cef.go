@@ -1169,7 +1169,7 @@ func cefOnLoadStart(data unsafe.Pointer, url *C.char) {
 	s.oskField = false
 	s.oskValue = ""
 	s.oskMu.Unlock()
-	s.noteURL(C.GoString(url)) // load start is main frame only
+	s.noteURL(C.GoString(url), true) // load start is main frame only
 	s.checkTrapURI(C.GoString(url))
 }
 
@@ -1188,9 +1188,7 @@ func cefOnLoadEnd(data unsafe.Pointer) {
 //export cefOnAddressChange
 func cefOnAddressChange(data unsafe.Pointer, url *C.char, isMain C.int) {
 	if s := cefSessionOf(data); s != nil {
-		if isMain != 0 {
-			s.noteURL(C.GoString(url)) // a subframe never moves the popup's origin
-		}
+		s.noteURL(C.GoString(url), isMain != 0)
 		s.checkTrapURI(C.GoString(url))
 	}
 }
@@ -1378,11 +1376,10 @@ func cefCookiesDeleted(data unsafe.Pointer, n C.int) {
 // session lifecycle (main thread)
 // ------------------------------------------------------------------
 
-// noteURL remembers the main frame's latest https page.
-func (s *cefSession) noteURL(uri string) {
-	if httpsOriginOf(uri) != "" {
-		s.topURL = uri
-	}
+// noteURL remembers the main frame's latest https page; a subframe never
+// moves the popup's origin.
+func (s *cefSession) noteURL(uri string, isMain bool) {
+	s.topURL = mainFrameURL(s.topURL, uri, isMain)
 }
 
 func (s *cefSession) checkTrapURI(uri string) {

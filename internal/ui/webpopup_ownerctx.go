@@ -89,6 +89,16 @@ func (c *popupOwnerContexts) readAllowed(owner, uri string) bool {
 	return origin != "" && c.byOwner[owner] == origin
 }
 
+// mainFrameURL is the page a popup counts as showing after an address change
+// of uri: the main frame's latest https page. A subframe or a non-https
+// address leaves prev alone.
+func mainFrameURL(prev, uri string, isMain bool) string {
+	if isMain && httpsOriginOf(uri) != "" {
+		return uri
+	}
+	return prev
+}
+
 // popupContextURL is the page a finished popup counts as ended on. A popup
 // that found its cookie ended on the wait target: that is where the cookie
 // was seen, and it can happen before any page callback ran (the cookie was
