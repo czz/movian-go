@@ -257,6 +257,58 @@ public final class WebPopupActivity extends Activity {
         } catch (InterruptedException e) { Thread.currentThread().interrupt(); return null; }
         return out[0];
     }
+    /**
+     * Removes the matching cookies from every clearance profile (one per
+     * plugin) by setting expired twins, then flushes. Bounded by
+     * COOKIE_DELETE_TIMEOUT_MS; null on failure or timeout.
+     */
+    static String deleteCookies(final String host, final String path, final String namesJson) {
+        if (host == null || host.isEmpty() || Looper.myLooper() == Looper.getMainLooper()) return null;
+        final java.util.Set<String> names = new java.util.HashSet<String>();
+        try {
+            if (namesJson != null && !namesJson.isEmpty()) {
+                org.json.JSONArray a = new org.json.JSONArray(namesJson);
+                for (int i = 0; i < a.length(); i++) names.add(a.getString(i));
+            }
+        } catch (Throwable e) { return null; }
+        final String[] out = new String[1]; // written before done.countDown()
+        final CountDownLatch done = new CountDownLatch(1);
+        PopupHost.runOnMain(new Runnable() { @Override public void run() {
+            try {
+                if (!WebViewFeature.isFeatureSupported(WebViewFeature.MULTI_PROFILE) ||
+                    !WebViewFeature.isFeatureSupported(WebViewFeature.GET_COOKIE_INFO)) { done.countDown(); return; }
+                long now = System.currentTimeMillis();
+                String reqPath = path == null || path.isEmpty() ? "/" : path;
+                String queryUrl = "https://" + host + (reqPath.startsWith("/") ? reqPath : "/" + reqPath);
+                CookieDelete.Plan total = new CookieDelete.Plan();
+                java.util.List<String> deleted = new java.util.ArrayList<String>();
+                for (String name : ProfileStore.getInstance().getAllProfileNames()) {
+                    if (!name.startsWith("clearance-")) continue;
+                    Profile profile = ProfileStore.getInstance().getProfile(name);
+                    if (profile == null) continue;
+                    CookieManager cm = profile.getCookieManager();
+                    List<String> info = CookieManagerCompat.getCookieInfo(cm, queryUrl);
+                    CookieDelete.Plan p = CookieDelete.plan(info, host, reqPath, names, now);
+                    for (CookieDelete.Expiry e : p.expire) {
+                        cm.setCookie(e.url, e.setCookie);
+                        deleted.add(e.name);
+                    }
+                    if (!p.expire.isEmpty()) cm.flush();
+                    total.expired += p.expired;
+                    total.otherHost += p.otherHost;
+                    total.otherPath += p.otherPath;
+                    total.filtered += p.filtered;
+                }
+                out[0] = CookieDelete.resultJson(deleted, total);
+            } catch (Throwable ignored) { out[0] = null; }
+            done.countDown();
+        }});
+        try {
+            if (!done.await(PopupRequest.COOKIE_DELETE_TIMEOUT_MS, TimeUnit.MILLISECONDS))
+                return null;
+        } catch (InterruptedException e) { Thread.currentThread().interrupt(); return null; }
+        return out[0];
+    }
     static String userAgent() {
         return lastUserAgent;
     }

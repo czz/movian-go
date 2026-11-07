@@ -114,6 +114,16 @@ public class Core {
         return WebPopupActivity.cookies(uri, owner);
     }
 
+    /**
+     * Removes the clearance-profile cookies a request to host/path would carry,
+     * limited to the names in the JSON array namesJson ("" or "[]" means all).
+     * Returns {"deleted":[names],"skipped":{...}}, or null on failure; returns
+     * within 8 s.
+     */
+    public static String webPopupPrototypeDeleteCookies(String host, String path, String namesJson) {
+        return WebPopupActivity.deleteCookies(host, path, namesJson);
+    }
+
     public static String webPopupPrototypeUA() {
         return WebPopupActivity.userAgent();
     }

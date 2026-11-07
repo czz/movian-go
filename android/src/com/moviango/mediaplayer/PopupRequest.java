@@ -28,6 +28,8 @@ final class PopupRequest {
     static final long SESSION_TIMEOUT_MS = 30L * 60L * 1000L;
     /** Upper bound for the cookie query that runs on the UI thread. */
     static final long COOKIE_QUERY_TIMEOUT_MS = 10_000L;
+    /** Upper bound for deleting cookies on the UI thread; below the Go side's 10 s. */
+    static final long COOKIE_DELETE_TIMEOUT_MS = 8_000L;
 
     private static final Object LOCK = new Object();
     private static PopupRequest active;

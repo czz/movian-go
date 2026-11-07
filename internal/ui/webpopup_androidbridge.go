@@ -6,6 +6,8 @@ package ui
 
 import (
 	"encoding/json"
+	"sort"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"unicode/utf16"
@@ -20,6 +22,10 @@ type androidPopupJNI interface {
 	// Cookies returns a JSON array of Set-Cookie strings, or "".
 	Cookies(uri, owner string) string
 	UserAgent() string
+	// DeleteCookies expires the matching cookies in the clearance profiles
+	// and returns {"deleted":[names],...} (see androidDeleteOutcome), or "".
+	// names empty means every cookie the request would carry.
+	DeleteCookies(host, path string, names []string) string
 }
 
 // androidPopupOutcome maps the Java result JSON to a webpopup result code.
@@ -176,6 +182,49 @@ func (b *androidBridge) cookies(uri, owner, name string) []WebpopupCookie {
 		return none
 	}
 	return []WebpopupCookie{*clr.Cookie}
+}
+
+// androidDeleteOutcome parses the Java deletecookies answer: the names of the
+// cookies it expired. ok is false for an empty or malformed answer.
+func androidDeleteOutcome(raw string) (deleted []string, ok bool) {
+	var r struct {
+		Deleted *[]string `json:"deleted"`
+	}
+	if json.Unmarshal([]byte(raw), &r) != nil || r.Deleted == nil {
+		return nil, false
+	}
+	return *r.Deleted, true
+}
+
+// deleteCookies is wpPlatformDeleteCookies: it asks Java to expire the
+// WebView cookies a request to host/path would carry (only the listed names
+// when names is not empty) and returns how many it expired.
+func (b *androidBridge) deleteCookies(host, path string, names map[string]bool) int {
+	host = strings.ToLower(host)
+	if host == "" {
+		return 0
+	}
+	if path == "" {
+		path = "/"
+	}
+	var list []string
+	for n := range names {
+		list = append(list, n)
+	}
+	sort.Strings(list)
+	raw := b.jni.DeleteCookies(host, path, list)
+	deleted, ok := androidDeleteOutcome(raw)
+	if clearanceDebug() {
+		if !ok {
+			clearanceTrace("android deletecookies failed host=%q path=%q names=%q raw=%q", host, path, list, raw)
+		} else {
+			clearanceTrace("android deletecookies host=%q path=%q names=%q deleted=%q count=%d raw=%q", host, path, list, deleted, len(deleted), raw)
+		}
+	}
+	if !ok {
+		return 0
+	}
+	return len(deleted)
 }
 
 func (b *androidBridge) userAgent() string { return b.jni.UserAgent() }
