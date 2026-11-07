@@ -16,7 +16,8 @@ func wpPlatformOK() bool { return false }
 
 func wpPlatformDispatch(fn func()) {}
 
-func wpPlatformRunPopup(uri, title, trap string, wr *WebpopupResult,
+func wpPlatformRunPopup(uri, title, trap string, wait *WebpopupCookieWait,
+	wr *WebpopupResult,
 	done chan<- *WebpopupResult) {
 }
 
@@ -24,7 +25,9 @@ func wpPlatformBrowser(uri, title string) {}
 
 func wpPlatformStorage(dir string) {}
 
-func wpPlatformCookies(uri string, done chan map[string]string) {}
+func wpPlatformCookies(uri string, r *cookieRead) {
+	r.done <- nil
+}
 
 func wpPlatformDeleteCookies(host, path string, names map[string]bool,
 	done chan int) {

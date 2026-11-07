@@ -66,10 +66,13 @@ func wpGetJSCookies(uri string) map[string]string {
 	return nil
 }
 
-// WebpopupCreate — C: webpopup_create. Opens a browser window and
-// blocks until navigation reaches a URL starting with trap, or the
-// user closes the window.
-func WebpopupCreate(uri, title, trap string) *WebpopupResult {
+// WebpopupCreate — C: webpopup_create. Opens a browser window and blocks
+// until navigation reaches a URL starting with trap, the user closes the
+// window, or — when a WebpopupCookieWait is given — the awaited cookie
+// appears (WebpopupCookieFound) or the wait times out
+// (WebpopupCookieTimeout). The optional wait keeps every three-argument
+// caller source-compatible; an invalid wait does not start the popup.
+func WebpopupCreate(uri, title, trap string, waits ...WebpopupCookieWait) *WebpopupResult {
 	wpEnsure()
 	wr := &WebpopupResult{}
 	if !wpPlatformOK() {
@@ -77,9 +80,21 @@ func WebpopupCreate(uri, title, trap string) *WebpopupResult {
 		WebpopupFinalizeResult(wr)
 		return wr
 	}
+	var wait *WebpopupCookieWait
+	if len(waits) > 0 {
+		w := waits[0]
+		target, ok := cookieWaitURL(uri, w.URL, w.Name)
+		if !ok {
+			wr.ResultCode = WebpopupLoadError
+			WebpopupFinalizeResult(wr)
+			return wr
+		}
+		w.target = target
+		wait = &w
+	}
 	done := make(chan *WebpopupResult, 1)
 	wpPlatformDispatch(func() {
-		wpPlatformRunPopup(uri, title, trap, wr, done)
+		wpPlatformRunPopup(uri, title, trap, wait, wr, done)
 	})
 	wr = <-done
 	WebpopupFinalizeResult(wr)
@@ -96,30 +111,42 @@ func WebbrowserOpen(uri, title string) {
 	wpPlatformDispatch(func() { wpPlatformBrowser(uri, title) })
 }
 
-// WebpopupCookies returns the cookies the webview holds for uri's
-// origin — the native jar (HttpOnly included) where the platform
-// implements it, merged over the JS-visible snapshot. The platform
-// hook runs on the UI thread and only STARTS the query; the async
-// completion pushes the result (nil if unsupported) on done.
-func WebpopupCookies(uri string) map[string]string {
+// WebpopupCookieList returns the unpartitioned cookies the webview sends
+// to uri — the URL-scoped native jar, HttpOnly included, one per name
+// (see scopeCookies: ambiguous names are dropped). The platform hook runs
+// on the UI thread and only STARTS the query; the async completion pushes
+// the result (nil if unsupported) on done. Cookies of other CHIPS
+// partitions are never returned: CEF does not label them.
+func WebpopupCookieList(uri string) []WebpopupCookie {
 	wpEnsure()
-	var native map[string]string
 	if !wpPlatformOK() {
-		return wpGetJSCookies(uri)
+		return nil
 	}
-	done := make(chan map[string]string, 1)
-	wpPlatformDispatch(func() { wpPlatformCookies(uri, done) })
+	r := newCookieRead()
+	wpPlatformDispatch(func() { wpPlatformCookies(uri, r) })
 	select {
-	case native = <-done:
+	case cookies := <-r.done:
+		return cookies
 	case <-time.After(10 * time.Second):
+		r.Abandon() // detach: late CEF callbacks become no-ops
+		return nil
 	}
-	for k, v := range wpGetJSCookies(uri) {
-		if native == nil {
-			native = map[string]string{}
-		}
-		native[k] = v
+}
+
+// WebpopupCookies — WebpopupCookieList flattened to the legacy
+// name→value map of webcookies(), merged under the JS-visible snapshot
+// (document.cookie: first-party, so never another partition's).
+func WebpopupCookies(uri string) map[string]string {
+	cookies := WebpopupCookieList(uri)
+	js := wpGetJSCookies(uri)
+	if cookies == nil && js == nil {
+		return nil
 	}
-	return native
+	m := CookieMap(cookies)
+	for k, v := range js {
+		m[k] = v
+	}
+	return m
 }
 
 // WebpopupUserAgent is the UA string the webview sends — cookies like
