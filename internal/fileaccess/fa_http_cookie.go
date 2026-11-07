@@ -52,13 +52,23 @@ type HTTPCookieRecord struct {
 	HostOnly bool
 }
 
-// validateCookie — C: validate_cookie (RFC 2109 §4.3.2).
+// validateCookie — C: validate_cookie (RFC 2109 §4.3.2), for the host and
+// path of a request that would carry the cookie: the cookie's path must
+// match the request path and its domain the request host. Accepting a
+// Set-Cookie checks the domain only (validateCookieDomain): the Path
+// attribute limits where a cookie is sent, not whether it is stored.
 func validateCookie(reqHost, reqPath, domain, path string) int {
 	// The value for the Path attribute is not a prefix of the request-URI.
 	if !cookiePathMatch(reqPath, path) {
 		return 1
 	}
+	return validateCookieDomain(reqHost, domain)
+}
 
+// validateCookieDomain is the Domain part of validateCookie: 0 when a
+// response from reqHost may set a cookie for domain, else the RFC 2109
+// error code.
+func validateCookieDomain(reqHost, domain string) int {
 	// The value for the Domain attribute contains no embedded dots or
 	// does not start with a dot — unless it matches req_host perfectly.
 	// C: if(*domain == '.') domain++; then strchr(domain + 1, '.')
@@ -99,7 +109,7 @@ func cookiePathMatch(reqPath, cookiePath string) bool {
 // cookieDomainMatch reports whether reqHost equals domain or is a
 // subdomain of it (leading dot of domain ignored), on a label boundary.
 // It is the Set-Cookie Domain check shared by HTTP/1 (inside
-// validateCookie, together with the legacy RFC 2109 path/dot rules) and
+// validateCookieDomain, together with the legacy RFC 2109 dot rules) and
 // HTTP/2 (h2SetCookies, domain check only; HTTP/3 shares that path).
 func cookieDomainMatch(reqHost, domain string) bool {
 	reqHost = strings.ToLower(reqHost)
@@ -227,7 +237,7 @@ func httpCookieSet(cookie string, hf *httpFile) {
 		hf.hfTrace("Rejected cookie name=%s domain=%s: public suffix", name, domain)
 		return
 	}
-	if r := validateCookie(reqHost, reqPath, domain, path); r != 0 {
+	if r := validateCookieDomain(reqHost, domain); r != 0 {
 		hf.hfTrace("Rejected cookie name=%s path=%s domain=%s value=%s error=%d",
 			name, path, domain, value, r)
 		return
