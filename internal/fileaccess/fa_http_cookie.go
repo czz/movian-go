@@ -59,14 +59,24 @@ func validateCookie(reqHost, reqPath, domain, path string) int {
 		}
 	}
 
-	// The request-host does not domain-match the Domain attribute.
-	s := strings.Index(reqHost, domain)
-	if s == -1 && strings.HasPrefix(domain, ".") && reqHost == domain[1:] {
-		s = 0
-	} else if s == -1 || s+len(domain) != len(reqHost) {
+	// The request-host does not domain-match the Domain attribute:
+	// equal, or a subdomain separated by a dot (no bare suffix match, so
+	// evilexample.test does not match example.test).
+	if !cookieDomainMatch(reqHost, domain) {
 		return 3
 	}
 	return 0
+}
+
+// cookieDomainMatch reports whether reqHost equals domain or is a
+// subdomain of it (leading dot of domain ignored), on a label boundary.
+// It is the Set-Cookie Domain check shared by HTTP/1 (inside
+// validateCookie, together with the legacy RFC 2109 path/dot rules) and
+// HTTP/2 (h2SetCookies, domain check only; HTTP/3 shares that path).
+func cookieDomainMatch(reqHost, domain string) bool {
+	reqHost = strings.ToLower(reqHost)
+	domain = strings.TrimPrefix(strings.ToLower(domain), ".")
+	return reqHost == domain || strings.HasSuffix(reqHost, "."+domain)
 }
 
 // cookiePersist — C: cookie_persist (callout).

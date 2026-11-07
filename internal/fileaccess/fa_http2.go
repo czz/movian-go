@@ -177,6 +177,11 @@ func (hf *h2File) h2SetCookies(resp *http.Response, u *neturl.URL) {
 		} else if c.MaxAge > 0 {
 			expire = now + int64(c.MaxAge)
 		}
+		if !cookieDomainMatch(u.Hostname(), domain) {
+			hf.h2Trace("Rejected cookie name=%s path=%s domain=%s: foreign domain",
+				c.Name, path, domain)
+			continue
+		}
 		fam.httpCookies.mu.Lock()
 		var hc *httpCookie
 		for _, x := range fam.httpCookies.list {
