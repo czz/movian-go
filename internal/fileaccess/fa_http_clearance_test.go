@@ -273,75 +273,6 @@ func TestImportedClearanceCollisionAndDelete(t *testing.T) {
 	}
 }
 
-func TestImportedClearanceUAPin(t *testing.T) {
-	fam := &FileAccessManager{}
-	c := clrCookie()
-	if err := fam.HTTPImportClearance(c); err != nil {
-		t.Fatal(err)
-	}
-	if got := fam.httpDomainUAGet("example.test"); got != clrUA {
-		t.Fatalf("pin=%q after import, want %q", got, clrUA)
-	}
-	c.UA = "Mozilla/5.0 Synthetic/2.0"
-	if err := fam.HTTPImportClearance(c); err != nil {
-		t.Fatal(err)
-	}
-	if got := fam.httpDomainUAGet("example.test"); got != c.UA {
-		t.Fatalf("pin=%q after replace, want %q", got, c.UA)
-	}
-	if !fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, c.Name) {
-		t.Fatal("delete failed")
-	}
-	if got := fam.httpDomainUAGet("example.test"); got != "" {
-		t.Fatalf("pin=%q after delete, want cleared", got)
-	}
-
-	// A pin somebody else set after the import survives the delete.
-	if err := fam.HTTPImportClearance(c); err != nil {
-		t.Fatal(err)
-	}
-	fam.HTTPDomainSetUserAgent("example.test", "UserSet/1")
-	fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, c.Name)
-	if got := fam.httpDomainUAGet("example.test"); got != "UserSet/1" {
-		t.Fatalf("delete wiped a pin the record did not set: %q", got)
-	}
-
-	// A pin that already equalled the record's UA is not the record's.
-	fam.HTTPDomainSetUserAgent("example.test", c.UA)
-	if err := fam.HTTPImportClearance(c); err != nil {
-		t.Fatal(err)
-	}
-	fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, c.Name)
-	if got := fam.httpDomainUAGet("example.test"); got != c.UA {
-		t.Fatalf("delete wiped a pre-existing pin: %q", got)
-	}
-
-	// Two records on one host must share one UA; deleting one keeps the
-	// pin for the other.
-	fam = &FileAccessManager{}
-	a, b := clrCookie(), clrCookie()
-	b.Name = "second"
-	if err := fam.HTTPImportClearance(a); err != nil {
-		t.Fatal(err)
-	}
-	b.UA = "Other/1"
-	if err := fam.HTTPImportClearance(b); err == nil {
-		t.Fatal("second record with a different UA on the same host accepted")
-	}
-	b.UA = a.UA
-	if err := fam.HTTPImportClearance(b); err != nil {
-		t.Fatal(err)
-	}
-	fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, a.Name)
-	if got := fam.httpDomainUAGet("example.test"); got != a.UA {
-		t.Fatalf("pin=%q, want kept for the remaining record", got)
-	}
-	fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, b.Name)
-	if got := fam.httpDomainUAGet("example.test"); got != "" {
-		t.Fatalf("pin=%q, want cleared with the last record", got)
-	}
-}
-
 func TestImportedClearancePersist(t *testing.T) {
 	src := clrFAM(t)
 	testCookieSetOn(src, "https://example.test/", "plain=1; Path=/; Max-Age=3600")
@@ -363,9 +294,6 @@ func TestImportedClearancePersist(t *testing.T) {
 	got, ok := dst.HTTPGetImportedClearance(clrOwner, clrOrigin, "cf_clearance")
 	if !ok || got.Value != "synthetic-value" || got.UA != clrUA {
 		t.Fatalf("round trip lost the record: ok=%v", ok)
-	}
-	if ua := dst.httpDomainUAGet("example.test"); ua != clrUA {
-		t.Fatalf("pin after load = %q", ua)
 	}
 	if h1, _ := clrSend(dst, "https://example.test/", ""); hasCookie(h1, "cf_clearance=synthetic-value") {
 		t.Fatal("loaded imported record sent without the opt-in")
@@ -509,28 +437,11 @@ func TestImportedClearanceExpiredDoesNotBlockImport(t *testing.T) {
 	if err := fam.HTTPImportClearance(a); err != nil {
 		t.Fatalf("import blocked by expired records: %v", err)
 	}
-	if got := fam.httpDomainUAGet("example.test"); got != a.UA {
-		t.Fatalf("pin=%q, want %q", got, a.UA)
+	if h1, _ := hostUASend(fam, "https://example.test/", clrOwner); h1 != a.UA {
+		t.Fatalf("record UA=%q, want %q", h1, a.UA)
 	}
 	if n := len(fam.httpCookies.list); n != 1 {
 		t.Fatalf("jar has %d entries, want 1", n)
-	}
-}
-
-// A mixed-case request host still gets the pinned User-Agent, so the
-// cookie and the UA it is bound to travel together.
-func TestImportedClearanceUAPinHostCase(t *testing.T) {
-	fam := clrFAM(t)
-	if got := fam.httpDomainUAGet("Example.TEST"); got != clrUA {
-		t.Fatalf("pin for a mixed-case host = %q, want %q", got, clrUA)
-	}
-	h1, _ := clrSend(fam, "https://Example.TEST/", clrOwner)
-	if !hasCookie(h1, "cf_clearance=synthetic-value") {
-		t.Fatalf("mixed-case host lost the cookie: %q", h1)
-	}
-	fam.HTTPDomainSetUserAgent("EXAMPLE.test", "")
-	if got := fam.httpDomainUAGet("example.test"); got != "" {
-		t.Fatalf("clearing through another case left %q", got)
 	}
 }
 
@@ -586,21 +497,6 @@ func TestImportedClearanceHTTPReqvTags(t *testing.T) {
 	}
 }
 
-// A pin does not outlive its expired cookie, even with no later jar change.
-func TestImportedClearanceExpiryReleasesPinOnRequest(t *testing.T) {
-	fam := clrFAM(t)
-	if got := fam.requestUA("example.test"); got != clrUA {
-		t.Fatalf("live record: pin=%q", got)
-	}
-	fam.httpCookies.list[0].expire = time.Now().Unix() - 1
-	if got := fam.requestUA("example.test"); got != "" {
-		t.Fatalf("expired record left pin %q", got)
-	}
-	if n := len(fam.httpCookies.list); n != 0 {
-		t.Fatalf("expired record kept (%d)", n)
-	}
-}
-
 // An imported record is bound to the exact origin it was solved for: the
 // same host on another port is a different origin and gets nothing.
 func TestImportedClearanceNotSentToOtherPort(t *testing.T) {
@@ -622,99 +518,15 @@ func TestImportedClearanceNotSentToOtherPort(t *testing.T) {
 	}
 }
 
-// An import pins the host's User-Agent. When the last pin leaves, the UA
-// the host had before the import comes back, unless something else changed
-// it meanwhile.
-func TestImportedClearanceRestoresPriorUserAgent(t *testing.T) {
-	const host = "example.test"
-	imp := func(t *testing.T, fam *FileAccessManager, name string) {
-		t.Helper()
-		c := clrCookie()
-		c.Name = name
-		if err := fam.HTTPImportClearance(c); err != nil {
-			t.Fatal(err)
-		}
+// A mixed-case request host still gets the record's User-Agent, so the cookie
+// and the UA it is bound to travel together.
+func TestImportedClearanceUAMixedCaseHost(t *testing.T) {
+	fam := clrFAM(t)
+	if h1, h2 := hostUASend(fam, "https://Example.TEST/", clrOwner); h1 != clrUA || h2 != clrUA {
+		t.Fatalf("mixed-case host UA = %q/%q, want %q", h1, h2, clrUA)
 	}
-	want := func(t *testing.T, fam *FileAccessManager, ua string) {
-		t.Helper()
-		if got := fam.httpDomainUAGet(host); got != ua {
-			t.Fatalf("host UA=%q, want %q", got, ua)
-		}
+	h1, _ := clrSend(fam, "https://Example.TEST/", clrOwner)
+	if !hasCookie(h1, "cf_clearance=synthetic-value") {
+		t.Fatalf("mixed-case host lost the cookie: %q", h1)
 	}
-
-	t.Run("delete restores", func(t *testing.T) {
-		fam := &FileAccessManager{}
-		fam.HTTPDomainSetUserAgent(host, "Old/1.0")
-		imp(t, fam, "cf_clearance")
-		want(t, fam, clrUA)
-		if !fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, "cf_clearance") {
-			t.Fatal("record not deleted")
-		}
-		want(t, fam, "Old/1.0")
-	})
-	t.Run("expiry restores", func(t *testing.T) {
-		fam := &FileAccessManager{}
-		fam.HTTPDomainSetUserAgent(host, "Old/1.0")
-		imp(t, fam, "cf_clearance")
-		fam.httpCookies.list[0].expire = time.Now().Unix() - 1
-		if got := fam.requestUA(host); got != "Old/1.0" {
-			t.Fatalf("request UA=%q, want the prior one", got)
-		}
-	})
-	t.Run("the last of two pins restores", func(t *testing.T) {
-		fam := &FileAccessManager{}
-		fam.HTTPDomainSetUserAgent(host, "Old/1.0")
-		imp(t, fam, "first")
-		imp(t, fam, "second")
-		fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, "first")
-		want(t, fam, clrUA)
-		fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, "second")
-		want(t, fam, "Old/1.0")
-	})
-	t.Run("deleting the pin setter first still restores at the end", func(t *testing.T) {
-		fam := &FileAccessManager{}
-		fam.HTTPDomainSetUserAgent(host, "Old/1.0")
-		imp(t, fam, "first")
-		imp(t, fam, "second")
-		fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, "second")
-		fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, "first")
-		want(t, fam, "Old/1.0")
-	})
-	t.Run("re-import keeps the prior UA", func(t *testing.T) {
-		fam := &FileAccessManager{}
-		fam.HTTPDomainSetUserAgent(host, "Old/1.0")
-		imp(t, fam, "cf_clearance")
-		imp(t, fam, "cf_clearance")
-		fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, "cf_clearance")
-		want(t, fam, "Old/1.0")
-	})
-	t.Run("a later external change is kept", func(t *testing.T) {
-		fam := &FileAccessManager{}
-		fam.HTTPDomainSetUserAgent(host, "Old/1.0")
-		imp(t, fam, "cf_clearance")
-		fam.HTTPDomainSetUserAgent(host, "Newer/2.0")
-		fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, "cf_clearance")
-		want(t, fam, "Newer/2.0")
-	})
-	// An external change between two imports is the newest setting to give
-	// back, whichever record leaves first.
-	for _, order := range [][2]string{{"first", "second"}, {"second", "first"}} {
-		t.Run("external change between two imports, delete "+order[0]+" first", func(t *testing.T) {
-			fam := &FileAccessManager{}
-			fam.HTTPDomainSetUserAgent(host, "Old/1.0")
-			imp(t, fam, "first")
-			fam.HTTPDomainSetUserAgent(host, "Newer/2.0")
-			imp(t, fam, "second")
-			fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, order[0])
-			want(t, fam, clrUA)
-			fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, order[1])
-			want(t, fam, "Newer/2.0")
-		})
-	}
-	t.Run("no prior UA clears the pin", func(t *testing.T) {
-		fam := &FileAccessManager{}
-		imp(t, fam, "cf_clearance")
-		fam.HTTPDeleteImportedClearance(clrOwner, clrOrigin, "cf_clearance")
-		want(t, fam, "")
-	})
 }

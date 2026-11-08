@@ -168,68 +168,36 @@ func (fam *FileAccessManager) findImportedLocked(origin, name string) int {
 	return -1
 }
 
-// importedHostUALocked returns the UA other imported records on host
-// require, or "" when there are none. skip is an index to ignore.
-func (fam *FileAccessManager) importedHostUALocked(host string, skip int) string {
+// ownerHostUALocked returns the UA the owner's other imported records on
+// host are bound to, or "" when there are none. skip is an index to ignore.
+// A request carries the UA of the records it sends, so one owner keeps one UA
+// per host; different owners are independent.
+func (fam *FileAccessManager) ownerHostUALocked(owner, host string, skip int) string {
 	for i, x := range fam.httpCookies.list {
-		if i != skip && x.imported && x.domain == host {
+		if i != skip && x.imported && x.scopeOwner == owner && x.domain == host {
 			return x.ua
 		}
 	}
 	return ""
 }
 
-// unpinImportedUALocked releases the UA pin of a record that is leaving the
-// jar (list[idx] must still be present). The pin stays while another
-// imported record on the host needs it; a record that set it hands that
-// duty over. Caller holds httpCookies.mu.
-func (fam *FileAccessManager) unpinImportedUALocked(idx int) {
-	hc := fam.httpCookies.list[idx]
-	if !hc.uaPinned {
-		return
-	}
-	for i, x := range fam.httpCookies.list {
-		if i != idx && x.imported && x.domain == hc.domain && x.ua == hc.ua {
-			x.uaPinned, x.uaPrev = true, hc.uaPrev
-			return
-		}
-	}
-	// Give the host back the UA it had before the import, unless someone
-	// else changed it since: that newer setting is not ours to undo.
-	if fam.httpDomainUAGet(hc.domain) == hc.ua {
-		fam.HTTPDomainSetUserAgent(hc.domain, hc.uaPrev)
-	}
-}
-
-// purgeExpiredImportedLocked drops expired imported records and releases
-// their UA pins, so a dead record never blocks a new import. Caller holds
-// httpCookies.mu.
+// purgeExpiredImportedLocked drops expired imported records, so a dead record
+// never blocks a new import. Caller holds httpCookies.mu.
 func (fam *FileAccessManager) purgeExpiredImportedLocked(now int64) {
 	for i := 0; i < len(fam.httpCookies.list); i++ {
 		if hc := fam.httpCookies.list[i]; hc.imported && hc.expire <= now {
-			fam.unpinImportedUALocked(i)
 			fam.httpCookies.list = slices.Delete(fam.httpCookies.list, i, i+1)
 			i--
 		}
 	}
 }
 
-// requestUA is the pinned User-Agent for a request to host. An imported
-// record that has expired since the last jar change is purged first, so its
-// pin does not outlive the cookie.
-func (fam *FileAccessManager) requestUA(host string) string {
-	now := time.Now().Unix()
-	fam.httpCookies.mu.Lock()
-	fam.purgeExpiredImportedLocked(now)
-	fam.httpCookies.mu.Unlock()
-	return fam.httpDomainUAGet(host)
-}
-
 // HTTPImportClearance stores ic as an imported record: sent only to an
-// opted-in request of ic.Owner, pinned to ic.UA. A second import for the
-// same owner, origin and name replaces the first; another owner for that
-// origin and name is rejected, as is a UA that differs from the one another
-// imported record on the host already needs.
+// opted-in request of ic.Owner, which then carries ic.UA. The shared host
+// User-Agent is never changed. A second import for the same owner, origin and
+// name replaces the first; another owner for that origin and name is rejected,
+// as is a UA that differs from the one the owner's other records on the host
+// are bound to.
 func (fam *FileAccessManager) HTTPImportClearance(ic ImportedCookie) error {
 	in := ic
 	err := fam.importClearance(&ic)
@@ -269,40 +237,18 @@ func (fam *FileAccessManager) importClearance(icp *ImportedCookie) error {
 		fam.httpCookies.mu.Unlock()
 		return errors.New("import clearance: record belongs to another owner")
 	}
-	if ua := fam.importedHostUALocked(host, idx); ua != "" && ua != ic.UA {
+	if ua := fam.ownerHostUALocked(ic.Owner, host, idx); ua != "" && ua != ic.UA {
 		fam.httpCookies.mu.Unlock()
-		return errors.New("import clearance: host already has imported cookies bound to another user agent")
+		return errors.New("import clearance: owner already has imported cookies on this host bound to another user agent")
 	}
 	// An ordinary cookie of the same name, domain and path stays: the import
 	// is a record of its own namespace, sent in its place only to the
 	// opted-in owner (see selectCookies).
-	prior := fam.httpDomainUAGet(host)
 	if idx >= 0 {
-		old := fam.httpCookies.list[idx]
-		switch {
-		case old.uaPinned && prior == old.ua:
-			nc.uaPinned, nc.uaPrev = true, old.uaPrev // still our pin
-		case prior != ic.UA:
-			nc.uaPinned, nc.uaPrev = true, prior
-		}
-		*old = nc
+		*fam.httpCookies.list[idx] = nc
 	} else {
-		if prior != ic.UA {
-			nc.uaPinned, nc.uaPrev = true, prior
-		}
 		fam.httpCookies.list = append([]*httpCookie{&nc}, fam.httpCookies.list...)
 	}
-	if nc.uaPinned {
-		// One host holds one UA to give back. Another record that already
-		// pins it must hand back the same, newest setting: whichever record
-		// leaves last restores it.
-		for _, x := range fam.httpCookies.list {
-			if x.imported && x.uaPinned && x.domain == host && x.ua == ic.UA {
-				x.uaPrev = nc.uaPrev
-			}
-		}
-	}
-	fam.HTTPDomainSetUserAgent(host, ic.UA)
 	fam.httpCookies.mu.Unlock()
 	fam.armCookiePersist()
 	return nil
@@ -342,7 +288,6 @@ func (fam *FileAccessManager) HTTPDeleteImportedClearance(owner, origin, name st
 		fam.httpCookies.mu.Unlock()
 		return false
 	}
-	fam.unpinImportedUALocked(idx)
 	fam.httpCookies.list = append(fam.httpCookies.list[:idx], fam.httpCookies.list[idx+1:]...)
 	fam.httpCookies.mu.Unlock()
 	fam.armCookiePersist()

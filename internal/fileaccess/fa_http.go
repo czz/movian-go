@@ -145,7 +145,7 @@ func httpHeadersSetup(l *httpnet.HTTPHeaderList, hf *httpFile) {
 	}
 	l.Add("Connection", conn, false)
 	// C: snprintf(str[200], APPNAMEUSER" %s %s", systype, appversion)
-	if ua := fam.requestUA(hc.hostname); ua != "" {
+	if ua := fam.httpDomainUAGet(hc.hostname); ua != "" {
 		l.Add("User-Agent", ua, false)
 	} else {
 		l.Add("User-Agent", snprintfN(200, "Movian Go %s %s",

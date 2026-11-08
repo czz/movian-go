@@ -163,7 +163,9 @@ removes it (`true` if there was one). The record is never sent by a plain
 `http_req`: pass `persistedCookies: true` in the request options, and it is
 sent over https to the exact host only, on matching paths, and only to the
 plugin that stored it. Such a request skips the response cache. The webview
-User-Agent is pinned on the host while the record exists. CEF does not label
+User-Agent stays on the record: the plugin's own `persistedCookies` request that
+sends it carries that User-Agent (over a later host User-Agent or an explicit
+header), and every other request to the host keeps the host User-Agent. CEF does not label
 a cookie's partition, so partitioned cookies cannot be told apart.
 
 **Debug logging of clearance cookies.** With the developer setting "Debug all

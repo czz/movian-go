@@ -244,7 +244,7 @@ func (hf *h2File) h2NewRequest(url, method string, start int64) (*http.Request, 
 		return nil, err
 	}
 
-	if ua := hf.fam.requestUA(u.Hostname()); ua != "" {
+	if ua := hf.fam.httpDomainUAGet(u.Hostname()); ua != "" {
 		req.Header.Set("User-Agent", ua)
 	} else {
 		req.Header.Set("User-Agent", fmt.Sprintf("Movian Go %s %s",
