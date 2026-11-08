@@ -273,16 +273,9 @@ func (fam *FileAccessManager) importClearance(icp *ImportedCookie) error {
 		fam.httpCookies.mu.Unlock()
 		return errors.New("import clearance: host already has imported cookies bound to another user agent")
 	}
-	// A Set-Cookie cookie with the same name, domain and path is replaced.
-	for i, x := range fam.httpCookies.list {
-		if i != idx && !x.imported && x.name == nc.name && x.path == nc.path && x.domain == nc.domain {
-			fam.httpCookies.list = append(fam.httpCookies.list[:i], fam.httpCookies.list[i+1:]...)
-			if idx > i {
-				idx--
-			}
-			break
-		}
-	}
+	// An ordinary cookie of the same name, domain and path stays: the import
+	// is a record of its own namespace, sent in its place only to the
+	// opted-in owner (see selectCookies).
 	prior := fam.httpDomainUAGet(host)
 	if idx >= 0 {
 		old := fam.httpCookies.list[idx]
@@ -368,7 +361,8 @@ type cookiePair struct{ name, value string }
 // selectCookies returns the jar cookies a request may carry, in jar order.
 // importedOwner is the owner of a request that opted in with
 // FaImportedCookies ("" = no opt-in); an imported cookie is sent only to
-// that owner and replaces a same-named generic one. HTTP/1 and HTTP/2/3
+// that owner and is sent instead of a same-named ordinary one (the two
+// namespaces coexist in the jar; the ordinary cookie is untouched). HTTP/1 and HTTP/2/3
 // build their Cookie header from it so the rules cannot drift. dbg is the
 // request's debug flag: it traces each imported record's fate.
 //

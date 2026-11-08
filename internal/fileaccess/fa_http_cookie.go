@@ -208,11 +208,11 @@ func cookieCanonDomain(d string) string {
 	return strings.ToLower(strings.TrimPrefix(d, "."))
 }
 
-// findJarCookieLocked returns the index of the jar cookie with this name,
-// path and domain, or -1. The caller holds the jar lock or owns the jar.
+// findJarCookieLocked returns the index of the ordinary jar cookie with this
+// name, path and domain, or -1 (imported records have their own lookup). The caller holds the jar lock or owns the jar.
 func (fam *FileAccessManager) findJarCookieLocked(name, path, domain string) int {
 	for i, x := range fam.httpCookies.list {
-		if x.name == name && x.path == path && x.domain == domain {
+		if !x.imported && x.name == name && x.path == path && x.domain == domain {
 			return i
 		}
 	}
@@ -466,21 +466,19 @@ func cookieURLSecure(rawURL string) bool {
 	return false
 }
 
-// cookieJarPut stores nc in the shared jar, replacing a cookie with the
-// same name, domain and path (RFC 6265 §5.3 step 11), or deletes that
-// cookie when nc is already expired. HTTP/1 and HTTP/2/3 both end here.
+// cookieJarPut stores nc in the shared jar, replacing a cookie of the same
+// namespace (ordinary or imported) with the same name, domain and path
+// (RFC 6265 §5.3 step 11), or deletes that cookie when nc is already
+// expired. An ordinary cookie never touches an imported record. HTTP/1 and HTTP/2/3 both end here.
 func (fam *FileAccessManager) cookieJarPut(nc httpCookie) {
 	nc.domain = cookieCanonDomain(nc.domain)
 	now := time.Now().Unix()
 	fam.httpCookies.mu.Lock()
 	idx := -1
 	for i, x := range fam.httpCookies.list {
-		if x.name == nc.name && x.path == nc.path && x.domain == nc.domain {
-			if x.imported {
-				// An imported record is only changed through its own API.
-				fam.httpCookies.mu.Unlock()
-				return
-			}
+		// Ordinary and imported records are separate namespaces: whether a
+		// record is imported is part of its identity.
+		if x.imported == nc.imported && x.name == nc.name && x.path == nc.path && x.domain == nc.domain {
 			idx = i
 			break
 		}
@@ -513,16 +511,11 @@ func (fam *FileAccessManager) HTTPInjectCookies(host, path string, cookies map[s
 	fam.httpCookies.mu.Lock()
 	for name, value := range cookies {
 		var hc *httpCookie
-		protected := false
 		for _, x := range fam.httpCookies.list {
-			if x.name == name && x.path == path && x.domain == host {
+			if !x.imported && x.name == name && x.path == path && x.domain == host {
 				hc = x
-				protected = x.imported
 				break
 			}
-		}
-		if protected {
-			continue
 		}
 		if hc == nil {
 			hc = &httpCookie{name: name, path: path, domain: host}

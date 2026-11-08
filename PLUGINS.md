@@ -151,7 +151,13 @@ by the calling plugin. It returns `{value, ua, expires, path, origin}`
 public-suffix host, a cookie that is not Secure, a session cookie, or when
 the webview cannot pick one cookie of that name (same-path twins; with
 different paths the longest path wins, as in a browser request). A later expiry than 30 days is
-cut to 30 days. `getPersistedWebCookie(url, name)` returns the same shape for
+cut to 30 days. The record lives next to the ordinary cookies of the shared
+jar and never replaces them: `Set-Cookie`, `injectcookies` and
+`deletecookies` keep working on the ordinary cookie of the same name, and a
+request of another plugin, or one without `persistedCookies`, still sees
+only the ordinary cookies. The plugin's own `persistedCookies` request sends
+the record **instead of** a same-named ordinary cookie, so a name is never
+sent twice; deleting the record brings the ordinary cookie back into effect. `getPersistedWebCookie(url, name)` returns the same shape for
 the plugin's own unexpired record, and `deletePersistedWebCookie(url, name)`
 removes it (`true` if there was one). The record is never sent by a plain
 `http_req`: pass `persistedCookies: true` in the request options, and it is

@@ -214,7 +214,8 @@ func TestImportedClearanceSendRules(t *testing.T) {
 
 func TestImportedClearanceCollisionAndDelete(t *testing.T) {
 	fam := clrFAM(t)
-	// Set-Cookie with the same key must not replace or delete it.
+	// Set-Cookie with the same key works on the ordinary record next to it
+	// and must not replace or delete the import.
 	testCookieSetOn(fam, "https://example.test/", "cf_clearance=server; Secure; Path=/")
 	testCookieSetOn(fam, "https://example.test/", "cf_clearance=; Path=/; Max-Age=0")
 	u, _ := url.Parse("https://example.test/")
@@ -225,13 +226,14 @@ func TestImportedClearanceCollisionAndDelete(t *testing.T) {
 		t.Fatalf("Set-Cookie touched the imported record: ok=%v", ok)
 	}
 	if n := len(fam.httpCookies.list); n != 1 {
-		t.Fatalf("jar has %d entries, want 1", n)
+		t.Fatalf("jar has %d entries, want the import only (the expired ordinary cookie is gone)", n)
 	}
 
-	// HTTPInjectCookies / HTTPDeleteCookies leave it alone.
+	// HTTPInjectCookies adds an ordinary record; HTTPDeleteCookies removes
+	// only that one and leaves the import alone.
 	fam.HTTPInjectCookies("example.test", "/", map[string]string{"cf_clearance": "inject"})
-	if n := fam.HTTPDeleteCookies("example.test", "/", nil); n != 0 {
-		t.Fatalf("HTTPDeleteCookies removed %d imported records", n)
+	if n := fam.HTTPDeleteCookies("example.test", "/", nil); n != 1 {
+		t.Fatalf("HTTPDeleteCookies removed %d records, want the injected one", n)
 	}
 	got, ok = fam.HTTPGetImportedClearance(clrOwner, clrOrigin, "cf_clearance")
 	if !ok || got.Value != "synthetic-value" {
