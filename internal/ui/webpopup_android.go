@@ -55,7 +55,6 @@ import "C"
 
 import (
 	"encoding/json"
-	"runtime"
 	"unsafe"
 
 	"github.com/czz/movian-go/internal/arch"
@@ -98,14 +97,25 @@ func (androidJNI) UserAgent() string {
 }
 
 // androidPopupCall runs one static Core method on a locked OS thread with a
-// JNIEnv for it. Every wait is bounded on the Java side (15 s claim, the
+// JNIEnv for it, which it detaches again if it had to attach the thread.
+// Every wait is bounded on the Java side (15 s claim, the
 // cookie-wait limit or 30 min session, 10 s cookie query). The result string
 // is copied before its chars and local reference are released.
 func androidPopupCall(method, sig string, tail int64, hasTail bool, args ...string) string {
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
-	env := (*C.JNIEnv)(unsafe.Pointer(arch.JNIEnv()))
-	if env == nil || arch.STCore == nil || len(args) > 7 {
+	return withAttachedThread(
+		func() (unsafe.Pointer, bool) {
+			env, attached := arch.JNIEnvAttach()
+			return unsafe.Pointer(env), attached
+		},
+		arch.JniDetach,
+		func(e unsafe.Pointer) string {
+			return androidPopupCallOn((*C.JNIEnv)(e), method, sig, tail, hasTail, args)
+		})
+}
+
+// androidPopupCallOn is androidPopupCall on a thread that already has env.
+func androidPopupCallOn(env *C.JNIEnv, method, sig string, tail int64, hasTail bool, args []string) string {
+	if arch.STCore == nil || len(args) > 7 {
 		return ""
 	}
 	cm, cs := C.CString(method), C.CString(sig)

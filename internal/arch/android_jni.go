@@ -566,16 +566,25 @@ var (
 // run on any OS thread so attachment is per-call with LockOSThread).
 // The caller must hold an OS-thread lock (runtime.LockOSThread) for
 // the duration of the JNIEnv use; JniDetach detaches a thread that
-// was attached by JNIEnv.
+// was attached by JNIEnv (JNIEnvAttach reports whether that happened).
 func JNIEnv() *C.JNIEnv {
+	env, _ := JNIEnvAttach()
+	return env
+}
+
+// JNIEnvAttach is JNIEnv that also reports whether this call attached the
+// thread. Only then may (and should) the caller JniDetach it when done, with
+// the OS thread still locked; a thread that was already attached must stay so.
+func JNIEnvAttach() (env *C.JNIEnv, attached bool) {
 	if JVM == nil {
-		return nil
+		return nil, false
 	}
-	env := C.ml_jni_getenv(JVM)
+	env = C.ml_jni_getenv(JVM)
 	if env == nil {
 		env = C.ml_jni_attach(JVM)
+		attached = env != nil
 	}
-	return env
+	return env, attached
 }
 
 // JniDetach — C: DetachCurrentThread (android_threads.c:148).
