@@ -513,8 +513,13 @@ func (fam *FileAccessManager) HTTPInjectCookies(host, path string, cookies map[s
 			hc = &httpCookie{name: name, path: path, domain: host}
 			fam.httpCookies.list = slices.Insert(fam.httpCookies.list, 0, hc)
 		}
+		// The same scope whether the jar had the cookie or not: injected
+		// cookies are domain-wide and not Secure, so a replaced Set-Cookie
+		// record does not keep its old restrictions.
 		hc.value = value
 		hc.expire = expire
+		hc.secure = false
+		hc.hostOnly = false
 	}
 	fam.httpCookies.mu.Unlock()
 	if cs := fam.CalloutSystem(); cs != nil {

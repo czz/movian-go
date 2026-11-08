@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"testing"
 	"time"
+
+	httpnet "github.com/czz/movian-go/internal/networking/http"
 )
 
 func testCookieSemanticsSet(t *testing.T, origin, header string) *FileAccessManager {
@@ -494,4 +496,41 @@ func mustParseURL(t *testing.T, raw string) *url.URL {
 		t.Fatal(err)
 	}
 	return u
+}
+
+// injectcookies creates a non-Secure, domain-wide cookie in an empty jar.
+// Replacing an existing ordinary cookie must give it exactly the same scope,
+// not keep the Secure and host-only restrictions of the old Set-Cookie.
+func TestInjectCookiesReplacementScopeMatchesEmptyJar(t *testing.T) {
+	send := func(fam *FileAccessManager, target string) string {
+		u, _ := url.Parse(target)
+		var extra, headers httpnet.HTTPHeaderList
+		httpCookieAppend(u.Hostname(), urlPortNum(u), &httpFile{fam: fam, path: u.EscapedPath(), url: target}, &headers, &extra)
+		h1, _ := headers.Get("Cookie")
+		return h1
+	}
+	targets := []string{"https://example.test/", "http://example.test/", "https://sub.example.test/", "http://sub.example.test/"}
+	empty := &FileAccessManager{}
+	empty.HTTPInjectCookies("example.test", "/", map[string]string{"session": "new"})
+
+	repl := &FileAccessManager{}
+	testCookieSetOn(repl, "https://example.test/", "session=old; Secure; Path=/")
+	repl.HTTPInjectCookies("example.test", "/", map[string]string{"session": "new"})
+
+	for _, target := range targets {
+		want := send(empty, target)
+		if !hasCookie(want, "session=new") {
+			t.Fatalf("precondition: empty-jar injection not sent to %s: %q", target, want)
+		}
+		if got := send(repl, target); got != want {
+			t.Errorf("%s: replacement sends %q, empty jar sends %q", target, got, want)
+		}
+	}
+	if n := len(repl.httpCookies.list); n != 1 {
+		t.Fatalf("replacement left %d records", n)
+	}
+	a, b := empty.httpCookies.list[0], repl.httpCookies.list[0]
+	if a.secure != b.secure || a.hostOnly != b.hostOnly {
+		t.Errorf("scope differs: empty secure=%v hostOnly=%v, replacement secure=%v hostOnly=%v", a.secure, a.hostOnly, b.secure, b.hostOnly)
+	}
 }
