@@ -238,6 +238,17 @@ final class PopupRequest {
         LOCK.notifyAll();
     }
 
+    /**
+     * The result of a popup that ends on url (a trapped navigation, a page
+     * with the awaited cookie). url is reported as is, but topOrigin is the
+     * https origin of displayedUrl, the page the top frame actually shows: a
+     * trapped navigation is intercepted and never loaded, so its destination
+     * says nothing about where the popup is.
+     */
+    static String resultJson(String result, String url, String displayedUrl) {
+        return json(result, url, httpsOriginOf(displayedUrl));
+    }
+
     /** Builds the result object returned through JNI. */
     static String json(String result, String url, String topOrigin) {
         StringBuilder b = new StringBuilder(64).append("{\"result\":");

@@ -34,6 +34,7 @@ public final class PopupRequestTest {
         noWaitTimeoutKeepsNeterror();
         waitLimitCountsFromClaim();
         trapMatching();
+        trapResultNamesDisplayedOrigin();
         cookieQueryUrlIgnoresDisplayedPath();
         cookieQueryUrlKeepsOriginChecks();
         hasCookieChecks();
@@ -292,6 +293,31 @@ public final class PopupRequestTest {
         PopupRequest r = PopupRequest.begin(uri, "t", trap, waitUrl, waitName, "plugin.a");
         require(r != null, "begin");
         return r;
+    }
+
+    /**
+     * A trapped navigation is intercepted and never loaded: the result keeps
+     * the trapped URL but its topOrigin is the origin the top frame actually
+     * shows, https only. A cross-origin trap must not name the trap's origin.
+     */
+    static void trapResultNamesDisplayedOrigin() {
+        String trapped = "https://target.example/callback?code=1";
+        // Cross-origin trap: the page shown is other.example.
+        String s = PopupRequest.resultJson("trapped", trapped, "https://other.example/login");
+        require(s.equals("{\"result\":\"trapped\",\"url\":\"https://target.example/callback?code=1\","
+                + "\"topOrigin\":\"https://other.example\"}"), "cross-origin trap: " + s);
+        require(!s.contains("\"topOrigin\":\"https://target.example\""), "trap origin leaked: " + s);
+        // Same-origin trap still names that origin.
+        s = PopupRequest.resultJson("trapped", "https://other.example/done", "https://other.example/login");
+        require(s.contains("\"topOrigin\":\"https://other.example\""), "same-origin trap: " + s);
+        // Nothing displayed yet, or a page that is not https: no origin.
+        s = PopupRequest.resultJson("trapped", trapped, null);
+        require(s.equals("{\"result\":\"trapped\",\"url\":\"https://target.example/callback?code=1\"}"), "no page: " + s);
+        s = PopupRequest.resultJson("trapped", trapped, "http://other.example/");
+        require(!s.contains("topOrigin"), "plain http page: " + s);
+        // A found cookie names the displayed page too.
+        s = PopupRequest.resultJson("cookie", "https://a.example/x", "https://a.example/x");
+        require(s.contains("\"topOrigin\":\"https://a.example\""), "cookie: " + s);
     }
 
     static void trapMatching() {

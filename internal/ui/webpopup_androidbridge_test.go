@@ -433,3 +433,38 @@ func TestAndroidBridgeUserCloseWithOriginAllowsOwnerOnly(t *testing.T) {
 		t.Fatalf("userclose without origin gave %+v", got)
 	}
 }
+
+// A trapped navigation keeps the trapped URL in the result, but the popup
+// context is the origin the WebView actually showed (topOrigin): a trap into
+// an origin that was never displayed grants no read there, even if that
+// origin's profile still holds a cookie.
+func TestAndroidBridgeTrapContextIsDisplayedOrigin(t *testing.T) {
+	const trapURL = policyOrigin + "/callback?code=1"
+	t.Run("cross-origin trap grants nothing for the target", func(t *testing.T) {
+		f := &fakeAndroidJNI{popupRaw: popupJSON("trapped", trapURL, "https://other.example"), ua: policyUA, cookies: []string{liveLine()}}
+		b := newTestBridge(f)
+		wr := runTestPopup(b, policyOwner, nil)
+		if wr.ResultCode != WebpopupTrappedURL || wr.Trapped.URL != trapURL {
+			t.Fatalf("trapped result lost: code=%d url=%q", wr.ResultCode, wr.Trapped.URL)
+		}
+		if got := readCookies(b, policyOwner, policyTarget, policyName); len(got) != 0 {
+			t.Fatalf("a trap into an undisplayed origin granted %+v", got)
+		}
+	})
+	t.Run("same-origin trap still works", func(t *testing.T) {
+		f := &fakeAndroidJNI{popupRaw: popupJSON("trapped", trapURL, policyOrigin), ua: policyUA, cookies: []string{liveLine()}}
+		b := newTestBridge(f)
+		runTestPopup(b, policyOwner, nil)
+		if got := readCookies(b, policyOwner, policyTarget, policyName); len(got) != 1 {
+			t.Fatalf("same-origin trap: got %+v, want the cookie", got)
+		}
+	})
+	t.Run("nothing displayed grants nothing", func(t *testing.T) {
+		f := &fakeAndroidJNI{popupRaw: popupJSON("trapped", trapURL, ""), ua: policyUA, cookies: []string{liveLine()}}
+		b := newTestBridge(f)
+		runTestPopup(b, policyOwner, nil)
+		if got := readCookies(b, policyOwner, policyTarget, policyName); len(got) != 0 {
+			t.Fatalf("got %+v", got)
+		}
+	})
+}

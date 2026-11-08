@@ -78,17 +78,6 @@ public final class WebPopupActivity extends Activity {
         return PopupRequest.json("neterror", null, null);
     }
 
-    private static String originOf(String value) {
-        if (value == null) return null;
-        try {
-            android.net.Uri u = android.net.Uri.parse(value);
-            String scheme = u.getScheme(), host = u.getHost();
-            if (scheme == null || host == null) return null;
-            int port = u.getPort();
-            return scheme.toLowerCase(java.util.Locale.US) + "://" + host.toLowerCase(java.util.Locale.US)
-                    + (port >= 0 ? ":" + port : "");
-        } catch (Throwable ignored) { return null; }
-    }
     private static String profileName(String owner) {
         try {
             byte[] hash = java.security.MessageDigest.getInstance("SHA-256")
@@ -180,10 +169,13 @@ public final class WebPopupActivity extends Activity {
     private void complete(String result, String url) {
         if (finishingResult) return;
         finishingResult = true;
-        if (url == null && webView != null) url = webView.getUrl();
+        String displayed = currentUrl();
+        if (url == null) url = displayed;
         flushCookies();
         if (request != null)
-            request.finish(PopupRequest.json(result, url, originOf(url)));
+            // url may be an intercepted destination that was never loaded:
+            // the origin the popup ended on is the page the WebView shows.
+            request.finish(PopupRequest.resultJson(result, url, displayed));
         handler.removeCallbacks(waitCookie);
         finish();
     }
