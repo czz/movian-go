@@ -10,6 +10,8 @@
 package htsmsg
 
 import (
+	"math"
+
 	fileaccesscore "github.com/czz/movian-go/internal/fileaccess"
 )
 
@@ -25,13 +27,32 @@ func HTTPCookieStoreSave(storeDep any,
 		c.AddStr("path", r.Path)
 		c.AddStr("domain", r.Domain)
 		c.AddStr("value", r.Value)
-		c.AddS32("expire", int32(r.Expire))
+		c.AddS32("expire", clampExpire(r.Expire))
+		if r.Secure {
+			c.AddS32("secure", 1)
+		}
+		if r.HostOnly {
+			c.AddS32("hostonly", 1)
+		}
 		m.AddMsg("", c)
 	}
 	if s != nil {
 		s.Save(m, "httpcookies")
 	}
 	m.Release()
+}
+
+// clampExpire fits a Unix expiry into the store's signed 32-bit field;
+// larger values (far-future Max-Age) keep the latest representable date
+// instead of wrapping to the past.
+func clampExpire(t int64) int32 {
+	if t > math.MaxInt32 {
+		return math.MaxInt32
+	}
+	if t < math.MinInt32 {
+		return math.MinInt32
+	}
+	return int32(t)
 }
 
 // HTTPCookieStoreLoad — C: load_cookies htsmsg_store_load.
@@ -59,6 +80,9 @@ func HTTPCookieStoreLoad(storeDep any) []fileaccesscore.HTTPCookieRecord {
 		r.Value = o.GetStr("value")
 		exp := o.GetS32OrDefault("expire", -1)
 		r.Expire = int64(exp)
+		// Records written before these fields existed have none: false.
+		r.Secure = o.GetS32OrDefault("secure", 0) != 0
+		r.HostOnly = o.GetS32OrDefault("hostonly", 0) != 0
 		out = append(out, r)
 	}
 	return out
