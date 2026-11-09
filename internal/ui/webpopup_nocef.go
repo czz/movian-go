@@ -1,4 +1,4 @@
-//go:build webpopup && !cef
+//go:build webpopup && !cef && !android
 
 package ui
 
