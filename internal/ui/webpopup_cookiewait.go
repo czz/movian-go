@@ -32,6 +32,10 @@ type WebpopupCookieWait struct {
 	Timeout time.Duration // 0 = DefaultCookieWaitTimeout; capped at Max
 
 	target cookieURL // set by WebpopupCreate
+	// port is the non-default port of the validated URL ("" for 443). The
+	// target's host is canonical and carries no port; the owner context needs
+	// the port to name the origin the popup ended on.
+	port string
 }
 
 // cookieWaitTimeout clamps a requested wait to (0, Max]; <=0 → default.
@@ -132,6 +136,8 @@ func (w *cookieWaiter) Fire(code int) bool {
 // callback does nothing and no state outlives the call.
 type cookieRead struct {
 	done      chan []WebpopupCookie // buffered (1)
+	owner     string                // requesting plugin ("" = none)
+	name      string                // wanted cookie name (Android only)
 	mu        sync.Mutex
 	abandoned bool
 	cancel    func()

@@ -9,11 +9,19 @@ package ui
 // WebpopupAvailable — C: ENABLE_WEBPOPUP.
 const WebpopupAvailable = false
 
+// WebpopupSupportsBrowserLogin — no webview, so no browser login.
+const WebpopupSupportsBrowserLogin = false
+
 // WebpopupSetStorage is a no-op without a webview.
 func WebpopupSetStorage(dir string) {}
 
 // WebpopupCreate — C: webpopup_create (disabled build).
 func WebpopupCreate(url, title, trap string, waits ...WebpopupCookieWait) *WebpopupResult {
+	return &WebpopupResult{ResultCode: WebpopupLoadError}
+}
+
+// WebpopupCreateFor — WebpopupCreate on behalf of an owner (disabled build).
+func WebpopupCreateFor(owner, url, title, trap string, waits ...WebpopupCookieWait) *WebpopupResult {
 	return &WebpopupResult{ResultCode: WebpopupLoadError}
 }
 
@@ -23,6 +31,9 @@ func WebbrowserOpen(url, title string) {}
 // WebpopupCookieList returns nil without a webview.
 func WebpopupCookieList(uri string) []WebpopupCookie { return nil }
 
+// WebpopupCookieListFor returns nil without a webview.
+func WebpopupCookieListFor(owner, uri, name string) []WebpopupCookie { return nil }
+
 // WebpopupCookies returns nil without a webview.
 func WebpopupCookies(uri string) map[string]string { return nil }
 
@@ -31,6 +42,11 @@ func WebpopupUserAgent() string { return "" }
 
 // WebpopupDeleteCookies returns 0 without a webview.
 func WebpopupDeleteCookies(host, path string, names map[string]bool) int {
+	return 0
+}
+
+// WebpopupDeleteCookiesFor returns 0 without a webview.
+func WebpopupDeleteCookiesFor(owner, host, path string, names map[string]bool) int {
 	return 0
 }
 

@@ -73,8 +73,15 @@ func wpGetJSCookies(uri string) map[string]string {
 // (WebpopupCookieTimeout). The optional wait keeps every three-argument
 // caller source-compatible; an invalid wait does not start the popup.
 func WebpopupCreate(uri, title, trap string, waits ...WebpopupCookieWait) *WebpopupResult {
+	return WebpopupCreateFor("", uri, title, trap, waits...)
+}
+
+// WebpopupCreateFor is WebpopupCreate on behalf of the plugin owner. The
+// Android backend binds its WebView profile and the cookie it later hands
+// out to that owner and refuses an empty one; the CEF backend ignores it.
+func WebpopupCreateFor(owner, uri, title, trap string, waits ...WebpopupCookieWait) *WebpopupResult {
 	wpEnsure()
-	wr := &WebpopupResult{}
+	wr := &WebpopupResult{owner: owner}
 	if !wpPlatformOK() {
 		wr.ResultCode = WebpopupLoadError
 		WebpopupFinalizeResult(wr)
@@ -90,6 +97,7 @@ func WebpopupCreate(uri, title, trap string, waits ...WebpopupCookieWait) *Webpo
 			return wr
 		}
 		w.target = target
+		w.port = cookieWaitPort(w.URL)
 		wait = &w
 	}
 	done := make(chan *WebpopupResult, 1)
@@ -118,11 +126,22 @@ func WebbrowserOpen(uri, title string) {
 // the result (nil if unsupported) on done. Cookies of other CHIPS
 // partitions are never returned: CEF does not label them.
 func WebpopupCookieList(uri string) []WebpopupCookie {
+	return WebpopupCookieListFor("", uri, "")
+}
+
+// WebpopupCookieListFor is WebpopupCookieList for one cookie name on behalf
+// of a plugin owner. For a non-empty owner both backends answer only for
+// the https origin that owner's own popup ended on: the Android backend
+// returns only the clearance cookie its policy accepts, the CEF backend
+// the URL-scoped cookies of that origin. An empty owner is the legacy
+// ownerless read, which CEF still answers from the whole shared jar.
+func WebpopupCookieListFor(owner, uri, name string) []WebpopupCookie {
 	wpEnsure()
 	if !wpPlatformOK() {
 		return nil
 	}
 	r := newCookieRead()
+	r.owner, r.name = owner, name
 	wpPlatformDispatch(func() { wpPlatformCookies(uri, r) })
 	select {
 	case cookies := <-r.done:
@@ -158,10 +177,20 @@ var wpDelCookiesMu sync.Mutex
 
 // WebpopupDeleteCookies removes the webview-store cookies a request to
 // host/path would carry — optionally restricted to the listed names —
-// and returns the removed count. Partitioned cookies are covered too:
-// the native visitor walks the whole store. An empty jar reports 0 via
+// and returns the removed count. CEF's visitor does not see Partitioned
+// cookies: the CEF backend removes the first-party ones (key = the host's
+// own site) through DevTools in a second step. An empty jar reports 0 via
 // the wait timeout, like the read path.
 func WebpopupDeleteCookies(host, path string, names map[string]bool) int {
+	return WebpopupDeleteCookiesFor("", host, path, names)
+}
+
+// WebpopupDeleteCookiesFor is WebpopupDeleteCookies on behalf of a plugin
+// owner. The Android backend deletes only in that owner's own WebView
+// profile (and nothing for an empty owner); the count never includes other
+// profiles. CEF has a single cookie store shared by all plugins, so it
+// ignores the owner and deletes from it as before.
+func WebpopupDeleteCookiesFor(owner, host, path string, names map[string]bool) int {
 	wpEnsure()
 	if !wpPlatformOK() {
 		return 0
@@ -169,11 +198,11 @@ func WebpopupDeleteCookies(host, path string, names map[string]bool) int {
 	done := make(chan int, 1)
 	wpDelCookiesMu.Lock()
 	defer wpDelCookiesMu.Unlock()
-	wpPlatformDispatch(func() { wpPlatformDeleteCookies(host, path, names, done) })
+	wpPlatformDispatch(func() { wpPlatformDeleteCookies(owner, host, path, names, done) })
 	select {
 	case n := <-done:
 		return n
-	case <-time.After(10 * time.Second):
+	case <-time.After(20 * time.Second): // the CEF visitor, then its DevTools step
 		return 0
 	}
 }

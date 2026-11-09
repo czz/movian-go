@@ -10,6 +10,9 @@ package ui
 // Build with -tags "webpopup cef" (+ a cef pkg-config) for the real
 // backend.
 
+// WebpopupSupportsBrowserLogin — no browser backend is compiled in.
+const WebpopupSupportsBrowserLogin = false
+
 func wpPlatformSetup() {}
 
 func wpPlatformOK() bool { return false }
@@ -29,7 +32,7 @@ func wpPlatformCookies(uri string, r *cookieRead) {
 	r.done <- nil
 }
 
-func wpPlatformDeleteCookies(host, path string, names map[string]bool,
+func wpPlatformDeleteCookies(owner, host, path string, names map[string]bool,
 	done chan int) {
 	done <- 0
 }

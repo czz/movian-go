@@ -144,6 +144,21 @@ func scopeCookies(visits []cookieVisit, u cookieURL) (cookies []WebpopupCookie, 
 	return cookies, ambiguous
 }
 
+// cookieDeleteMatches — whether a cookie (domain as CEF stores it) falls
+// under a deletion request: the same rules as the shared HTTP jar, the
+// cookie's Domain must domain-match the request host and its Path must be a
+// prefix of the request path; a nil names map matches every name.
+func cookieDeleteMatches(dom, path, name, host, delPath string, names map[string]bool) bool {
+	if names != nil && !names[name] {
+		return false
+	}
+	d := strings.TrimPrefix(dom, ".")
+	if host != d && !strings.HasSuffix(host, "."+d) {
+		return false
+	}
+	return strings.HasPrefix(delPath, path)
+}
+
 // CookieMap flattens cookies to the legacy webcookies() shape. Names are
 // unique after scopeCookies, so nothing is overwritten. The result is never nil.
 func CookieMap(cookies []WebpopupCookie) map[string]string {
@@ -222,6 +237,19 @@ func validHTTPSOrigin(u *url.URL) bool {
 func validPort(port string) bool {
 	n, err := strconv.Atoi(port)
 	return err == nil && n > 0 && n <= 65535
+}
+
+// cookieWaitPort is the explicit non-default port of a wait URL that
+// cookieWaitURL accepted, "" otherwise.
+func cookieWaitPort(waitURL string) string {
+	u, err := url.Parse(waitURL)
+	if err != nil || !validHTTPSOrigin(u) {
+		return ""
+	}
+	if p := originPort(u); p != "443" {
+		return p
+	}
+	return ""
 }
 
 func originPort(u *url.URL) string {
