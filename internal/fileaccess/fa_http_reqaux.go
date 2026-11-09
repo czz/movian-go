@@ -35,6 +35,7 @@ var HTTPBufferInternally = &struct{ httpBufferInternally int }{}
 
 // HTTPReqAux — C: http_req_aux_t.
 type HTTPReqAux struct {
+	importedOwner  string // HTTPTagImportedOwner
 	refcount       int32
 	total          int64
 	bytesCompleted int64
@@ -302,11 +303,11 @@ retry:
 			}
 		}
 
-		httpCookieAppend(hc.hostname, hf, &headers, &cookies)
+		boundUA := httpCookieAppend(hc.hostname, hc.port, hf, &headers, &cookies)
 		cookies.Free()
 
 		hf.hfTrace("Sending request for %s (cid=%d)", hf.url, hc.id)
-		httpHeadersSend(&q, &headers, &hra.headersIn)
+		httpHeadersSend(&q, &headers, &hra.headersIn, boundUA)
 
 		if hf.debug {
 			traceRequest(&q, hf)

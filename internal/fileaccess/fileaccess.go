@@ -49,6 +49,10 @@ const (
 	FaNonInteractive     = 0x20000
 	FaNoCookies          = 0x40000
 	FaSSLVerify          = 0x80000
+	// FaImportedCookies lets the request carry the imported clearance cookies
+	// of the owner named by HTTPTagImportedOwner (or OpenExtra.ImportedOwner).
+	// Without it, and without an owner, an imported cookie is never sent.
+	FaImportedCookies = 0x100000
 )
 
 // Normalize normalizes a URL by standardizing path separators and removing duplicates

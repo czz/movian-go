@@ -1,0 +1,380 @@
+// fa_http_clearance.go — imported clearance cookies (no C counterpart).
+//
+// A plugin that solved a bot check in a browser hands the resulting cookie
+// to Core through HTTPImportClearance. The record lives in the shared
+// cookie jar but is never sent by the generic jar: only a request that
+// carries FaImportedCookies and names the importing owner receives it.
+
+package fileaccess
+
+import (
+	"errors"
+	"fmt"
+	"net/netip"
+	"net/url"
+	"slices"
+	"strings"
+	"time"
+
+	"golang.org/x/net/publicsuffix"
+)
+
+// ImportedCookieMaxLifetime caps how far ahead an imported cookie may
+// expire; a later expiry is clamped to it.
+const ImportedCookieMaxLifetime = 30 * 24 * time.Hour
+
+const (
+	importedMaxName  = 256
+	importedMaxValue = 4096
+	importedMaxUA    = 1024
+	importedMaxOwner = 256
+	importedMaxPath  = 1024
+)
+
+// ImportedCookie is a clearance cookie handed over by a plugin. Value is a
+// secret: it is logged only in debug mode (see clearanceTrace).
+type ImportedCookie struct {
+	Owner  string // plugin/context ID; set by Core from the caller, not by a plugin
+	Origin string // https://host of the site it was solved for
+	Name   string
+	Value  string
+	UA     string // User-Agent the cookie is bound to
+	Path   string // "" = "/"
+	Expire int64  // Unix seconds
+}
+
+// validImportedHost checks the host of an imported record: ASCII, not an IP
+// literal, and not a public suffix.
+func validImportedHost(host string) error {
+	if host == "" || host != strings.ToLower(host) {
+		return errors.New("origin host is empty or not lower case")
+	}
+	for i := 0; i < len(host); i++ {
+		c := host[i]
+		if c >= 0x80 || c <= ' ' || c == 0x7f || strings.IndexByte("/\\?#@:[]%", c) >= 0 {
+			return errors.New("origin host has invalid characters")
+		}
+	}
+	if _, err := netip.ParseAddr(host); err == nil {
+		return errors.New("origin host is an IP literal")
+	}
+	if suffix, _ := publicsuffix.PublicSuffix(host); suffix == host {
+		return errors.New("origin host is a public suffix")
+	}
+	return nil
+}
+
+func hasControl(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] < ' ' || s[i] == 0x7f {
+			return true
+		}
+	}
+	return false
+}
+
+// importedCookieNameOK reports whether name is an RFC 6265 token.
+func importedCookieNameOK(name string) bool {
+	for i := 0; i < len(name); i++ {
+		c := name[i]
+		switch {
+		case c >= 'a' && c <= 'z', c >= 'A' && c <= 'Z', c >= '0' && c <= '9':
+		case strings.IndexByte("!#$%&'*+-.^_`|~", c) >= 0:
+		default:
+			return false
+		}
+	}
+	return name != ""
+}
+
+// normalizeImportedOrigin returns the canonical "https://host" of origin and
+// its host, or an error.
+func normalizeImportedOrigin(origin string) (canon, host string, err error) {
+	u, perr := url.Parse(origin)
+	if perr != nil || u.Opaque != "" || u.User != nil || u.RawQuery != "" ||
+		u.Fragment != "" || (u.Path != "" && u.Path != "/") || u.Host == "" {
+		return "", "", errors.New("origin must be https://host")
+	}
+	if !strings.EqualFold(u.Scheme, "https") {
+		return "", "", errors.New("origin must use https")
+	}
+	if p := u.Port(); p != "" && p != "443" {
+		return "", "", errors.New("origin must use the default https port")
+	}
+	host = strings.ToLower(u.Hostname())
+	if strings.HasPrefix(u.Host, "[") {
+		return "", "", errors.New("origin host is an IP literal")
+	}
+	if err := validImportedHost(host); err != nil {
+		return "", "", err
+	}
+	return "https://" + host, host, nil
+}
+
+// validateImportedCookie checks ic and returns its normalized form. Expire
+// is clamped to now+ImportedCookieMaxLifetime when clamp is set, rejected
+// otherwise. Errors never carry the cookie value.
+func validateImportedCookie(ic ImportedCookie, now int64, clamp bool) (ImportedCookie, error) {
+	var err error
+	if ic.Owner == "" || len(ic.Owner) > importedMaxOwner || hasControl(ic.Owner) {
+		return ic, errors.New("invalid owner")
+	}
+	if ic.Origin, _, err = normalizeImportedOrigin(ic.Origin); err != nil {
+		return ic, err
+	}
+	if len(ic.Name) > importedMaxName || !importedCookieNameOK(ic.Name) {
+		return ic, errors.New("invalid cookie name")
+	}
+	if ic.Value == "" || len(ic.Value) > importedMaxValue || hasControl(ic.Value) ||
+		strings.ContainsAny(ic.Value, ";\\\" ,") {
+		return ic, errors.New("invalid cookie value")
+	}
+	if ic.UA == "" || len(ic.UA) > importedMaxUA || hasControl(ic.UA) {
+		return ic, errors.New("invalid user agent")
+	}
+	if ic.Path == "" {
+		ic.Path = "/"
+	}
+	if len(ic.Path) > importedMaxPath || !strings.HasPrefix(ic.Path, "/") ||
+		hasControl(ic.Path) || strings.ContainsAny(ic.Path, ";?#") {
+		return ic, errors.New("invalid cookie path")
+	}
+	if ic.Expire <= now {
+		return ic, errors.New("cookie is expired or has no expiry")
+	}
+	limit := now + int64(ImportedCookieMaxLifetime/time.Second)
+	if ic.Expire > limit {
+		if !clamp {
+			return ic, errors.New("cookie expiry beyond the allowed lifetime")
+		}
+		ic.Expire = limit
+	}
+	return ic, nil
+}
+
+func (hc *httpCookie) importedRecord() ImportedCookie {
+	return ImportedCookie{Owner: hc.scopeOwner, Origin: hc.scopeOrigin, Name: hc.name,
+		Value: hc.value, UA: hc.ua, Path: hc.path, Expire: hc.expire}
+}
+
+// findImportedLocked returns the index of the imported record for
+// (owner, origin, name), or -1: each owner keeps its own record. Caller holds
+// httpCookies.mu.
+func (fam *FileAccessManager) findImportedLocked(owner, origin, name string) int {
+	for i, x := range fam.httpCookies.list {
+		if x.imported && x.scopeOwner == owner && x.scopeOrigin == origin && x.name == name {
+			return i
+		}
+	}
+	return -1
+}
+
+// ownerHostUALocked returns the UA the owner's other imported records on
+// host are bound to, or "" when there are none. skip is an index to ignore.
+// A request carries the UA of the records it sends, so one owner keeps one UA
+// per host; different owners are independent.
+func (fam *FileAccessManager) ownerHostUALocked(owner, host string, skip int) string {
+	for i, x := range fam.httpCookies.list {
+		if i != skip && x.imported && x.scopeOwner == owner && x.domain == host {
+			return x.ua
+		}
+	}
+	return ""
+}
+
+// purgeExpiredImportedLocked drops expired imported records, so a dead record
+// never blocks a new import. Caller holds httpCookies.mu.
+func (fam *FileAccessManager) purgeExpiredImportedLocked(now int64) {
+	for i := 0; i < len(fam.httpCookies.list); i++ {
+		if hc := fam.httpCookies.list[i]; hc.imported && hc.expire <= now {
+			fam.httpCookies.list = slices.Delete(fam.httpCookies.list, i, i+1)
+			i--
+		}
+	}
+}
+
+// HTTPImportClearance stores ic as an imported record: sent only to an
+// opted-in request of ic.Owner, which then carries ic.UA. The shared host
+// User-Agent is never changed. A second import for the same owner, origin and
+// name replaces the first; another owner's record for that origin and name is
+// a record of its own and is never touched. A UA that differs from the one
+// the owner's other records on the host are bound to is rejected.
+func (fam *FileAccessManager) HTTPImportClearance(ic ImportedCookie) error {
+	in := ic
+	err := fam.importClearance(&ic)
+	if fam.ClearanceDebug() {
+		if err != nil {
+			fam.ClearanceTrace("import rejected: %v owner=%q origin=%q name=%q value=%q ua=%q path=%q expire=%d",
+				err, in.Owner, in.Origin, in.Name, in.Value, in.UA, in.Path, in.Expire)
+		} else {
+			fam.ClearanceTrace("import accepted owner=%q origin=%q name=%q value=%q ua=%q path=%q expire=%d->%d clamped=%t",
+				ic.Owner, ic.Origin, ic.Name, ic.Value, ic.UA, ic.Path, in.Expire, ic.Expire, in.Expire != ic.Expire)
+		}
+	}
+	return err
+}
+
+// importClearance does the work of HTTPImportClearance; on success *icp
+// holds the normalized record.
+func (fam *FileAccessManager) importClearance(icp *ImportedCookie) error {
+	now := time.Now().Unix()
+	ic := *icp
+	ic, err := validateImportedCookie(ic, now, true)
+	if err != nil {
+		return fmt.Errorf("import clearance: %w", err)
+	}
+	*icp = ic
+	host := strings.TrimPrefix(ic.Origin, "https://")
+	nc := httpCookie{
+		name: ic.Name, path: ic.Path, domain: host, value: ic.Value,
+		expire: ic.Expire, secure: true, hostOnly: true,
+		imported: true, ua: ic.UA, scopeOrigin: ic.Origin, scopeOwner: ic.Owner,
+	}
+
+	fam.httpCookies.mu.Lock()
+	fam.purgeExpiredImportedLocked(now)
+	idx := fam.findImportedLocked(ic.Owner, ic.Origin, ic.Name)
+	if ua := fam.ownerHostUALocked(ic.Owner, host, idx); ua != "" && ua != ic.UA {
+		fam.httpCookies.mu.Unlock()
+		return errors.New("import clearance: owner already has imported cookies on this host bound to another user agent")
+	}
+	// An ordinary cookie of the same name, domain and path stays: the import
+	// is a record of its own namespace, sent in its place only to the
+	// opted-in owner (see selectCookies).
+	if idx >= 0 {
+		*fam.httpCookies.list[idx] = nc
+	} else {
+		fam.httpCookies.list = append([]*httpCookie{&nc}, fam.httpCookies.list...)
+	}
+	fam.httpCookies.mu.Unlock()
+	fam.armCookiePersist()
+	return nil
+}
+
+// HTTPGetImportedClearance returns the unexpired record the owner imported
+// for origin and name. The value is a secret: never log it.
+func (fam *FileAccessManager) HTTPGetImportedClearance(owner, origin, name string) (ImportedCookie, bool) {
+	canon, _, err := normalizeImportedOrigin(origin)
+	if err != nil || owner == "" {
+		return ImportedCookie{}, false
+	}
+	now := time.Now().Unix()
+	fam.httpCookies.mu.Lock()
+	defer fam.httpCookies.mu.Unlock()
+	idx := fam.findImportedLocked(owner, canon, name)
+	if idx < 0 {
+		return ImportedCookie{}, false
+	}
+	hc := fam.httpCookies.list[idx]
+	if hc.expire <= now {
+		return ImportedCookie{}, false
+	}
+	return hc.importedRecord(), true
+}
+
+// HTTPDeleteImportedClearance removes the owner's record and releases its
+// UA pin if the record set it. It reports whether a record was removed.
+func (fam *FileAccessManager) HTTPDeleteImportedClearance(owner, origin, name string) bool {
+	canon, _, err := normalizeImportedOrigin(origin)
+	if err != nil || owner == "" {
+		return false
+	}
+	fam.httpCookies.mu.Lock()
+	idx := fam.findImportedLocked(owner, canon, name)
+	if idx < 0 {
+		fam.httpCookies.mu.Unlock()
+		return false
+	}
+	fam.httpCookies.list = append(fam.httpCookies.list[:idx], fam.httpCookies.list[idx+1:]...)
+	fam.httpCookies.mu.Unlock()
+	fam.armCookiePersist()
+	return true
+}
+
+func (fam *FileAccessManager) armCookiePersist() {
+	if cs := fam.CalloutSystem(); cs != nil {
+		cs.Arm(&fam.httpCookies.persistTimer, fam.cookiePersist, nil, 5)
+	}
+}
+
+// cookiePair is a name/value ready for a Cookie header.
+type cookiePair struct{ name, value string }
+
+// selectCookies returns the jar cookies a request may carry, in jar order.
+// importedOwner is the owner of a request that opted in with
+// FaImportedCookies ("" = no opt-in); an imported cookie is sent only to
+// that owner and is sent instead of a same-named ordinary one (the two
+// namespaces coexist in the jar; the ordinary cookie is untouched). HTTP/1 and HTTP/2/3
+// build their Cookie header from it so the rules cannot drift. dbg is the
+// request's debug flag: it traces each imported record's fate.
+//
+// boundUA is the User-Agent the request must carry: that of the imported
+// record(s) it sends ("" when it sends none). An imported cookie is bound to
+// the browser that solved the challenge, so the record's UA wins over a later
+// HTTPDomainSetUserAgent and over a User-Agent header of the caller. The
+// alternative, withholding the record from a request that forces another UA,
+// would only turn the request into one the server rejects anyway. One host
+// holds one bound UA (importClearance refuses a second), so the records sent
+// together agree.
+func (fam *FileAccessManager) selectCookies(host string, port int, path string, secureReq bool,
+	importedOwner string, dbg bool, extra func(name string) bool) (out []cookiePair, boundUA string) {
+	now := time.Now().Unix()
+	fam.httpCookies.mu.Lock()
+	defer fam.httpCookies.mu.Unlock()
+	var sentImported map[string]bool
+	trace := dbg && importedOwner != "" // only a request that opted in
+	for _, hc := range fam.httpCookies.list {
+		if !hc.imported {
+			continue
+		}
+		reason := cookieSkipReason(hc, host, port, path, secureReq, importedOwner, now)
+		if reason == "" {
+			if sentImported == nil {
+				sentImported = map[string]bool{}
+			}
+			sentImported[hc.name] = true
+			if boundUA == "" && !extra(hc.name) {
+				boundUA = hc.ua // not when the caller's own cookie replaces it
+			}
+		}
+		if trace {
+			if reason == "" && extra(hc.name) {
+				reason = "explicit-cookie-override"
+			}
+			fam.traceImportedSend(hc, host, path, importedOwner, reason)
+		}
+	}
+	for _, hc := range fam.httpCookies.list {
+		if !cookieSendable(hc, host, port, path, secureReq, importedOwner, now) {
+			continue
+		}
+		if !hc.imported && sentImported[hc.name] {
+			continue
+		}
+		if extra(hc.name) {
+			continue
+		}
+		out = append(out, cookiePair{hc.name, hc.value})
+	}
+	return out, boundUA
+}
+
+// validLoadedImported re-checks a persisted imported record. Anything that
+// fails is dropped, never repaired.
+func validLoadedImported(r HTTPCookieRecord, now int64) (httpCookie, bool) {
+	if !r.Secure || !r.HostOnly {
+		return httpCookie{}, false
+	}
+	ic, err := validateImportedCookie(ImportedCookie{
+		Owner: r.ScopeOwner, Origin: r.ScopeOrigin, Name: r.Name, Value: r.Value,
+		UA: r.UA, Path: r.Path, Expire: r.Expire,
+	}, now, false)
+	if err != nil || ic.Origin != r.ScopeOrigin || r.Domain != strings.TrimPrefix(ic.Origin, "https://") {
+		return httpCookie{}, false
+	}
+	return httpCookie{
+		name: ic.Name, path: ic.Path, domain: r.Domain, value: ic.Value, expire: ic.Expire,
+		secure: true, hostOnly: true,
+		imported: true, ua: ic.UA, scopeOrigin: ic.Origin, scopeOwner: ic.Owner,
+	}, true
+}

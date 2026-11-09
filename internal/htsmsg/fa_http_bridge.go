@@ -34,6 +34,12 @@ func HTTPCookieStoreSave(storeDep any,
 		if r.HostOnly {
 			c.AddS32("hostonly", 1)
 		}
+		if r.Imported {
+			c.AddS32("imported", 1)
+			c.AddStr("ua", r.UA)
+			c.AddStr("scopeorigin", r.ScopeOrigin)
+			c.AddStr("scopeowner", r.ScopeOwner)
+		}
 		m.AddMsg("", c)
 	}
 	if s != nil {
@@ -83,6 +89,12 @@ func HTTPCookieStoreLoad(storeDep any) []fileaccesscore.HTTPCookieRecord {
 		// Records written before these fields existed have none: false.
 		r.Secure = o.GetS32OrDefault("secure", 0) != 0
 		r.HostOnly = o.GetS32OrDefault("hostonly", 0) != 0
+		if o.GetS32OrDefault("imported", 0) != 0 {
+			r.Imported = true
+			r.UA = o.GetStr("ua")
+			r.ScopeOrigin = o.GetStr("scopeorigin")
+			r.ScopeOwner = o.GetStr("scopeowner")
+		}
 		out = append(out, r)
 	}
 	return out

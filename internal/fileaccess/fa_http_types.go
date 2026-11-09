@@ -109,6 +109,7 @@ type httpFile struct {
 	streaming       bool
 	noRetries       bool
 	noCookies       bool
+	importedOwner   string // owner of a request that set FaImportedCookies
 	reqCompression  bool
 	originalURL     string
 	filesizeIsFinal bool
@@ -153,4 +154,7 @@ const (
 	HTTPTagReadTimeout
 	HTTPTagLocation
 	HTTPTagResponseCode
+	// HTTPTagImportedOwner (string): the owner whose imported clearance
+	// cookies the request may carry. Only effective with FaImportedCookies.
+	HTTPTagImportedOwner
 )
