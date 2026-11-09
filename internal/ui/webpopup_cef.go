@@ -27,6 +27,7 @@ package ui
 #include <string.h>
 #include <stdio.h>
 #include <stdatomic.h>
+#include <stdint.h>
 #if defined(_WIN32)
 #include <windows.h>
 #include <process.h>
@@ -46,6 +47,7 @@ package ui
 #include <include/capi/cef_display_handler_capi.h>
 #include <include/capi/cef_browser_process_handler_capi.h>
 #include <include/capi/cef_cookie_capi.h>
+#include <include/capi/cef_parser_capi.h>
 #include <include/capi/cef_command_line_capi.h>
 #include <include/cef_api_hash.h>
 #include <include/cef_version_info.h>
@@ -59,7 +61,9 @@ extern void cefOnLoadEnd(void *data);
 extern void cefOnAddressChange(void *data, char *url);
 extern void cefOnField(void *data, char *msg);
 extern void cefOnConsole(void *data, char *msg);
-extern void cefCookieVisit(char *name, char *value);
+extern int cefCookieVisit(void *data, char *name, char *value,
+    char *domain, char *path, int secure, int httponly, int has_expires,
+    int64_t expires);
 extern void cefCookiesDone(void *data);
 extern int cefCookieDelMatch(char *dom, char *path, char *name);
 extern void cefCookiesDeleted(void *data, int n);
@@ -72,15 +76,19 @@ extern void cefCookiesDeleted(void *data, int n);
 // CEF_CALLBACK (= __stdcall on 32-bit Windows, empty elsewhere) is
 // required on every function assigned into a cef_*_t vtable — without
 // it mingw-386 rejects the assignment as an incompatible pointer type.
-#define REFCOUNT_IMPL(prefix, type)                                        \
-	typedef struct { type h; atomic_int rc; void *ud; } prefix##_t;    \
+#define REFCOUNT_IMPL_D(prefix, type, extra, destroy)                      \
+	typedef struct { type h; atomic_int rc; extra } prefix##_t;        \
 	static void CEF_CALLBACK prefix##_add_ref(                         \
 	    cef_base_ref_counted_t *s) {                                   \
 		atomic_fetch_add(&((prefix##_t *)s)->rc, 1);               \
 	}                                                                \
 	static int CEF_CALLBACK prefix##_release(                          \
 	    cef_base_ref_counted_t *s) {                                   \
-		return atomic_fetch_sub(&((prefix##_t *)s)->rc, 1) == 1;     \
+		if (atomic_fetch_sub(&((prefix##_t *)s)->rc, 1) == 1) {      \
+			destroy(s);                                          \
+			return 1;                                            \
+		}                                                            \
+		return 0;                                                    \
 	}                                                                \
 	static int CEF_CALLBACK prefix##_has_one(                          \
 	    cef_base_ref_counted_t *s) {                                   \
@@ -98,6 +106,54 @@ extern void cefCookiesDeleted(void *data, int n);
 		o->h.base.has_one_ref = prefix##_has_one;                    \
 		o->h.base.has_at_least_one_ref = prefix##_has_atleast;       \
 		atomic_init(&o->rc, 1);                                      \
+	}
+
+// Static objects (never freed): the release that reaches zero does nothing.
+#define REFCOUNT_IMPL(prefix, type)                                        \
+	static void prefix##_keep(void *o) { (void)o; }                    \
+	REFCOUNT_IMPL_D(prefix, type, void *ud;, prefix##_keep)
+
+// ---- per-browser session token ----
+// The user data of every callback of one browser: C memory, immutable,
+// reference counted. The Go side holds one reference (dropped when the
+// session finishes) and each per-browser handler holds one, so the token
+// is freed exactly once, after the last object that can deliver a callback
+// carrying it has been released. No Go pointer is ever stored in C.
+typedef struct { atomic_int rc; } stok_t;
+static atomic_long g_stok_made, g_stok_freed;
+
+static void *stok_new(void) {
+	stok_t *t = (stok_t *)malloc(sizeof(stok_t));
+	atomic_init(&t->rc, 1);
+	atomic_fetch_add(&g_stok_made, 1);
+	return t;
+}
+static void stok_retain(void *p) {
+	atomic_fetch_add(&((stok_t *)p)->rc, 1);
+}
+static void stok_release(void *p) {
+	if (atomic_fetch_sub(&((stok_t *)p)->rc, 1) == 1) {
+		atomic_fetch_add(&g_stok_freed, 1);
+		free(p);
+	}
+}
+static long stok_made(void) { return atomic_load(&g_stok_made); }
+static long stok_freed(void) { return atomic_load(&g_stok_freed); }
+
+// Per-browser handler: holds a token reference, freed at its last release.
+#define HANDLER_IMPL(prefix, type)                                         \
+	static void prefix##_destroy(void *o);                             \
+	REFCOUNT_IMPL_D(prefix, type, void *ud;, prefix##_destroy)         \
+	static void prefix##_destroy(void *o) {                            \
+		stok_release(((prefix##_t *)o)->ud);                       \
+		free(o);                                                   \
+	}                                                                \
+	static prefix##_t *prefix##_new(void *tok) {                       \
+		prefix##_t *o = (prefix##_t *)malloc(sizeof(prefix##_t));  \
+		prefix##_init(o);                                          \
+		o->ud = tok;                                               \
+		stok_retain(tok);                                          \
+		return o;                                                  \
 	}
 
 // ---- helpers ----
@@ -118,7 +174,7 @@ static void cef_set_str(cef_string_t *dst, const char *s) {
 }
 
 // ---- render handler: OnPaint → BGRA frame to Go ----
-REFCOUNT_IMPL(rh, cef_render_handler_t)
+HANDLER_IMPL(rh, cef_render_handler_t)
 
 static int g_viewsz[2] = {1280, 720};
 
@@ -137,7 +193,7 @@ static void CEF_CALLBACK rh_on_paint(cef_render_handler_t *self,
 }
 
 // ---- load handler: load-start URL → trap detection ----
-REFCOUNT_IMPL(lh, cef_load_handler_t)
+HANDLER_IMPL(lh, cef_load_handler_t)
 
 static void CEF_CALLBACK lh_on_load_start(cef_load_handler_t *self,
     cef_browser_t *b, cef_frame_t *f, cef_transition_type_t t) {
@@ -164,7 +220,7 @@ static void CEF_CALLBACK lh_on_load_end(cef_load_handler_t *self,
 // WPE's (CEF has no equivalent in the browser process without
 // render-process plumbing) — it posts "MOVIANOSK:<m>" through
 // console.log instead; on_console_message delivers it here.
-REFCOUNT_IMPL(dh, cef_display_handler_t)
+HANDLER_IMPL(dh, cef_display_handler_t)
 
 static void CEF_CALLBACK dh_on_address_change(
     cef_display_handler_t *self, cef_browser_t *b, cef_frame_t *f,
@@ -189,7 +245,7 @@ static int CEF_CALLBACK dh_on_console_message(
 }
 
 // ---- life span: browser created → register session ----
-REFCOUNT_IMPL(lsh, cef_life_span_handler_t)
+HANDLER_IMPL(lsh, cef_life_span_handler_t)
 
 static void CEF_CALLBACK lsh_on_after_created(
     cef_life_span_handler_t *self, cef_browser_t *b) {
@@ -198,49 +254,65 @@ static void CEF_CALLBACK lsh_on_after_created(
 }
 
 // ---- client ----
-REFCOUNT_IMPL(cl, cef_client_t)
+// One client per browser, owning one reference to each of its handlers.
+// Its getters hand out an extra reference (the CEF contract: the caller
+// releases what a getter returns), so a handler can outlive the client.
+static void cl_destroy(void *o);
+REFCOUNT_IMPL_D(cl, cef_client_t,
+    rh_t *rh; lh_t *lh; dh_t *dh; lsh_t *lsh;, cl_destroy)
 
-static cl_t g_client;
+static void cl_destroy(void *o) {
+	cl_t *c = (cl_t *)o;
+	c->rh->h.base.release(&c->rh->h.base);
+	c->lh->h.base.release(&c->lh->h.base);
+	c->dh->h.base.release(&c->dh->h.base);
+	c->lsh->h.base.release(&c->lsh->h.base);
+	free(c);
+}
 
 static cef_render_handler_t *CEF_CALLBACK cl_get_rh(cef_client_t *s) {
-	static rh_t rh; static int done;
-	if (!done) {
-		rh_init(&rh);
-		rh.h.get_view_rect = rh_get_view_rect;
-		rh.h.on_paint = rh_on_paint;
-		done = 1;
-	}
-	return &rh.h;
+	rh_t *h = ((cl_t *)s)->rh;
+	h->h.base.add_ref(&h->h.base);
+	return &h->h;
 }
 static cef_load_handler_t *CEF_CALLBACK cl_get_lh(cef_client_t *s) {
-	static lh_t lh; static int done;
-	if (!done) {
-		lh_init(&lh);
-		lh.h.on_load_start = lh_on_load_start;
-		lh.h.on_load_end = lh_on_load_end;
-		done = 1;
-	}
-	return &lh.h;
+	lh_t *h = ((cl_t *)s)->lh;
+	h->h.base.add_ref(&h->h.base);
+	return &h->h;
 }
 static cef_display_handler_t *CEF_CALLBACK cl_get_dh(cef_client_t *s) {
-	static dh_t dh; static int done;
-	if (!done) {
-		dh_init(&dh);
-		dh.h.on_address_change = dh_on_address_change;
-		dh.h.on_console_message = dh_on_console_message;
-		done = 1;
-	}
-	return &dh.h;
+	dh_t *h = ((cl_t *)s)->dh;
+	h->h.base.add_ref(&h->h.base);
+	return &h->h;
 }
 static cef_life_span_handler_t *CEF_CALLBACK cl_get_lsh(
     cef_client_t *s) {
-	static lsh_t l; static int done;
-	if (!done) {
-		lsh_init(&l);
-		l.h.on_after_created = lsh_on_after_created;
-		done = 1;
-	}
-	return &l.h;
+	lsh_t *h = ((cl_t *)s)->lsh;
+	h->h.base.add_ref(&h->h.base);
+	return &h->h;
+}
+
+// cl_new — a client with its own handler instances, all carrying tok.
+// Returns the single reference, which create_browser consumes.
+static cl_t *cl_new(void *tok) {
+	cl_t *c = (cl_t *)malloc(sizeof(cl_t));
+	cl_init(c);
+	c->rh = rh_new(tok);
+	c->rh->h.get_view_rect = rh_get_view_rect;
+	c->rh->h.on_paint = rh_on_paint;
+	c->lh = lh_new(tok);
+	c->lh->h.on_load_start = lh_on_load_start;
+	c->lh->h.on_load_end = lh_on_load_end;
+	c->dh = dh_new(tok);
+	c->dh->h.on_address_change = dh_on_address_change;
+	c->dh->h.on_console_message = dh_on_console_message;
+	c->lsh = lsh_new(tok);
+	c->lsh->h.on_after_created = lsh_on_after_created;
+	c->h.get_render_handler = cl_get_rh;
+	c->h.get_load_handler = cl_get_lh;
+	c->h.get_display_handler = cl_get_dh;
+	c->h.get_life_span_handler = cl_get_lsh;
+	return c;
 }
 
 // ---- browser process handler + app ----
@@ -250,21 +322,6 @@ REFCOUNT_IMPL(app, cef_app_t)
 static void CEF_CALLBACK bph_on_context_initialized(
     cef_browser_process_handler_t *self) {
 	cefOnContextInit();
-}
-
-// cl_init_once — the client singleton must exist before
-// cef_initialize (browsers may be created as soon as the context is
-// up, before on_context_initialized is even observed).
-static void cl_init_once(void) {
-	static int done;
-	if (done)
-		return;
-	done = 1;
-	cl_init(&g_client);
-	g_client.h.get_render_handler = cl_get_rh;
-	g_client.h.get_load_handler = cl_get_lh;
-	g_client.h.get_display_handler = cl_get_dh;
-	g_client.h.get_life_span_handler = cl_get_lsh;
 }
 
 static cef_browser_process_handler_t *CEF_CALLBACK app_get_bph(
@@ -398,7 +455,6 @@ static void cef_store_args(int argc, char **argv) {
 static int cef_early(int argc, char **argv) {
 	cef_api_hash(CEF_API_VERSION, 0);
 	cef_store_args(argc, argv);
-	cl_init_once();
 	app_init(&g_app);
 	g_app.h.get_browser_process_handler = app_get_bph;
 	g_app.h.on_before_command_line_processing = app_before_cmdline;
@@ -408,7 +464,6 @@ static int cef_early(int argc, char **argv) {
 static int cef_init(const char *subproc, const char *resdir,
     const char *locdir, const char *cachedir) {
 	cef_api_hash(CEF_API_VERSION, 0);
-	cl_init_once();
 	app_init(&g_app);
 	g_app.h.get_browser_process_handler = app_get_bph;
 	g_app.h.on_before_command_line_processing = app_before_cmdline;
@@ -448,19 +503,45 @@ static void *cef_browser_create(void *data, int w, int h,
 
 	cef_string_t url = {0};
 	cef_set_str(&url, uri);
-	int ok = cef_browser_host_create_browser(&wi, &g_client.h, &url,
+	cl_t *c = cl_new(data);
+	int ok = cef_browser_host_create_browser(&wi, &c->h, &url,
 	    &bs, NULL, NULL);
+	// cef_browser_host_create_browser consumes the caller's reference to
+	// the client (libcef wraps it without add_ref and releases it when the
+	// browser is gone, or at once if creation fails), so it is not
+	// released here: the client, its handlers and their token references
+	// are freed by CEF's last release.
 	cef_string_utf16_clear(&url);
 	return ok ? (void *)1 : NULL;
 }
 
-// session data → handlers (the client singleton carries it in ud;
-// one popup at a time, same as the WPE exportable's single data ptr)
-static void cef_set_ud(void *data) {
-	((rh_t *)cl_get_rh(&g_client.h))->ud = data;
-	((lh_t *)cl_get_lh(&g_client.h))->ud = data;
-	((dh_t *)cl_get_dh(&g_client.h))->ud = data;
-	((lsh_t *)cl_get_lsh(&g_client.h))->ud = data;
+// ---- test seam: drive the real client and handlers without libcef ----
+// The browser is a stub whose add_ref does nothing; callbacks are delivered
+// through the objects cl_new built, exactly as CEF would.
+static void CEF_CALLBACK tbr_add_ref(cef_base_ref_counted_t *s) { (void)s; }
+static void *cef_test_browser(void) {
+	cef_browser_t *b = (cef_browser_t *)calloc(1, sizeof(cef_browser_t));
+	b->base.size = sizeof(cef_browser_t);
+	b->base.add_ref = tbr_add_ref;
+	return b;
+}
+static void *cef_test_client(void *tok) { return cl_new(tok); }
+static void cef_test_after_created(void *client, void *browser) {
+	cef_client_t *c = (cef_client_t *)client;
+	cef_life_span_handler_t *l = c->get_life_span_handler(c);
+	l->on_after_created(l, (cef_browser_t *)browser);
+	l->base.release(&l->base);
+}
+static void cef_test_paint(void *client, void *browser, void *buf,
+    int w, int h) {
+	cef_client_t *c = (cef_client_t *)client;
+	cef_render_handler_t *r = c->get_render_handler(c);
+	r->on_paint(r, (cef_browser_t *)browser, PET_VIEW, 0, NULL, buf, w, h);
+	r->base.release(&r->base);
+}
+static void cef_test_client_release(void *client) {
+	cef_client_t *c = (cef_client_t *)client;
+	c->base.release(&c->base);
 }
 
 // Deferred close: the trap fires mid-navigation (provisional load
@@ -662,16 +743,119 @@ static void cef_inject_scripts(void *browser) {
 	cef_string_utf16_clear(&code);
 }
 
+// cef_go_dup — a malloc'd UTF-8 copy of s, whatever its length (a fixed
+// buffer cut long values silently); free() it. NULL when malloc fails.
+static char *cef_go_dup(const cef_string_t *s) {
+	cef_string_utf8_t u8 = {0};
+	cef_string_to_utf8(s->str, s->length, &u8);
+	char *out = malloc(u8.length + 1);
+	if (out) {
+		if (u8.str)
+			memcpy(out, u8.str, u8.length);
+		out[u8.length] = 0;
+	}
+	cef_string_utf8_clear(&u8);
+	return out;
+}
+
+// cef_canon_url — the scheme, host and path of uri as cef_parse_url
+// canonicalizes them (an IPv6 host comes bracketed), each malloc'd: free
+// them. Returns 0, with all three NULL, when CEF rejects the URL or a copy
+// fails.
+static int cef_canon_url(const char *uri, char **scheme, char **host,
+    char **path) {
+	cef_string_t s = {0};
+	cef_urlparts_t p = {0};
+	cef_set_str(&s, uri);
+	p.size = sizeof(p);
+	int ok = cef_parse_url(&s, &p);
+	*scheme = *host = *path = NULL;
+	if (ok) {
+		*scheme = cef_go_dup(&p.scheme);
+		*host = cef_go_dup(&p.host);
+		*path = cef_go_dup(&p.path);
+		if (!*scheme || !*host || !*path) {
+			free(*scheme);
+			free(*host);
+			free(*path);
+			*scheme = *host = *path = NULL;
+			ok = 0;
+		}
+	}
+	cef_string_utf16_clear(&s);
+	cef_string_utf16_clear(&p.spec);
+	cef_string_utf16_clear(&p.scheme);
+	cef_string_utf16_clear(&p.username);
+	cef_string_utf16_clear(&p.password);
+	cef_string_utf16_clear(&p.host);
+	cef_string_utf16_clear(&p.port);
+	cef_string_utf16_clear(&p.origin);
+	cef_string_utf16_clear(&p.path);
+	cef_string_utf16_clear(&p.query);
+	cef_string_utf16_clear(&p.fragment);
+	return ok;
+}
+
 // ---- cookies: global manager → visit_url_cookies ----
-REFCOUNT_IMPL(cvis, cef_cookie_visitor_t)
+// webcookies() and the popup cookie wait read the URL-scoped visitor ONLY.
+// CEF 152's cef_cookie_t carries no partition key, and visit_all_cookies
+// would hand over cookies of every CHIPS partition indistinguishably;
+// visit_url_cookies leaves partitioned cookies out. Do not switch this to
+// visit_all_cookies.
+// One visitor per webcookies() call, on the heap: CEF holds it until the
+// visit is over, and its last release frees it. ud is the call's key in
+// cookieQueries: a C-owned token (malloc'd by Go, never Go memory, since
+// the visitor keeps it after the cgo call returned). The visitor owns the
+// token from cef_get_cookies on and frees it exactly once, at its final
+// release, after the last cefCookiesDone. cefCookiesDone may be reached
+// several times per call; Go acts on the first only.
+typedef struct {
+	cef_cookie_visitor_t h;
+	atomic_int rc;
+	void *ud;
+} cvis_t;
+
+static void CEF_CALLBACK cvis_add_ref(cef_base_ref_counted_t *s) {
+	atomic_fetch_add(&((cvis_t *)s)->rc, 1);
+}
+
+static int CEF_CALLBACK cvis_release(cef_base_ref_counted_t *s) {
+	cvis_t *v = (cvis_t *)s;
+	if (atomic_fetch_sub(&v->rc, 1) != 1)
+		return 0;
+	// An empty jar is never visited: CEF's release is the done signal then.
+	cefCookiesDone(v->ud);
+	free(v->ud);
+	free(v);
+	return 1;
+}
+
+static int CEF_CALLBACK cvis_has_one(cef_base_ref_counted_t *s) {
+	return atomic_load(&((cvis_t *)s)->rc) == 1;
+}
+
+static int CEF_CALLBACK cvis_has_atleast(cef_base_ref_counted_t *s) {
+	return atomic_load(&((cvis_t *)s)->rc) >= 1;
+}
 
 static int CEF_CALLBACK cvis_visit(cef_cookie_visitor_t *self,
     const cef_cookie_t *c, int count, int total, int *del) {
 	cvis_t *v = (cvis_t *)self;
-	char name[256], value[1024];
-	cef_go_str(name, sizeof name, &c->name);
-	cef_go_str(value, sizeof value, &c->value);
-	cefCookieVisit(name, value);
+	char *name = cef_go_dup(&c->name), *value = cef_go_dup(&c->value);
+	char *domain = cef_go_dup(&c->domain), *path = cef_go_dup(&c->path);
+	// A cookie whose copy failed (out of memory) is left out of the result.
+	// Go answers 0 once the query is cancelled: stop visiting.
+	int keep_going = 1;
+	if (name && value && domain && path)
+		keep_going = cefCookieVisit(v->ud, name, value, domain, path,
+		    c->secure, c->httponly, c->has_expires,
+		    c->has_expires ? (int64_t)c->expires.val : 0);
+	free(name);
+	free(value);
+	free(domain);
+	free(path);
+	if (!keep_going)
+		return 0;
 	if (count + 1 >= total) {
 		cefCookiesDone(v->ud);
 		return 0;
@@ -679,27 +863,61 @@ static int CEF_CALLBACK cvis_visit(cef_cookie_visitor_t *self,
 	return 1;
 }
 
-static cvis_t g_cvis;
+// cvis_new — the visitor with one reference, the caller's; NULL when
+// malloc fails.
+static cvis_t *cvis_new(void *ud) {
+	cvis_t *v = (cvis_t *)calloc(1, sizeof(cvis_t));
+	if (!v)
+		return NULL;
+	v->h.base.size = sizeof(cef_cookie_visitor_t);
+	v->h.base.add_ref = cvis_add_ref;
+	v->h.base.release = cvis_release;
+	v->h.base.has_one_ref = cvis_has_one;
+	v->h.base.has_at_least_one_ref = cvis_has_atleast;
+	v->h.visit = cvis_visit;
+	atomic_init(&v->rc, 1);
+	v->ud = ud;
+	return v;
+}
 
-// cef_get_cookies — get_global_manager is synchronous (returns the
-// manager, storage init is lazy); visit_url_cookies runs the visitor
-// on the UI thread. An empty jar never calls visit → report done
-// when visit_url_cookies returns with no visitor callback: the Go
-// side treats "done without any visit" as an empty map.
-static void cef_get_cookies(const char *uri, void *data) {
-	cvis_init(&g_cvis);
-	g_cvis.h.visit = cvis_visit;
-	g_cvis.ud = data;
+// cef_get_cookies — visit_url_cookies (HttpOnly included) on the UI thread
+// for the already-canonicalized uri. The done signal (cefCookiesDone) comes
+// on the last visited cookie; an empty jar is never visited, so it comes
+// when CEF releases the visitor; a visit that returns false reports at once.
+static void cef_get_cookies(const char *uri, void *ud) {
+	cvis_t *v = cvis_new(ud);
+	if (!v) {
+		cefCookiesDone(ud);
+		free(ud); // no visitor took the token over
+		return;
+	}
 	cef_cookie_manager_t *mgr =
 	    cef_cookie_manager_get_global_manager(NULL);
 	if (!mgr) {
-		cefCookiesDone(data);
+		// Not handed to CEF: this release of the caller's reference is
+		// the last one (it reports done and frees visitor and token).
+		v->h.base.release(&v->h.base);
 		return;
 	}
 	cef_string_t u = {0};
 	cef_set_str(&u, uri);
-	mgr->visit_url_cookies(mgr, &u, 1, &g_cvis.h);
+	// Ownership: passing a client-allocated ref-counted struct to CEF
+	// TRANSFERS one reference. libcef's CefCppToCRefCounted::Wrap
+	// (third_party/cef/linux64/libcef_dll/cpptoc/cpptoc_ref_counted.h:
+	// 30-37) adds "a reference ... that will be released once our
+	// structure arrives on the other side", and CefCToCppRefCounted::Wrap
+	// (ctocpp/ctocpp_ref_counted.h:134-142) releases it into a CefRefPtr
+	// on arrival; cookie_manager_ctocpp.cc:88-91 passes the wrapped
+	// visitor straight into visit_url_cookies. So the one reference
+	// cvis_new created is consumed by this call whatever it returns
+	// (on false, CEF's CefRefPtr releases it as it goes out of scope).
+	// The caller must NOT release after the call, or the count can hit 0
+	// while CEF still holds the visitor. Only a visitor never handed to
+	// CEF (manager unavailable, above) is released here.
+	int started = mgr->visit_url_cookies(mgr, &u, 1, &v->h);
 	cef_string_utf16_clear(&u);
+	if (!started)
+		cefCookiesDone(ud);
 }
 
 // ---- cookie deletion: visit_all_cookies + *del flag + flush ----
@@ -825,11 +1043,18 @@ func CefExecuteProcess() int {
 // thread's websurface widget. Implements uiglw.WebsurfaceHooks.
 type cefSession struct {
 	browser  unsafe.Pointer // cef_browser_t* (add_ref'd), main thread
-	key      unsafe.Pointer // cefSessions map key (callback user data)
+	key      unsafe.Pointer // session token (C memory): map key and callback user data
 	trap     string
 	wr       *WebpopupResult
 	done     chan<- *WebpopupResult
 	finished bool
+
+	// popup cookie wait (nil wait = none); UI thread only except waiter
+	wait               *WebpopupCookieWait
+	waiter             *cookieWaiter
+	cookieQuery        *cookieQuery // read in flight, if any
+	cookieCancel       func()       // detaches it
+	cookieCheckPending bool         // another check came while one ran
 
 	frameMu     sync.Mutex
 	frame       []byte
@@ -844,6 +1069,24 @@ type cefSession struct {
 }
 
 var cefSessions sync.Map // unsafe.Pointer -> *cefSession
+
+// Session token wrappers (C memory, reference counted; see stok_t). The
+// session holds one reference until finish(); each per-browser handler
+// holds another. Test seams reach the C side only through these.
+func cefTokenNew() unsafe.Pointer      { return C.stok_new() }
+func cefTokenRetain(k unsafe.Pointer)  { C.stok_retain(k) }
+func cefTokenRelease(k unsafe.Pointer) { C.stok_release(k) }
+func cefTokensFreed() int64            { return int64(C.stok_freed()) }
+func cefTokensMade() int64             { return int64(C.stok_made()) }
+
+// Test seam wrappers (see the cef_test_* helpers in the C preamble).
+func cefTestBrowser() unsafe.Pointer                { return C.cef_test_browser() }
+func cefTestClient(k unsafe.Pointer) unsafe.Pointer { return C.cef_test_client(k) }
+func cefTestClientRelease(c unsafe.Pointer)         { C.cef_test_client_release(c) }
+func cefTestAfterCreated(c, b unsafe.Pointer)       { C.cef_test_after_created(c, b) }
+func cefTestPaint(c, b unsafe.Pointer, buf []byte, w, h int) {
+	C.cef_test_paint(c, b, unsafe.Pointer(&buf[0]), C.int(w), C.int(h))
+}
 
 func cefSessionOf(data unsafe.Pointer) *cefSession {
 	v, _ := cefSessions.Load(data)
@@ -860,14 +1103,24 @@ func cefOnContextInit() {
 	cefCtxUp = true
 }
 
+// cefCloseBrowser — releases a browser the session no longer owns; a seam
+// for the late-creation test.
+var cefCloseBrowser = func(browser unsafe.Pointer) { C.cef_close(browser) }
+
+// cefFocusBrowser — a seam so ordering tests need no real browser.
+var cefFocusBrowser = func(browser unsafe.Pointer) { C.cef_focus(browser) }
+
 //export cefOnBrowserCreated
 func cefOnBrowserCreated(browser, data unsafe.Pointer) {
 	s := cefSessionOf(data)
 	if s == nil {
+		// The session finished before the browser existed: nothing will
+		// close it otherwise. cef_close releases the add_ref'd browser.
+		cefCloseBrowser(browser)
 		return
 	}
 	s.browser = browser
-	C.cef_focus(browser)
+	cefFocusBrowser(browser)
 	webpopupDeps.ts.Trace(trace.TRACE_DEBUG, "cef",
 		"browser created id=%v", browser)
 }
@@ -917,6 +1170,9 @@ func cefOnLoadEnd(data unsafe.Pointer) {
 		// Fresh DOM — (re)attach the focus tracker + spatial nav.
 		C.cef_inject_scripts(s.browser)
 	}
+	if s != nil {
+		s.checkCookie() // a page load is the usual moment a cookie appears
+	}
 }
 
 //export cefOnAddressChange
@@ -947,13 +1203,95 @@ func cefOnField(data unsafe.Pointer, msg *C.char) {
 	}
 }
 
-//export cefCookieVisit
-func cefCookieVisit(name, value *C.char) {
-	cefCookieResult[C.GoString(name)] = C.GoString(value)
+// cookieQuery — one URL-scoped cookie read: the URL it asks for, the
+// cookies CEF visited so far, and where the result goes. Either done
+// (webcookies) or session (popup cookie wait) is set.
+type cookieQuery struct {
+	url       cookieURL
+	done      chan<- []WebpopupCookie // buffered (1): one send, never blocks
+	session   *cefSession             // popup wait; UI thread only
+	mu        sync.Mutex
+	cancelled bool // guarded by mu
+	visits    []cookieVisit
 }
 
-var cefCookiesCh chan map[string]string
-var cefCookieResult map[string]string
+// cookieQueries — the reads in flight, keyed by the visitor's user data,
+// a C-owned token (see cvis_t). An entry is removed exactly once, by
+// cefCookiesDone or by cancelCookieQuery, whichever comes first; that
+// removal alone decrements cefActiveN.
+var cookieQueries sync.Map // unsafe.Pointer -> *cookieQuery
+
+// newCookieToken — the visitor's user data, C memory freed by the visitor;
+// nil when malloc fails.
+func newCookieToken() unsafe.Pointer { return C.malloc(1) }
+
+// startCookieQuery registers q under a fresh token and returns it with a
+// cancel function. Safe from any goroutine; the cancel is idempotent and a
+// no-op once CEF completed the query, even if the token's address was
+// reused since (the entry is matched by q, not by address alone). ok is
+// false when no token could be allocated: nothing is registered and
+// cefActiveN is untouched; the caller reports an empty result.
+func startCookieQuery(q *cookieQuery) (key unsafe.Pointer, cancel func(), ok bool) {
+	key = newCookieToken()
+	if key == nil {
+		return nil, nil, false
+	}
+	cookieQueries.Store(key, q)
+	cefActiveN.Add(1)
+	return key, func() { cancelCookieQuery(key, q) }, true
+}
+
+// cancelCookieQuery detaches q: later C callbacks find no entry and do
+// nothing (cefCookieVisit answers 0, which stops the visit).
+func cancelCookieQuery(key unsafe.Pointer, q *cookieQuery) {
+	if !cookieQueries.CompareAndDelete(key, q) {
+		return
+	}
+	cefActiveN.Add(-1)
+	q.mu.Lock()
+	q.cancelled = true
+	q.visits = nil
+	q.mu.Unlock()
+}
+
+// cefCookieVisit — one cookie of a read. Returns 0 to stop the visit when
+// the query is gone or cancelled. Never logs a name or value.
+//
+//export cefCookieVisit
+func cefCookieVisit(data unsafe.Pointer, name, value, domain, path *C.char,
+	secure, httpOnly, hasExpires C.int, expires C.int64_t) C.int {
+	cv := cookieVisit{
+		name: C.GoString(name), value: C.GoString(value),
+		domain: C.GoString(domain), path: C.GoString(path),
+		secure: secure != 0, httpOnly: httpOnly != 0,
+	}
+	if hasExpires != 0 {
+		if u, ok := cefBaseTimeUnix(int64(expires)); ok {
+			cv.expires = u
+		}
+	}
+	if recordCookieVisit(data, cv) {
+		return 1
+	}
+	return 0
+}
+
+// recordCookieVisit adds one visited cookie to the query under key; false
+// (stop visiting) when the query is gone or cancelled.
+func recordCookieVisit(key unsafe.Pointer, cv cookieVisit) bool {
+	v, ok := cookieQueries.Load(key)
+	if !ok {
+		return false
+	}
+	q := v.(*cookieQuery)
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	if q.cancelled {
+		return false
+	}
+	q.visits = append(q.visits, cv)
+	return true
+}
 
 //export cefOnConsole
 func cefOnConsole(data unsafe.Pointer, msg *C.char) {
@@ -964,12 +1302,36 @@ func cefOnConsole(data unsafe.Pointer, msg *C.char) {
 	}
 }
 
+// cefCookiesDone — the end of one read; a second call for the same key
+// finds nothing and does nothing (completion once). Never blocks the UI
+// thread, also after WebpopupCookieList gave up on its timeout. A popup
+// wait result goes to the session, a webcookies() result to its channel.
+//
 //export cefCookiesDone
 func cefCookiesDone(data unsafe.Pointer) {
-	cefActiveN.Add(-1)
-	if cefCookiesCh != nil {
-		cefCookiesCh <- cefCookieResult
+	v, ok := cookieQueries.LoadAndDelete(data)
+	if !ok {
+		return
 	}
+	cefActiveN.Add(-1)
+	q := v.(*cookieQuery)
+	q.mu.Lock()
+	if q.cancelled {
+		q.mu.Unlock()
+		return
+	}
+	visits := q.visits
+	q.mu.Unlock()
+	if s := q.session; s != nil {
+		s.cookieQueryDone(q, visits)
+		return
+	}
+	cookies, ambiguous := scopeCookies(visits, q.url)
+	if ambiguous > 0 {
+		webpopupDeps.ts.Trace(trace.TRACE_DEBUG, "cef",
+			"webcookies: %d ambiguous cookie name(s) withheld", ambiguous)
+	}
+	q.done <- cookies
 }
 
 //export cefCookieDelMatch
@@ -1013,22 +1375,101 @@ func (s *cefSession) checkTrapURI(uri string) {
 	}
 }
 
+// checkCookie starts one asynchronous URL-scoped read for the awaited
+// cookie. Triggers (page loads, the poll) coalesce: a check that arrives
+// while one runs queues exactly one follow-up. The UI thread never waits.
+func (s *cefSession) checkCookie() {
+	if s.finished || s.wait == nil {
+		return
+	}
+	if s.cookieQuery != nil {
+		s.cookieCheckPending = true
+		return
+	}
+	s.cookieCheckPending = false
+	q := &cookieQuery{url: s.wait.target, session: s}
+	key, cancel, ok := startCookieQuery(q)
+	if !ok {
+		return // out of memory: no read; the next poll or page load retries
+	}
+	s.cookieQuery, s.cookieCancel = q, cancel
+	curi := C.CString(s.wait.target.scheme + "://" + s.wait.target.host +
+		s.wait.target.path)
+	defer C.free(unsafe.Pointer(curi))
+	C.cef_get_cookies(curi, key)
+}
+
+// cefCanonURL — uri as cef_parse_url canonicalizes it (see cookieURL).
+func cefCanonURL(uri string) (cookieURL, bool) {
+	curi := C.CString(uri)
+	defer C.free(unsafe.Pointer(curi))
+	var scheme, host, path *C.char
+	if C.cef_canon_url(curi, &scheme, &host, &path) == 0 {
+		return cookieURL{}, false
+	}
+	u := cookieURL{C.GoString(scheme), C.GoString(host), C.GoString(path)}
+	C.free(unsafe.Pointer(scheme))
+	C.free(unsafe.Pointer(host))
+	C.free(unsafe.Pointer(path))
+	return u, true
+}
+
+// cefCreateBrowser — the browser-create call, a seam for failure tests.
+var cefCreateBrowser = func(key unsafe.Pointer, uri string) bool {
+	curi := C.CString(uri)
+	defer C.free(unsafe.Pointer(curi))
+	return C.cef_browser_create(key, 1280, 720, curi) != nil
+}
+
+// cookieQueryDone — a wait read ended (UI thread). The cookie completes the
+// wait once; otherwise a coalesced check runs.
+func (s *cefSession) cookieQueryDone(q *cookieQuery, visits []cookieVisit) {
+	if s.cookieQuery == q {
+		s.cookieQuery, s.cookieCancel = nil, nil
+	}
+	if s.finished {
+		return
+	}
+	if cookieWaitSatisfied(visits, q.url, s.wait.Name) {
+		s.waiter.Fire(WebpopupCookieFound)
+		return
+	}
+	if s.cookieCheckPending {
+		s.checkCookie()
+	}
+}
+
+// finish ends the session. Every terminal source (trap, close, load error,
+// cookie found, wait timeout) comes through here and through the waiter's
+// Resolve first: the first source to resolve fixes the result, and a
+// later source finishes with that result instead of its own. UI thread only.
 func (s *cefSession) finish(code int) {
+	if s.waiter != nil {
+		code = s.waiter.Resolve(code)
+	}
 	if s.finished {
 		return
 	}
 	s.finished = true
 	s.wr.ResultCode = code
+	if s.cookieCancel != nil {
+		s.cookieCancel()
+		s.cookieQuery, s.cookieCancel = nil, nil
+	}
 	cefActiveN.Add(-1)
 	if wpSurfaceGlueCef.hide != nil {
 		wpSurfaceGlueCef.hide()
 	}
 	if s.browser != nil {
-		C.cef_close(s.browser)
+		cefCloseBrowser(s.browser)
 		s.browser = nil
 	}
 	if s.key != nil {
+		// Unmap first, then drop the session's reference: the token memory
+		// lives on while a handler can still call back, so its address
+		// cannot be reused while a stale map entry could match it.
 		cefSessions.Delete(s.key)
+		cefTokenRelease(s.key)
 		s.key = nil
 	}
 	s.done <- s.wr
@@ -1266,15 +1707,26 @@ func cefUAPlatform() string {
 
 // wpNewSession creates the windowless browser on the main thread and
 // shows the websurface.
-func wpNewSession(uri, trap string, wr *WebpopupResult,
+func wpNewSession(uri, trap string, wait *WebpopupCookieWait, wr *WebpopupResult,
 	done chan<- *WebpopupResult) *cefSession {
-	s := &cefSession{trap: trap, wr: wr, done: done}
-	s.key = unsafe.Pointer(new(C.int))
+	s := &cefSession{trap: trap, wait: wait, wr: wr, done: done}
+	s.key = cefTokenNew()
 	cefSessions.Store(s.key, s)
-	C.cef_set_ud(s.key)
-	curi := C.CString(uri)
-	defer C.free(unsafe.Pointer(curi))
-	if C.cef_browser_create(s.key, 1280, 720, curi) == nil {
+	if wait != nil {
+		// Match cookies against CEF's own canonical form of the target
+		// (dot segments, punycode), still confined to the opener's host.
+		t, ok := canonWaitTarget(cefCanonURL, uri, wait.target)
+		if !ok {
+			cefActiveN.Add(1) // balance finish(), as for a failed create
+			s.finish(WebpopupLoadError)
+			return s
+		}
+		wait.target = t
+	}
+	if !cefCreateBrowser(s.key, uri) {
+		// No browser was created, so finish() must not decrement the
+		// active count: balance it first.
+		cefActiveN.Add(1)
 		s.finish(WebpopupLoadError)
 		return s
 	}
@@ -1284,19 +1736,25 @@ func wpNewSession(uri, trap string, wr *WebpopupResult,
 		s.finish(WebpopupLoadError)
 		return s
 	}
+	if wait != nil {
+		s.waiter = startCookieWaiter(wait.Timeout, cookieWaitPollEvery,
+			func() { wpPlatformDispatch(s.checkCookie) },
+			func(code int) { wpPlatformDispatch(func() { s.finish(code) }) })
+		s.checkCookie() // includes cookies that existed before the popup opened
+	}
 	return s
 }
 
 // wpPlatformRunPopup — runs on the main thread; completion arrives
 // via trap or user close on this same context.
-func wpPlatformRunPopup(uri, title, trap string, wr *WebpopupResult,
-	done chan<- *WebpopupResult) {
+func wpPlatformRunPopup(uri, title, trap string, wait *WebpopupCookieWait,
+	wr *WebpopupResult, done chan<- *WebpopupResult) {
 	if cefEnsureInit() != 1 {
 		wr.ResultCode = WebpopupLoadError
 		done <- wr
 		return
 	}
-	wpNewSession(uri, trap, wr, done)
+	wpNewSession(uri, trap, wait, wr, done)
 }
 
 // wpPlatformBrowser — detached browsing shares the embedded surface.
@@ -1306,7 +1764,7 @@ func wpPlatformBrowser(uri, title string) {
 	}
 	wr := &WebpopupResult{}
 	done := make(chan *WebpopupResult, 1)
-	wpNewSession(uri, "", wr, done)
+	wpNewSession(uri, "", nil, wr, done)
 	go func() { <-done }()
 }
 
@@ -1320,18 +1778,36 @@ func wpPlatformStorage(dir string) {
 	cefCacheDir = dir
 }
 
-// wpPlatformCookies — cookie query via the global cookie manager.
-func wpPlatformCookies(uri string, done chan map[string]string) {
+// wpPlatformCookies — URL-scoped cookie read via the global cookie
+// manager. Runs on the UI thread and only starts the query; the result goes
+// to done. A URL CEF cannot parse answers at once with an empty list, and
+// a CEF that cannot start with nil (unsupported).
+func wpPlatformCookies(uri string, r *cookieRead) {
 	if cefEnsureInit() != 1 {
-		done <- nil
+		r.done <- nil
 		return
 	}
-	cefCookieResult = map[string]string{}
-	cefCookiesCh = done
-	cefActiveN.Add(1)
+	u, ok := cefCanonURL(uri)
+	if !ok {
+		r.done <- []WebpopupCookie{}
+		return
+	}
 	curi := C.CString(uri)
 	defer C.free(unsafe.Pointer(curi))
-	C.cef_get_cookies(curi, nil)
+	q := &cookieQuery{url: u, done: r.done}
+	key, cancel, ok := startCookieQuery(q)
+	if !ok {
+		r.done <- []WebpopupCookie{}
+		return
+	}
+	if !r.Attach(cancel) {
+		// The caller gave up before the UI thread got here: no visitor
+		// was created, so the token is still ours to free.
+		cancel()
+		C.free(key)
+		return
+	}
+	C.cef_get_cookies(curi, key)
 }
 
 var cefCookiesDelCh chan int

@@ -13,12 +13,15 @@ const WebpopupAvailable = false
 func WebpopupSetStorage(dir string) {}
 
 // WebpopupCreate — C: webpopup_create (disabled build).
-func WebpopupCreate(url, title, trap string) *WebpopupResult {
+func WebpopupCreate(url, title, trap string, waits ...WebpopupCookieWait) *WebpopupResult {
 	return &WebpopupResult{ResultCode: WebpopupLoadError}
 }
 
 // WebbrowserOpen — C: webbrowser_open (disabled build).
 func WebbrowserOpen(url, title string) {}
+
+// WebpopupCookieList returns nil without a webview.
+func WebpopupCookieList(uri string) []WebpopupCookie { return nil }
 
 // WebpopupCookies returns nil without a webview.
 func WebpopupCookies(uri string) map[string]string { return nil }

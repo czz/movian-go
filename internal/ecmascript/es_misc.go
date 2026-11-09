@@ -47,20 +47,36 @@ func esWebpopup(ctx *gaftape.Context) int {
 	title := ctx.SafeToString(1)
 	trap := ctx.SafeToString(2)
 
-	wr := ui.WebpopupCreate(url, title, trap)
-
-	var t string
-	switch wr.ResultCode {
-	case ui.WebpopupTrappedURL:
-		t = "trapped"
-	case ui.WebpopupClosedByUser:
-		t = "userclose"
-	case ui.WebpopupLoadError:
-		t = "neterror"
-	default:
-		t = "error"
+	// Optional 4th argument {waitForCookie: {url, name, timeout}}; timeout
+	// is in seconds. Absent, the three-argument behavior is unchanged.
+	var wait []ui.WebpopupCookieWait
+	if ctx.GetTop() > 3 && ctx.IsObject(3) {
+		ctx.GetPropString(3, "waitForCookie")
+		if ctx.IsObject(-1) {
+			var w ui.WebpopupCookieWait
+			ctx.GetPropString(-1, "url")
+			if ctx.IsString(-1) {
+				w.URL = ctx.GetString(-1)
+			}
+			ctx.Pop()
+			ctx.GetPropString(-1, "name")
+			if ctx.IsString(-1) {
+				w.Name = ctx.GetString(-1)
+			}
+			ctx.Pop()
+			ctx.GetPropString(-1, "timeout")
+			if ctx.IsNumber(-1) {
+				w.Timeout = cookieWaitSeconds(ctx.GetNumber(-1))
+			}
+			ctx.Pop()
+			wait = append(wait, w)
+		}
+		ctx.Pop()
 	}
-	ctx.PushString(t)
+
+	wr := ui.WebpopupCreate(url, title, trap, wait...)
+
+	ctx.PushString(popupResultName(wr.ResultCode))
 	ctx.PutPropString(-2, "result")
 
 	if wr.Trapped.URL != "" {
@@ -81,6 +97,35 @@ func esWebpopup(ctx *gaftape.Context) int {
 	return 1
 }
 
+// popupResultName — the plugin-visible `result` string of a popup code.
+func popupResultName(code int) string {
+	switch code {
+	case ui.WebpopupTrappedURL:
+		return "trapped"
+	case ui.WebpopupClosedByUser:
+		return "userclose"
+	case ui.WebpopupLoadError:
+		return "neterror"
+	case ui.WebpopupCookieFound:
+		return "cookie"
+	case ui.WebpopupCookieTimeout:
+		return "timeout"
+	}
+	return "error"
+}
+
+// cookieWaitSeconds — a plugin timeout in seconds as a Duration; NaN,
+// negative and zero mean "use the default" (ui clamps the maximum).
+func cookieWaitSeconds(sec float64) time.Duration {
+	if !(sec > 0) {
+		return 0
+	}
+	if sec > ui.MaxCookieWaitTimeout.Seconds() {
+		return ui.MaxCookieWaitTimeout
+	}
+	return time.Duration(sec * float64(time.Second))
+}
+
 // es_webbrowser — C: webbrowser_open. Non-blocking browser window.
 func esWebbrowser(ctx *gaftape.Context) int {
 	ui.WebbrowserOpen(ctx.SafeToString(0), ctx.SafeToString(1))
@@ -88,8 +133,11 @@ func esWebbrowser(ctx *gaftape.Context) int {
 }
 
 // es_webcookies — the shared webview jar's cookies for a URL
-// (HttpOnly included; used to harvest cf_clearance after the user
-// passes a challenge in the popup).
+// (HttpOnly included). Only the cookies a request to that URL would
+// carry, unpartitioned, one value per name; a name CEF reports twice at
+// the same path (host-only + domain cookie, or an unlabeled CHIPS
+// partition) is withheld. Partitioned (CHIPS) cookies such as a partitioned
+// cf_clearance are never returned.
 func esWebcookies(ctx *gaftape.Context) int {
 	cookies := ui.WebpopupCookies(ctx.SafeToString(0))
 	ctx.PushObject()
