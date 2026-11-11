@@ -1,6 +1,6 @@
 module github.com/czz/movian-go
 
-go 1.27.3
+go 1.27.4
 
 require (
 	github.com/dop251/goja v0.0.0-20260618133527-c9b2ea77db59
