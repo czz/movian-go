@@ -28,8 +28,10 @@ type WebpopupPlatform interface {
 	UserAgent() string
 
 	// RunPopup — open a popup at uri; sends wr on done (once).
-	RunPopup(uri, title, trap string, wr *WebpopupResult,
-		done chan<- *WebpopupResult)
+	// wait, when non-nil, completes early once the named cookie
+	// appears for the wait URL.
+	RunPopup(uri, title, trap string, wait *WebpopupCookieWait,
+		wr *WebpopupResult, done chan<- *WebpopupResult)
 
 	// Browser — open a full browser window at uri.
 	Browser(uri, title string)
@@ -37,10 +39,12 @@ type WebpopupPlatform interface {
 	// Storage — set the engine's persistent storage dir.
 	Storage(dir string)
 
-	// Cookies — deliver uri's cookies on done (once).
-	Cookies(uri string, done chan map[string]string)
+	// Cookies — deliver uri's scoped cookies through r (once).
+	Cookies(uri string, r *cookieRead)
 
 	// DeleteCookies — remove matching cookies; sends the removed
-	// count on done (once).
-	DeleteCookies(host, path string, names map[string]bool, done chan int)
+	// count on done (once). owner scopes the store on backends
+	// with per-owner profiles.
+	DeleteCookies(owner, host, path string, names map[string]bool,
+		done chan int)
 }

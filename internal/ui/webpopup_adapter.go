@@ -20,17 +20,17 @@ func (wpPlatformAdapter) UserAgent() string  { return wpPlatformUserAgent() }
 func (wpPlatformAdapter) Storage(dir string) { wpPlatformStorage(dir) }
 
 func (wpPlatformAdapter) RunPopup(uri, title, trap string,
-	wr *WebpopupResult, done chan<- *WebpopupResult) {
-	wpPlatformRunPopup(uri, title, trap, wr, done)
+	wait *WebpopupCookieWait, wr *WebpopupResult, done chan<- *WebpopupResult) {
+	wpPlatformRunPopup(uri, title, trap, wait, wr, done)
 }
 
 func (wpPlatformAdapter) Browser(uri, title string) { wpPlatformBrowser(uri, title) }
 
-func (wpPlatformAdapter) Cookies(uri string, done chan map[string]string) {
-	wpPlatformCookies(uri, done)
+func (wpPlatformAdapter) Cookies(uri string, r *cookieRead) {
+	wpPlatformCookies(uri, r)
 }
 
-func (wpPlatformAdapter) DeleteCookies(host, path string,
+func (wpPlatformAdapter) DeleteCookies(owner, host, path string,
 	names map[string]bool, done chan int) {
-	wpPlatformDeleteCookies(host, path, names, done)
+	wpPlatformDeleteCookies(owner, host, path, names, done)
 }
