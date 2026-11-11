@@ -90,17 +90,22 @@ func (fam *FileAccessManager) addPermanentRedirect(from, to string) {
 
 // HTTPDomainSetUserAgent pins a User-Agent for a host ("" clears).
 func (fam *FileAccessManager) HTTPDomainSetUserAgent(host, ua string) {
+	host = strings.ToLower(host)
 	fam.httpDUA.Lock()
 	defer fam.httpDUA.Unlock()
 	if ua == "" {
 		delete(fam.httpDUA.m, host)
 	} else {
+		if fam.httpDUA.m == nil {
+			fam.httpDUA.m = map[string]string{}
+		}
 		fam.httpDUA.m[host] = ua
 	}
 }
 
 // httpDomainUAGet returns the pinned UA for host, "" if none.
 func (fam *FileAccessManager) httpDomainUAGet(host string) string {
+	host = strings.ToLower(host)
 	fam.httpDUA.Lock()
 	defer fam.httpDUA.Unlock()
 	return fam.httpDUA.m[host]
@@ -149,10 +154,18 @@ func httpHeadersSetup(l *httpnet.HTTPHeaderList, hf *httpFile) {
 }
 
 // httpHeadersSend — C: http_headers_send.
+//
+// boundUA, when not empty, replaces the User-Agent after the caller's headers
+// are merged: the request carries an imported cookie bound to it.
 func httpHeadersSend(q *misc.HtsbufQueue, def *httpnet.HTTPHeaderList,
-	user1 *httpnet.HTTPHeaderList) {
+	user1 *httpnet.HTTPHeaderList, boundUA string) {
 	if user1 != nil {
 		def.Merge(user1)
+	}
+	if _, own := user1.Get("Cookie"); boundUA != "" && !own {
+		// A caller's own Cookie header replaced the generated one: no
+		// imported cookie is sent, so its UA is not forced either.
+		def.Add("User-Agent", boundUA, false)
 	}
 	for _, hh := range def.List {
 		q.QPrintf("%s: %s\r\n", hh.Key, hh.Value)
@@ -635,13 +648,13 @@ again:
 		return err
 	}
 
-	httpCookieAppend(hf.connection.hostname, hf, &headers, &cookies)
+	boundUA := httpCookieAppend(hf.connection.hostname, hf.connection.port, hf, &headers, &cookies)
 	cookies.Free()
 
 	hf.hfTrace("Sending open request for %s (cid=%d)",
 		hf.url, hf.connection.id)
 
-	httpHeadersSend(&q, &headers, hf.userReqHeaders)
+	httpHeadersSend(&q, &headers, hf.userReqHeaders, boundUA)
 
 	if hf.debug {
 		traceRequest(&q, hf)
@@ -717,6 +730,9 @@ func httpOpenEx(fam *FileAccessManager, url string, nonInteractive *int,
 	hf.streaming = flags&FaStreaming != 0
 	hf.noRetries = flags&FaNoRetries != 0
 	hf.noCookies = flags&FaNoCookies != 0
+	if flags&FaImportedCookies != 0 && foe != nil {
+		hf.importedOwner = foe.ImportedOwner
+	}
 	hf.sslVerify = flags&FaSSLVerify != 0
 
 	if foe != nil {
@@ -930,11 +946,11 @@ func httpReadI(hf *httpFile, buf []byte) int {
 				q.QPrintf("Range: %s\r\n", rangestr)
 			}
 
-			httpCookieAppend(hc.hostname, hf, &headers, &cookies)
+			boundUA := httpCookieAppend(hc.hostname, hc.port, hf, &headers, &cookies)
 			cookies.Free()
 			hf.hfTrace("Read issuing new request for %s (cid=%d)",
 				hf.url, hc.id)
-			httpHeadersSend(&q, &headers, hf.userReqHeaders)
+			httpHeadersSend(&q, &headers, hf.userReqHeaders, boundUA)
 			if hf.debug {
 				traceRequest(&q, hf)
 			}
@@ -1554,6 +1570,10 @@ func (fam *FileAccessManager) HTTPReqv(url string, args []any,
 				*p = ""
 			}
 
+		case HTTPTagImportedOwner: // string
+			hra.importedOwner, _ = args[i].(string)
+			i++
+
 		case HTTPTagResponseCode: // *int
 			p, _ := args[i].(*int)
 			i++
@@ -1582,6 +1602,9 @@ func (fam *FileAccessManager) HTTPReqv(url string, args []any,
 	}
 	hf.reqCompression = hra.flags&FaCompression != 0
 	hf.noCookies = hra.flags&FaNoCookies != 0
+	if hra.flags&FaImportedCookies != 0 {
+		hf.importedOwner = hra.importedOwner
+	}
 	hf.sslVerify = hra.flags&FaSSLVerify != 0
 	hf.url = url
 

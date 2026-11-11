@@ -53,6 +53,7 @@ import android.util.Log;
 
 public class GLWActivity extends Activity implements VideoRendererProvider {
 
+    private final OneShot<Uri> pendingUri = new OneShot<>();
     GLWView mGLWView;
     FrameLayout mRoot;
     SurfaceView sv;
@@ -105,6 +106,8 @@ public class GLWActivity extends Activity implements VideoRendererProvider {
     protected void onCreate(Bundle savedInstanceState) {
         Log.d("Movian", "onCreate");
         super.onCreate(savedInstanceState);
+        PopupHost.set(this);
+        pendingUri.offer(uriOf(getIntent()));
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -136,6 +139,14 @@ public class GLWActivity extends Activity implements VideoRendererProvider {
         // (media open while running, or HOME presses when we are the
         // default launcher).
         setIntent(intent);
+        pendingUri.offer(uriOf(intent));
+    }
+
+    private static Uri uriOf(Intent intent) {
+        Uri uri = intent.getData();
+        if(uri == null)
+            uri = intent.getParcelableExtra("uri");
+        return uri;
     }
 
     @Override
@@ -143,11 +154,9 @@ public class GLWActivity extends Activity implements VideoRendererProvider {
         Log.d("Movian", "onResume");
         super.onResume();
 
-        Intent intent = getIntent();
-        Uri uri = intent.getData();
-        if(uri == null)
-            uri = intent.getParcelableExtra("uri");
-
+        // Each delivered intent opens its URI once. Returning from the WebView
+        // popup resumes us again and must not reopen the same route.
+        Uri uri = pendingUri.take();
         if(uri != null) {
             String u = getRealPathFromUri(uri);
             // Queued (deduplicated) until the core is ready.
@@ -164,6 +173,7 @@ public class GLWActivity extends Activity implements VideoRendererProvider {
     @Override
     protected void onDestroy() {
         Log.d("Movian", "onDestroy");
+        PopupHost.clear(this);
         CoreBoot.removeReadyListener(mReadyRunnable);
         closeOskView();
         tvUntune();

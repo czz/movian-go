@@ -1,4 +1,4 @@
-//go:build webpopup && !cef
+//go:build webpopup && !cef && !android
 
 package ui
 
@@ -10,13 +10,17 @@ package ui
 // Build with -tags "webpopup cef" (+ a cef pkg-config) for the real
 // backend.
 
+// WebpopupSupportsBrowserLogin — no browser backend is compiled in.
+const WebpopupSupportsBrowserLogin = false
+
 func wpPlatformSetup() {}
 
 func wpPlatformOK() bool { return false }
 
 func wpPlatformDispatch(fn func()) {}
 
-func wpPlatformRunPopup(uri, title, trap string, wr *WebpopupResult,
+func wpPlatformRunPopup(uri, title, trap string, wait *WebpopupCookieWait,
+	wr *WebpopupResult,
 	done chan<- *WebpopupResult) {
 }
 
@@ -24,9 +28,11 @@ func wpPlatformBrowser(uri, title string) {}
 
 func wpPlatformStorage(dir string) {}
 
-func wpPlatformCookies(uri string, done chan map[string]string) {}
+func wpPlatformCookies(uri string, r *cookieRead) {
+	r.done <- nil
+}
 
-func wpPlatformDeleteCookies(host, path string, names map[string]bool,
+func wpPlatformDeleteCookies(owner, host, path string, names map[string]bool,
 	done chan int) {
 	done <- 0
 }

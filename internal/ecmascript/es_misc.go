@@ -10,11 +10,13 @@ package ecmascript
 
 import (
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/czz/movian-go/internal/blobcache"
+	facore "github.com/czz/movian-go/internal/fileaccess"
 	"github.com/czz/movian-go/internal/gaftape"
 	"github.com/czz/movian-go/internal/keyring"
 	misc "github.com/czz/movian-go/internal/misc"
@@ -47,20 +49,36 @@ func esWebpopup(ctx *gaftape.Context) int {
 	title := ctx.SafeToString(1)
 	trap := ctx.SafeToString(2)
 
-	wr := ui.WebpopupCreate(url, title, trap)
-
-	var t string
-	switch wr.ResultCode {
-	case ui.WebpopupTrappedURL:
-		t = "trapped"
-	case ui.WebpopupClosedByUser:
-		t = "userclose"
-	case ui.WebpopupLoadError:
-		t = "neterror"
-	default:
-		t = "error"
+	// Optional 4th argument {waitForCookie: {url, name, timeout}}; timeout
+	// is in seconds. Absent, the three-argument behavior is unchanged.
+	var wait []ui.WebpopupCookieWait
+	if ctx.GetTop() > 3 && ctx.IsObject(3) {
+		ctx.GetPropString(3, "waitForCookie")
+		if ctx.IsObject(-1) {
+			var w ui.WebpopupCookieWait
+			ctx.GetPropString(-1, "url")
+			if ctx.IsString(-1) {
+				w.URL = ctx.GetString(-1)
+			}
+			ctx.Pop()
+			ctx.GetPropString(-1, "name")
+			if ctx.IsString(-1) {
+				w.Name = ctx.GetString(-1)
+			}
+			ctx.Pop()
+			ctx.GetPropString(-1, "timeout")
+			if ctx.IsNumber(-1) {
+				w.Timeout = cookieWaitSeconds(ctx.GetNumber(-1))
+			}
+			ctx.Pop()
+			wait = append(wait, w)
+		}
+		ctx.Pop()
 	}
-	ctx.PushString(t)
+
+	wr := ui.WebpopupCreateFor(clearanceOwner(ctx), url, title, trap, wait...)
+
+	ctx.PushString(popupResultName(wr.ResultCode))
 	ctx.PutPropString(-2, "result")
 
 	if wr.Trapped.URL != "" {
@@ -81,6 +99,35 @@ func esWebpopup(ctx *gaftape.Context) int {
 	return 1
 }
 
+// popupResultName — the plugin-visible `result` string of a popup code.
+func popupResultName(code int) string {
+	switch code {
+	case ui.WebpopupTrappedURL:
+		return "trapped"
+	case ui.WebpopupClosedByUser:
+		return "userclose"
+	case ui.WebpopupLoadError:
+		return "neterror"
+	case ui.WebpopupCookieFound:
+		return "cookie"
+	case ui.WebpopupCookieTimeout:
+		return "timeout"
+	}
+	return "error"
+}
+
+// cookieWaitSeconds — a plugin timeout in seconds as a Duration; NaN,
+// negative and zero mean "use the default" (ui clamps the maximum).
+func cookieWaitSeconds(sec float64) time.Duration {
+	if !(sec > 0) {
+		return 0
+	}
+	if sec > ui.MaxCookieWaitTimeout.Seconds() {
+		return ui.MaxCookieWaitTimeout
+	}
+	return time.Duration(sec * float64(time.Second))
+}
+
 // es_webbrowser — C: webbrowser_open. Non-blocking browser window.
 func esWebbrowser(ctx *gaftape.Context) int {
 	ui.WebbrowserOpen(ctx.SafeToString(0), ctx.SafeToString(1))
@@ -88,8 +135,11 @@ func esWebbrowser(ctx *gaftape.Context) int {
 }
 
 // es_webcookies — the shared webview jar's cookies for a URL
-// (HttpOnly included; used to harvest cf_clearance after the user
-// passes a challenge in the popup).
+// (HttpOnly included). Only the cookies a request to that URL would
+// carry, unpartitioned, one value per name; a name CEF reports twice at
+// the same path (host-only + domain cookie, or an unlabeled CHIPS
+// partition) is withheld. Partitioned (CHIPS) cookies such as a partitioned
+// cf_clearance are never returned.
 func esWebcookies(ctx *gaftape.Context) int {
 	cookies := ui.WebpopupCookies(ctx.SafeToString(0))
 	ctx.PushObject()
@@ -104,6 +154,157 @@ func esWebcookies(ctx *gaftape.Context) int {
 // like cf_clearance are bound to it; pin it per-domain).
 func esWebUserAgent(ctx *gaftape.Context) int {
 	ctx.PushString(ui.WebpopupUserAgent())
+	return 1
+}
+
+// esSupportsBrowserLogin — popup.supportsBrowserLogin(): whether the webview
+// backend is a full browser able to carry a login flow. A build-time property
+// of the backend, never derived from the OS or the UA.
+func esSupportsBrowserLogin(ctx *gaftape.Context) int {
+	ctx.PushBoolean(ui.WebpopupSupportsBrowserLogin)
+	return 1
+}
+
+// Seams for the webview, replaced by a fake in tests (no CEF).
+var (
+	webpopupCookieList = ui.WebpopupCookieListFor
+	webpopupUserAgent  = ui.WebpopupUserAgent
+	// webpopupDeleteCookies is owner-scoped on Android; CEF's single store
+	// ignores the owner.
+	webpopupDeleteCookies = ui.WebpopupDeleteCookiesFor
+)
+
+// pushClearance pushes the plugin-visible shape of an imported record:
+// {value, ua, expires, path, origin}; expires is Unix seconds.
+func pushClearance(ctx *gaftape.Context, c facore.ImportedCookie) int {
+	ctx.PushObject()
+	ctx.PushString(c.Value)
+	ctx.PutPropString(-2, "value")
+	ctx.PushString(c.UA)
+	ctx.PutPropString(-2, "ua")
+	ctx.PushNumber(float64(c.Expire))
+	ctx.PutPropString(-2, "expires")
+	ctx.PushString(c.Path)
+	ctx.PutPropString(-2, "path")
+	ctx.PushString(c.Origin)
+	ctx.PutPropString(-2, "origin")
+	return 1
+}
+
+// clearanceOwner is the calling plugin context. It is never a script
+// argument, so a plugin cannot read or write another plugin's record.
+func clearanceOwner(ctx *gaftape.Context) string {
+	if ec := EsGet(ctx); ec != nil {
+		return ec.ID()
+	}
+	return ""
+}
+
+// clearanceOrigin reduces an https URL to its origin ("" if it is not one).
+func clearanceOrigin(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil || !strings.EqualFold(u.Scheme, "https") || u.Opaque != "" ||
+		u.User != nil || u.Hostname() == "" {
+		return ""
+	}
+	return "https://" + strings.ToLower(u.Host)
+}
+
+// persistTrace logs, in debug mode only, what persistWebCookie did with the
+// webview's cookie, value included.
+func persistTrace(owner, origin, name, outcome string, c *ui.WebpopupCookie) {
+	if !esEnv.fam.ClearanceDebug() {
+		return
+	}
+	if c == nil {
+		esEnv.fam.ClearanceTrace("persistWebCookie %s owner=%q origin=%q name=%q", outcome, owner, origin, name)
+		return
+	}
+	esEnv.fam.ClearanceTrace("persistWebCookie %s owner=%q origin=%q name=%q value=%q domain=%q path=%q expire=%d secure=%t",
+		outcome, owner, origin, name, c.Value, c.Domain, c.Path, c.Expires, c.Secure)
+}
+
+// esPersistWebCookie — persistWebCookie(url, name): copy the webview's
+// cookie `name` for url into the Core jar as an imported record of the
+// calling plugin, together with the webview User-Agent. Returns
+// {value, ua, expires, path, origin} or null. Only a Secure cookie with an
+// expiry, and only when the webview reports exactly one cookie of that
+// name, is taken; the cookie value is logged only in debug mode.
+func esPersistWebCookie(ctx *gaftape.Context) int {
+	raw, name := ctx.SafeToString(0), ctx.SafeToString(1)
+	owner, origin := clearanceOwner(ctx), clearanceOrigin(raw)
+	if owner == "" || origin == "" || name == "" || esEnv.fam == nil {
+		persistTrace(owner, origin, name, "bad-arguments", nil)
+		ctx.PushNull()
+		return 1
+	}
+	var pick *ui.WebpopupCookie
+	matches := 0
+	cookies := webpopupCookieList(owner, raw, name)
+	for i := range cookies {
+		if cookies[i].Name == name {
+			matches++
+			pick = &cookies[i]
+		}
+	}
+	// The webview layer already returns one cookie per name (the longest
+	// path wins; same-path twins are dropped as ambiguous, see
+	// ui.scopeCookies). A list that still holds two of one name leaves no
+	// safe choice, so refuse it too.
+	if matches != 1 || !pick.Secure || pick.Expires <= time.Now().Unix() {
+		reason := "webview-cookie-count-not-1"
+		if matches == 1 {
+			reason = "not-secure"
+			if pick.Secure {
+				reason = "expired"
+			}
+		}
+		persistTrace(owner, origin, name, reason, pick)
+		ctx.PushNull()
+		return 1
+	}
+	ic := facore.ImportedCookie{
+		Owner: owner, Origin: origin, Name: name, Value: pick.Value,
+		UA: webpopupUserAgent(), Path: pick.Path, Expire: pick.Expires,
+	}
+	persistTrace(owner, origin, name, "webview-cookie-taken", pick)
+	if esEnv.fam.HTTPImportClearance(ic) != nil {
+		ctx.PushNull()
+		return 1
+	}
+	got, ok := esEnv.fam.HTTPGetImportedClearance(owner, origin, name)
+	if !ok {
+		ctx.PushNull()
+		return 1
+	}
+	return pushClearance(ctx, got)
+}
+
+// esGetPersistedWebCookie — getPersistedWebCookie(url, name): the calling
+// plugin's unexpired imported record for url's origin, or null.
+func esGetPersistedWebCookie(ctx *gaftape.Context) int {
+	owner, origin := clearanceOwner(ctx), clearanceOrigin(ctx.SafeToString(0))
+	name := ctx.SafeToString(1)
+	if owner == "" || origin == "" || name == "" || esEnv.fam == nil {
+		ctx.PushNull()
+		return 1
+	}
+	got, ok := esEnv.fam.HTTPGetImportedClearance(owner, origin, name)
+	if !ok {
+		ctx.PushNull()
+		return 1
+	}
+	return pushClearance(ctx, got)
+}
+
+// esDeletePersistedWebCookie — deletePersistedWebCookie(url, name): remove
+// the calling plugin's record; true if there was one.
+func esDeletePersistedWebCookie(ctx *gaftape.Context) int {
+	owner, origin := clearanceOwner(ctx), clearanceOrigin(ctx.SafeToString(0))
+	name := ctx.SafeToString(1)
+	ok := owner != "" && origin != "" && name != "" && esEnv.fam != nil &&
+		esEnv.fam.HTTPDeleteImportedClearance(owner, origin, name)
+	ctx.PushBoolean(ok)
 	return 1
 }
 
@@ -154,7 +355,9 @@ func esInjectCookies(ctx *gaftape.Context) int {
 // HTTP jar + webview store) so a plugin can finish a logout for real.
 // Optional second arg limits deletion to the listed names (array of
 // strings, or an object whose keys are the names). Returns the total
-// number of cookies removed.
+// number of cookies removed. The webview part is scoped to the calling
+// plugin's own profile where the backend has one (Android); CEF has a single
+// store, so there it removes the matching cookies of every plugin.
 func esDeleteCookies(ctx *gaftape.Context) int {
 	url := ctx.SafeToString(0)
 	var hbuf [256]byte
@@ -187,7 +390,7 @@ func esDeleteCookies(ctx *gaftape.Context) int {
 		ctx.Pop()
 	}
 	n := esEnv.fam.HTTPDeleteCookies(host, path, names)
-	n += ui.WebpopupDeleteCookies(host, path, names)
+	n += webpopupDeleteCookies(clearanceOwner(ctx), host, path, names)
 	ctx.PushInt(n)
 	return 1
 }
@@ -422,8 +625,12 @@ var fnlistPopup = []gaftape.FunctionListEntry{
 	{Key: "webbrowser", Value: esWebbrowser, Nargs: 2},
 	{Key: "webcookies", Value: esWebcookies, Nargs: 1},
 	{Key: "webuseragent", Value: esWebUserAgent, Nargs: 0},
+	{Key: "supportsBrowserLogin", Value: esSupportsBrowserLogin, Nargs: 0},
 	{Key: "injectcookies", Value: esInjectCookies, Nargs: 2},
 	{Key: "deletecookies", Value: esDeleteCookies, Nargs: -1},
+	{Key: "persistWebCookie", Value: esPersistWebCookie, Nargs: 2},
+	{Key: "getPersistedWebCookie", Value: esGetPersistedWebCookie, Nargs: 2},
+	{Key: "deletePersistedWebCookie", Value: esDeletePersistedWebCookie, Nargs: 2},
 	{Key: "getAuthCredentials", Value: esGetAuthCredentials, Nargs: 5},
 	{Key: "message", Value: esMessage, Nargs: 3},
 	{Key: "textDialog", Value: esTextDialog, Nargs: 3},

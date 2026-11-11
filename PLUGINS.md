@@ -144,6 +144,49 @@ Used for OAuth and Cloudflare-gated sites. Requires a `cef.pc`
 (pkg-config) at build time; without it the stub reports unsupported.
 See `plugin_examples/webpopupplugin/`.
 
+`persistWebCookie(url, name)` copies one Secure, expiring webview cookie into
+the Core cookie jar together with the webview User-Agent, as a record owned
+by the calling plugin. It returns `{value, ua, expires, path, origin}`
+(`expires` is Unix seconds) or `null`: for a non-https URL, an IP-literal or
+public-suffix host, a cookie that is not Secure, a session cookie, or when
+the webview cannot pick one cookie of that name (same-path twins; with
+different paths the longest path wins, as in a browser request). A later expiry than 30 days is
+cut to 30 days. The record lives next to the ordinary cookies of the shared
+jar and never replaces them: `Set-Cookie`, `injectcookies` and
+`deletecookies` keep working on the ordinary cookie of the same name, and a
+request of another plugin, or one without `persistedCookies`, still sees
+only the ordinary cookies. The plugin's own `persistedCookies` request sends
+the record **instead of** a same-named ordinary cookie, so a name is never
+sent twice; deleting the record brings the ordinary cookie back into effect. `getPersistedWebCookie(url, name)` returns the same shape for
+the plugin's own unexpired record, and `deletePersistedWebCookie(url, name)`
+removes it (`true` if there was one). The record is never sent by a plain
+`http_req`: pass `persistedCookies: true` in the request options, and it is
+sent over https to the exact host only, on matching paths, and only to the
+plugin that stored it. Such a request skips the response cache. The webview
+User-Agent stays on the record: the plugin's own `persistedCookies` request that
+sends it carries that User-Agent (over a later host User-Agent or an explicit
+header), and every other request to the host keeps the host User-Agent. CEF does not label
+a cookie's partition, so partitioned cookies cannot be told apart.
+
+**Debug logging of clearance cookies.** With the developer setting "Debug all
+HTTP requests" on (or the debug flag of a single request), Core logs the clearance
+path to the `clearance` trace subsystem at debug level, **cookie values in
+full**: the Android popup result and each raw WebView cookie line, why the
+Android policy accepted or rejected a cookie (for example
+`partitioned-not-allowed`), what `persistWebCookie` took, the import accept or
+reject with the expiry before and after the 30-day cut, and for a
+`persistedCookies` request which records were attached or skipped and why. The
+HTTP/1 request trace also shows the `Cookie` header as sent. With the setting
+off nothing of this is logged. Treat such a log as secret: the HTTP control
+API serves it at `/api/logfile`, so turn the setting off before sharing a log
+or leaving a device reachable.
+
+`popup.supportsBrowserLogin()` returns `true` when the webview backend is a
+full browser that can carry a login flow (CEF), and `false` when it is not:
+the Android popup is clearance-only, and builds without a webview have none.
+It is a build-time property of the backend, so do not guess it from the user
+agent or the platform name.
+
 ## Development workflow
 
 ```bash

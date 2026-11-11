@@ -71,6 +71,8 @@ type OpenExtra struct {
 	OpenTimeout         int // Open timeout in milliseconds
 	ProtocolError       int // Protocol-specific error code
 	Flags               int // C: flags param of fa_open_ex (FA_WRITE etc.)
+	// ImportedOwner names the owner for FaImportedCookies requests.
+	ImportedOwner string
 }
 
 // Protocol is the interface for file access protocol handlers

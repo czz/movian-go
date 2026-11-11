@@ -10,9 +10,15 @@
 package fileaccess
 
 import (
+	"math"
+	"net/http"
+	"net/url"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
+
+	"golang.org/x/net/publicsuffix"
 
 	"github.com/czz/movian-go/internal/callout"
 	"github.com/czz/movian-go/internal/misc"
@@ -31,6 +37,16 @@ type httpCookie struct {
 	domain string
 	value  string
 	expire int64 // time_t; -1 = never
+	secure bool  // Secure attribute: only sent over https
+	// hostOnly: no Domain attribute, so only the exact host gets it.
+	hostOnly bool
+
+	// Imported records (HTTPImportClearance) are never sent by the generic
+	// jar; see cookieSendable.
+	imported    bool
+	ua          string // User-Agent the cookie is bound to
+	scopeOrigin string // https://host the record was solved for
+	scopeOwner  string // context that imported it
 }
 
 // HTTPCookieRecord — persisted cookie fields (C: htsmsg map entries in
@@ -38,15 +54,36 @@ type httpCookie struct {
 type HTTPCookieRecord struct {
 	Name, Path, Domain, Value string
 	Expire                    int64
+	Secure                    bool // absent in records written before this field: false
+	// HostOnly is false for records written before this field existed,
+	// which keeps their earlier domain-wide behaviour.
+	HostOnly bool
+	// Imported clearance record fields (optional; absent in older records).
+	Imported    bool
+	UA          string
+	ScopeOrigin string
+	ScopeOwner  string
 }
 
-// validateCookie — C: validate_cookie (RFC 2109 §4.3.2).
+// validateCookie — C: validate_cookie (RFC 2109 §4.3.2), for the host and
+// path of a request that would carry the cookie: the cookie's path must
+// match the request path and its domain the request host. Accepting a
+// Set-Cookie checks the domain only (validateCookieDomain): the Path
+// attribute limits where a cookie is sent, not whether it is stored.
 func validateCookie(reqHost, reqPath, domain, path string) int {
 	// The value for the Path attribute is not a prefix of the request-URI.
-	if !strings.HasPrefix(reqPath, path) {
+	if !cookiePathMatch(reqPath, path) {
 		return 1
 	}
+	return validateCookieDomain(reqHost, domain)
+}
 
+// validateCookieDomain is the Domain part of validateCookie: 0 when a
+// response from reqHost may set a cookie for domain, else the RFC 2109
+// error code.
+func validateCookieDomain(reqHost, domain string) int {
+	// Host names compare without regard to case.
+	reqHost, domain = strings.ToLower(reqHost), strings.ToLower(domain)
 	// The value for the Domain attribute contains no embedded dots or
 	// does not start with a dot — unless it matches req_host perfectly.
 	// C: if(*domain == '.') domain++; then strchr(domain + 1, '.')
@@ -59,14 +96,40 @@ func validateCookie(reqHost, reqPath, domain, path string) int {
 		}
 	}
 
-	// The request-host does not domain-match the Domain attribute.
-	s := strings.Index(reqHost, domain)
-	if s == -1 && strings.HasPrefix(domain, ".") && reqHost == domain[1:] {
-		s = 0
-	} else if s == -1 || s+len(domain) != len(reqHost) {
+	// The request-host does not domain-match the Domain attribute:
+	// equal, or a subdomain separated by a dot (no bare suffix match, so
+	// evilexample.test does not match example.test).
+	if !cookieDomainMatch(reqHost, domain) {
 		return 3
 	}
 	return 0
+}
+
+// cookiePathMatch is the RFC 6265 §5.1.4 path-match: the cookie path equals
+// the request path, or is a prefix that ends at a "/" boundary, so /forum
+// matches /forum and /forum/x but not /forumx. A query or fragment on the
+// request path is not part of the path.
+func cookiePathMatch(reqPath, cookiePath string) bool {
+	if i := strings.IndexAny(reqPath, "?#"); i >= 0 {
+		reqPath = reqPath[:i]
+	}
+	if !strings.HasPrefix(reqPath, cookiePath) {
+		return false
+	}
+	return len(reqPath) == len(cookiePath) ||
+		strings.HasSuffix(cookiePath, "/") ||
+		reqPath[len(cookiePath)] == '/'
+}
+
+// cookieDomainMatch reports whether reqHost equals domain or is a
+// subdomain of it (leading dot of domain ignored), on a label boundary.
+// It is the Set-Cookie Domain check shared by HTTP/1 (inside
+// validateCookieDomain, together with the legacy RFC 2109 dot rules) and
+// HTTP/2 (h2SetCookies, domain check only; HTTP/3 shares that path).
+func cookieDomainMatch(reqHost, domain string) bool {
+	reqHost = strings.ToLower(reqHost)
+	domain = strings.TrimPrefix(strings.ToLower(domain), ".")
+	return reqHost == domain || strings.HasSuffix(reqHost, "."+domain)
 }
 
 // cookiePersist — C: cookie_persist (callout).
@@ -77,13 +140,16 @@ func (fam *FileAccessManager) cookiePersist(c *callout.Callout, opaque any) {
 	now := time.Now().Unix()
 	var records []HTTPCookieRecord
 	fam.httpCookies.mu.Lock()
+	fam.purgeExpiredImportedLocked(now)
 	for _, hc := range fam.httpCookies.list {
 		if hc.expire == -1 || now > hc.expire {
 			continue
 		}
 		records = append(records, HTTPCookieRecord{
 			Name: hc.name, Path: hc.path, Domain: hc.domain,
-			Value: hc.value, Expire: hc.expire,
+			Value: hc.value, Expire: hc.expire, Secure: hc.secure,
+			HostOnly: hc.hostOnly, Imported: hc.imported, UA: hc.ua,
+			ScopeOrigin: hc.scopeOrigin, ScopeOwner: hc.scopeOwner,
 		})
 	}
 	fam.httpCookies.mu.Unlock()
@@ -101,11 +167,48 @@ func (fam *FileAccessManager) loadCookies() {
 			r.Value == "" || r.Expire < now {
 			continue
 		}
+		if r.Imported {
+			hc, ok := validLoadedImported(r, now)
+			if !ok || fam.findImportedLocked(hc.scopeOrigin, hc.name) >= 0 {
+				continue
+			}
+			if ua := fam.ownerHostUALocked(hc.scopeOwner, hc.domain, -1); ua != "" && ua != hc.ua {
+				continue // an owner has one UA per host
+			}
+			fam.httpCookies.list = append([]*httpCookie{&hc}, fam.httpCookies.list...)
+			continue
+		}
+		// New cookies store their domain without the leading dot; records
+		// written before that keep it. Normalize so a replacement or a
+		// deletion finds them, and drop a later duplicate of the same cookie
+		// (records are saved newest first).
+		domain := cookieCanonDomain(r.Domain)
+		if domain == "" || fam.findJarCookieLocked(r.Name, r.Path, domain) >= 0 {
+			continue
+		}
 		fam.httpCookies.list = append([]*httpCookie{{
-			name: r.Name, path: r.Path, domain: r.Domain,
-			value: r.Value, expire: r.Expire,
+			name: r.Name, path: r.Path, domain: domain,
+			value: r.Value, expire: r.Expire, secure: r.Secure,
+			hostOnly: r.HostOnly,
 		}}, fam.httpCookies.list...)
 	}
+}
+
+// cookieCanonDomain is the form a jar domain is stored and compared in:
+// lowercase, without a leading dot.
+func cookieCanonDomain(d string) string {
+	return strings.ToLower(strings.TrimPrefix(d, "."))
+}
+
+// findJarCookieLocked returns the index of the ordinary jar cookie with this
+// name, path and domain, or -1 (imported records have their own lookup). The caller holds the jar lock or owns the jar.
+func (fam *FileAccessManager) findJarCookieLocked(name, path, domain string) int {
+	for i, x := range fam.httpCookies.list {
+		if !x.imported && x.name == name && x.path == path && x.domain == domain {
+			return i
+		}
+	}
+	return -1
 }
 
 // httpCookieSet — C: http_cookie_set.
@@ -117,7 +220,7 @@ func httpCookieSet(cookie string, hf *httpFile) {
 	reqHost := hf.connection.hostname
 	reqPath := hf.path
 	domain := reqHost
-	path := reqPath
+	path := cookieDefaultPath(reqPath)
 	var expire int64 = -1
 
 	cbuf := []byte(cookie)
@@ -136,57 +239,256 @@ func httpCookieSet(cookie string, hf *httpFile) {
 	value := name[eq+1:]
 	name = name[:eq]
 
+	var expires time.Time
+	var maxAge int64
+	hasMaxAge := false
+	secure := false
+	hostOnly := true
 	for i := 1; i < len(argv); i++ {
 		a := string(argv[i])
-		if strings.HasPrefix(strings.ToLower(a), "domain=") {
-			domain = a[len("domain="):]
+		lower := strings.ToLower(a)
+		// Flag attributes are matched by name, ignoring any "=value" a
+		// server attaches (net/http does the same on the HTTP/2 path).
+		attr, _, _ := strings.Cut(strings.TrimSpace(a), "=")
+		if strings.EqualFold(attr, "secure") {
+			secure = true
 		}
-		if strings.HasPrefix(strings.ToLower(a), "path=") {
-			path = a[len("path="):]
+		if strings.EqualFold(attr, "partitioned") {
+			// A Go request has no browser partition context: never widen a
+			// partitioned cookie into the shared jar.
+			hf.hfTrace("Ignoring Partitioned cookie name=%s", name)
+			return
 		}
-		if strings.HasPrefix(strings.ToLower(a), "expires=") {
-			if t, r := httpnet.HTTPCtime(a[len("expires="):]); r == 0 {
-				expire = t.Unix()
+		if strings.HasPrefix(lower, "domain=") {
+			if d := strings.TrimPrefix(strings.TrimSpace(a[len("domain="):]), "."); d != "" {
+				domain = strings.ToLower(d)
+				hostOnly = false
+			}
+		}
+		if strings.HasPrefix(lower, "path=") {
+			if p := a[len("path="):]; strings.HasPrefix(p, "/") {
+				path = p
+			} else {
+				path = cookieDefaultPath(reqPath)
+			}
+		}
+		if strings.HasPrefix(lower, "expires=") {
+			if t, ok := parseCookieExpires(a[len("expires="):]); ok {
+				expires = t
+			}
+		}
+		if strings.HasPrefix(lower, "max-age=") {
+			if n, err := strconv.ParseInt(strings.TrimSpace(a[len("max-age="):]), 10, 64); err == nil {
+				maxAge, hasMaxAge = n, true
 			}
 		}
 	}
+	now := time.Now().Unix()
+	expire = cookieExpiry(now, expires, maxAge, hasMaxAge)
 
-	if r := validateCookie(reqHost, reqPath, domain, path); r != 0 {
+	if !hostOnly {
+		reject, forceHostOnly := cookiePublicSuffixScope(reqHost, domain)
+		if reject {
+			hf.hfTrace("Rejected cookie name=%s domain=%s: public suffix", name, domain)
+			return
+		}
+		hostOnly = hostOnly || forceHostOnly
+	}
+	if r := validateCookieDomain(reqHost, domain); r != 0 {
 		hf.hfTrace("Rejected cookie name=%s path=%s domain=%s value=%s error=%d",
 			name, path, domain, value, r)
 		return
 	}
 
 	expiresIn := int64(-1)
-	if expire > 0 {
-		expiresIn = expire - time.Now().Unix()
+	if expire != -1 {
+		expiresIn = expire - now
 	}
 	hf.hfTrace("Updating cookie name=%s path=%s domain=%s value=%s expires in %d seconds",
 		name, path, domain, value, expiresIn)
 
-	fam.httpCookies.mu.Lock()
+	fam.cookieJarPut(httpCookie{
+		name: name, path: path, domain: domain, value: value, expire: expire, secure: secure,
+		hostOnly: hostOnly,
+	})
+}
 
-	var hc *httpCookie
-	for _, x := range fam.httpCookies.list {
-		if x.name == name && x.path == path && x.domain == domain {
-			hc = x
+// cookiePublicSuffixScope applies RFC 6265 §5.3 step 5 to a Domain
+// attribute. A domain that names a public suffix (co.uk) must not scope a
+// cookie to every site under it: when the suffix is not the request host
+// the cookie is rejected; when it is the request host the cookie is kept
+// but becomes host-only. A domain that is not a public suffix is left alone.
+func cookiePublicSuffixScope(reqHost, domain string) (reject, hostOnly bool) {
+	domain = cookieCanonDomain(domain)
+	suffix, _ := publicsuffix.PublicSuffix(domain)
+	if suffix != domain {
+		return false, false
+	}
+	if domain == strings.ToLower(reqHost) {
+		return false, true
+	}
+	return true, false
+}
+
+// cookieDefaultPath is the RFC 6265 §5.1.4 default-path: the request path
+// up to, not including, its last "/" ("/" when that leaves nothing).
+func cookieDefaultPath(reqPath string) string {
+	if i := strings.IndexAny(reqPath, "?#"); i >= 0 {
+		reqPath = reqPath[:i]
+	}
+	if !strings.HasPrefix(reqPath, "/") {
+		return "/"
+	}
+	if i := strings.LastIndex(reqPath, "/"); i > 0 {
+		return reqPath[:i]
+	}
+	return "/"
+}
+
+// parseCookieExpires parses a Set-Cookie Expires value: the three HTTP
+// date layouts plus the dash-separated RFC 850 variant servers still send.
+func parseCookieExpires(v string) (time.Time, bool) {
+	v = strings.TrimSpace(v)
+	if t, err := http.ParseTime(v); err == nil {
+		return t, true
+	}
+	if t, err := time.Parse("Mon, 02-Jan-2006 15:04:05 MST", v); err == nil {
+		return t, true
+	}
+	return time.Time{}, false
+}
+
+// cookieExpiry resolves a Set-Cookie lifetime to a Unix expiry shared by
+// HTTP/1 and HTTP/2/3: Max-Age wins over Expires (RFC 6265 §5.3 step 3);
+// Max-Age <= 0 yields a past time, which deletes; neither attribute is a
+// session cookie (-1). expires is the zero time when absent or invalid.
+func cookieExpiry(now int64, expires time.Time, maxAge int64, hasMaxAge bool) int64 {
+	if hasMaxAge {
+		switch {
+		case maxAge <= 0:
+			return 0
+		case maxAge > math.MaxInt64-now:
+			return math.MaxInt64
+		default:
+			return now + maxAge
+		}
+	}
+	if !expires.IsZero() {
+		return expires.Unix()
+	}
+	return -1
+}
+
+// cookieSendable reports whether hc may be attached to a request for
+// host:port/path now. HTTP/1 and HTTP/2/3 senders share it so the rules
+// cannot drift. port is the destination port, 0 or negative for the
+// scheme's default. secureReq is true when the request goes over TLS.
+// importedOwner is the owner of a request that opted in with
+// FaImportedCookies; an imported record is sent to that owner only.
+func cookieSendable(hc *httpCookie, host string, port int, path string, secureReq bool,
+	importedOwner string, now int64) bool {
+	return cookieSkipReason(hc, host, port, path, secureReq, importedOwner, now) == ""
+}
+
+// cookieSkipReason is "" when hc may be sent, else why not. It holds the
+// rules; cookieSendable and the clearance debug trace both use it.
+func cookieSkipReason(hc *httpCookie, host string, port int, path string, secureReq bool,
+	importedOwner string, now int64) string {
+	if hc.expire != -1 && now > hc.expire {
+		return "expired"
+	}
+	if hc.imported {
+		switch {
+		case importedOwner == "":
+			return "request-not-opted-in"
+		case hc.scopeOwner != importedOwner:
+			return "owner-mismatch"
+		case !secureReq:
+			return "insecure-request"
+		case !strings.EqualFold(host, hc.domain):
+			return "host-mismatch"
+		case !importedPortMatch(hc.scopeOrigin, port):
+			return "port-mismatch"
+		}
+	}
+	if hc.secure && !secureReq {
+		return "secure-required"
+	}
+	if hc.hostOnly && !strings.EqualFold(host, hc.domain) {
+		return "host-mismatch"
+	}
+	if validateCookie(host, path, hc.domain, hc.path) != 0 {
+		return "domain-or-path-mismatch"
+	}
+	return ""
+}
+
+// importedPortMatch reports whether a request to port is for the origin an
+// imported record was solved for. An origin without a port is the https
+// default; port 0 or negative means the scheme's default.
+func importedPortMatch(scopeOrigin string, port int) bool {
+	want := 443
+	if u, err := url.Parse(scopeOrigin); err == nil && u.Port() != "" {
+		if p, err := strconv.Atoi(u.Port()); err == nil {
+			want = p
+		}
+	}
+	if port <= 0 {
+		port = 443
+	}
+	return port == want
+}
+
+// urlPortNum is the explicit port of u, or 0 when it names none.
+func urlPortNum(u *url.URL) int {
+	p, _ := strconv.Atoi(u.Port())
+	return p
+}
+
+// cookieURLSecure reports whether a request URL is TLS-protected.
+func cookieURLSecure(rawURL string) bool {
+	i := strings.Index(rawURL, ":")
+	if i < 0 {
+		return false
+	}
+	switch strings.ToLower(rawURL[:i]) {
+	case "https", "webdavs":
+		return true
+	}
+	return false
+}
+
+// cookieJarPut stores nc in the shared jar, replacing a cookie of the same
+// namespace (ordinary or imported) with the same name, domain and path
+// (RFC 6265 §5.3 step 11), or deletes that cookie when nc is already
+// expired. An ordinary cookie never touches an imported record. HTTP/1 and HTTP/2/3 both end here.
+func (fam *FileAccessManager) cookieJarPut(nc httpCookie) {
+	nc.domain = cookieCanonDomain(nc.domain)
+	now := time.Now().Unix()
+	fam.httpCookies.mu.Lock()
+	idx := -1
+	for i, x := range fam.httpCookies.list {
+		// Ordinary and imported records are separate namespaces: whether a
+		// record is imported is part of its identity.
+		if x.imported == nc.imported && x.name == nc.name && x.path == nc.path && x.domain == nc.domain {
+			idx = i
 			break
 		}
 	}
-	if hc == nil {
-		hc = &httpCookie{name: name, path: path, domain: domain}
-		fam.httpCookies.list = slices.Insert(fam.httpCookies.list, 0, hc)
-	}
-
-	if expire != -1 {
-		if cs := fam.CalloutSystem(); cs != nil {
-			cs.Arm(&fam.httpCookies.persistTimer, fam.cookiePersist, nil, 5)
+	switch {
+	case nc.expire != -1 && nc.expire <= now:
+		if idx >= 0 {
+			fam.httpCookies.list = slices.Delete(fam.httpCookies.list, idx, idx+1)
 		}
+	case idx >= 0:
+		*fam.httpCookies.list[idx] = nc
+	default:
+		fam.httpCookies.list = slices.Insert(fam.httpCookies.list, 0, &nc)
 	}
-	hc.value = value
-	hc.expire = expire
-
 	fam.httpCookies.mu.Unlock()
+	if cs := fam.CalloutSystem(); cs != nil {
+		cs.Arm(&fam.httpCookies.persistTimer, fam.cookiePersist, nil, 5)
+	}
 }
 
 // HTTPInjectCookies inserts cookies into the shared jar for host/path
@@ -196,12 +498,13 @@ func (fam *FileAccessManager) HTTPInjectCookies(host, path string, cookies map[s
 	if path == "" {
 		path = "/"
 	}
+	host = cookieCanonDomain(host)
 	expire := time.Now().Unix() + 86400*30
 	fam.httpCookies.mu.Lock()
 	for name, value := range cookies {
 		var hc *httpCookie
 		for _, x := range fam.httpCookies.list {
-			if x.name == name && x.path == path && x.domain == host {
+			if !x.imported && x.name == name && x.path == path && x.domain == host {
 				hc = x
 				break
 			}
@@ -210,8 +513,13 @@ func (fam *FileAccessManager) HTTPInjectCookies(host, path string, cookies map[s
 			hc = &httpCookie{name: name, path: path, domain: host}
 			fam.httpCookies.list = slices.Insert(fam.httpCookies.list, 0, hc)
 		}
+		// The same scope whether the jar had the cookie or not: injected
+		// cookies are domain-wide and not Secure, so a replaced Set-Cookie
+		// record does not keep its old restrictions.
 		hc.value = value
 		hc.expire = expire
+		hc.secure = false
+		hc.hostOnly = false
 	}
 	fam.httpCookies.mu.Unlock()
 	if cs := fam.CalloutSystem(); cs != nil {
@@ -232,7 +540,8 @@ func (fam *FileAccessManager) HTTPDeleteCookies(host, path string, names map[str
 	n := 0
 	kept := fam.httpCookies.list[:0]
 	for _, x := range fam.httpCookies.list {
-		if (len(names) == 0 || names[x.name]) &&
+		if !x.imported && (len(names) == 0 || names[x.name]) &&
+			(!x.hostOnly || strings.EqualFold(host, x.domain)) &&
 			validateCookie(host, path, x.domain, x.path) == 0 {
 			n++
 			continue
@@ -253,51 +562,35 @@ func (fam *FileAccessManager) HTTPDeleteCookies(host, path string, names map[str
 }
 
 // httpCookieAppend — C: http_cookie_append.
-func httpCookieAppend(reqHost string, hf *httpFile,
-	headers, extraCookies *httpnet.HTTPHeaderList) {
+// The returned boundUA, when not empty, is the User-Agent the request must
+// send (see selectCookies); pass it to httpHeadersSend.
+func httpCookieAppend(reqHost string, reqPort int, hf *httpFile,
+	headers, extraCookies *httpnet.HTTPHeaderList) (boundUA string) {
 	fam := hf.fam
 	if hf.noCookies {
-		return
+		return ""
 	}
 	reqPath := hf.path
+	// The live connection is authoritative: a cached permanent redirect can
+	// leave hf.url at https while the socket is plaintext.
+	secureReq := cookieURLSecure(hf.url)
+	if hf.connection != nil {
+		secureReq = hf.connection.ssl
+	}
 	s := ""
-	now := time.Now().Unix()
 
 	var hq misc.HtsbufQueue
 	hq.HtsbufQueueSetup(0)
 
-	fam.httpCookies.mu.Lock()
-	for _, hc := range fam.httpCookies.list {
-		if hc.expire != -1 && now > hc.expire {
-			continue
-		}
-		if validateCookie(reqHost, reqPath, hc.domain, hc.path) != 0 {
-			continue
-		}
-		// C: http_header_get(extra_cookies, hc->hc_name) — presence
-		// check only (even an empty value suppresses the cookie).
-		if _, ok := extraCookies.Get(hc.name); ok {
-			continue
-		}
-		// Skip overridden headers — C: LIST_FOREACH + strcmp
-		// (case-sensitive)
-		skip := false
-		for _, hh := range extraCookies.List {
-			if hh.Key == hc.name {
-				skip = true
-				break
-			}
-		}
-		if skip {
-			continue
-		}
+	pairs, boundUA := fam.selectCookies(reqHost, reqPort, reqPath, secureReq, hf.importedOwner, hf.debug,
+		func(name string) bool { return extraCookieOverrides(extraCookies, name) })
+	for _, c := range pairs {
 		hq.Append([]byte(s))
-		hq.Append([]byte(hc.name))
+		hq.Append([]byte(c.name))
 		hq.Append([]byte("="))
-		hq.Append([]byte(hc.value))
+		hq.Append([]byte(c.value))
 		s = "; "
 	}
-	fam.httpCookies.mu.Unlock()
 
 	for _, hh := range extraCookies.List {
 		// C: if(hh->hh_value == NULL) continue; — Go values are never
@@ -310,7 +603,24 @@ func httpCookieAppend(reqHost string, hf *httpFile,
 	}
 
 	if hq.Len() == 0 {
-		return
+		return boundUA
 	}
 	headers.AddAlloced("Cookie", hq.String(), false)
+	return boundUA
+}
+
+// extraCookieOverrides reports whether the request's own cookie list names
+// name. C: http_header_get(extra_cookies, hc_name) is a presence check
+// (even an empty value suppresses the jar cookie), plus a case-sensitive
+// scan of the list.
+func extraCookieOverrides(extra *httpnet.HTTPHeaderList, name string) bool {
+	if _, ok := extra.Get(name); ok {
+		return true
+	}
+	for _, hh := range extra.List {
+		if hh.Key == name {
+			return true
+		}
+	}
+	return false
 }

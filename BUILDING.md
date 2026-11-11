@@ -191,6 +191,13 @@ MIN_SDK=26                       # manifest minSdkVersion
 TARGET_SDK=28                    # manifest targetSdkVersion
 ```
 
+The webpopup clearance policy defaults to the first-party variant
+(`android_cf_firstparty`): Android WebView stores Cloudflare's
+`cf_clearance` as a Partitioned cookie, and the variant accepts it
+only for the exact top-level origin and the plugin that opened the
+popup. `make apk ANDROID_FIRSTPARTY=0` builds the strict variant,
+which refuses every Partitioned cookie.
+
 Signing: if `MOVIAN_KEYSTORE_PASS` is set the APK is signed with
 `$MOVIAN_KEYSTORE` (default `android/movian.keystore` — a local file
 kept out of git); otherwise the script signs with the standard

@@ -318,7 +318,7 @@ func (de *devevent) ddRead(dd *deDev) int {
 
 	var e *eventpkg.Event
 
-	for i := 0; keyToAction[i][0] != 0; i++ {
+	for i := 0; i < len(keyToAction) && keyToAction[i][0] != 0; i++ {
 		if eventpkg.ActionType(ie.Code) == keyToAction[i][0] {
 			ev := &de.em.CreateAction(keyToAction[i][1+shift]).Event
 			ev.Flags |= eventpkg.EventKeypress
