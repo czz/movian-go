@@ -126,5 +126,52 @@ log "building $GOARCH (-j$FFMPEG_JOBS)"
 make -C "$bdir" -j"$FFMPEG_JOBS" >"$bdir/build.log" 2>&1 || {
     tail -30 "$bdir/build.log"; die "build failed"; }
 make -C "$bdir" install >"$bdir/install.log" 2>&1
+
+# Go's #cgo LDFLAGS archive check (security.go checkLinkerArchive) rejects
+# archives holding objects with zero sections — some ffmpeg objects come
+# out empty on this arch (e.g. AVX2/AVX512 asm skipped on 386) and share
+# the member name of a real object, so 'ar d' by name is unsafe. Rebuild
+# each archive keeping only sectioned members.
+for a in "$prefix"/lib/*.a; do
+    tmp=$(mktemp -d)
+    python3 - "$a" "$tmp" <<'PYEOF'
+import os, struct, sys
+data = open(sys.argv[1], 'rb').read()
+tmp = sys.argv[2]
+off, idx, kept, dropped, seen = 8, 0, [], [], set()
+while off + 60 <= len(data):
+    hdr = data[off:off+60]
+    name = hdr[:16].decode().strip()
+    sz = int(hdr[48:58].decode().strip())
+    body = data[off+60:off+60+sz]
+    if name not in ('/', '//'):
+        keep = True
+        if len(body) >= 20:
+            mach, nsects = struct.unpack('<HH', body[:4])
+            if mach in (0x14c, 0x8664, 0xaa64) and nsects == 0:
+                keep = False
+        if keep:
+            base = name.rstrip('/').split('/')[-1].replace('/', '_') or 'member'
+            if base in seen:
+                base = '%d-%s' % (idx, base)
+            seen.add(base)
+            fn = os.path.join(tmp, base)
+            open(fn, 'wb').write(body)
+            kept.append(fn)
+        else:
+            dropped.append(name)
+    off += 60 + sz + (sz % 2)
+    idx += 1
+open(os.path.join(tmp, 'kept.txt'), 'w').write(' '.join(kept))
+print('%s: dropped %d empty objects' % (sys.argv[1], len(dropped)),
+      file=sys.stderr)
+PYEOF
+    if [ -s "$tmp/kept.txt" ]; then
+        (cd "$tmp" && xargs ar rcs new.a < kept.txt)
+        mv "$tmp/new.a" "$a"
+    fi
+    rm -rf "$tmp"
+done
+
 log "$GOARCH -> $prefix"
 log "done"
