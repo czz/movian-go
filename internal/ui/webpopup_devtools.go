@@ -16,6 +16,7 @@ package ui
 import (
 	"encoding/json"
 	"errors"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -170,8 +171,21 @@ func selectFirstPartyCookie(list []devtoolsCookie, target cookieURL, targetOrigi
 // visited cookie of the same name that u matches is its unpartitioned twin
 // (the browser would send both): neither is kept, whether or not scopeCookies
 // already withheld the name as ambiguous. The result is never nil.
-func mergeFirstParty(visits []cookieVisit, u cookieURL, hold *WebpopupCookie) (out []WebpopupCookie, ambiguous int) {
+func mergeFirstParty(visits []cookieVisit, u cookieURL, hold *WebpopupCookie, heldAmbiguous string) (out []WebpopupCookie, ambiguous int) {
 	out, ambiguous = scopeCookies(visits, u)
+	if heldAmbiguous != "" {
+		// The hold found several cookies of this name for u: the visitor's
+		// one is one of them and must not stand for the name.
+		kept := out[:0]
+		for _, c := range out {
+			if c.Name == heldAmbiguous {
+				ambiguous++
+				continue
+			}
+			kept = append(kept, c)
+		}
+		out = kept
+	}
 	if hold == nil {
 		return out, ambiguous
 	}
@@ -212,23 +226,47 @@ func (r *devtoolsRead) take(id int) bool {
 	return true
 }
 
-// selectFirstPartyCookies is selectFirstPartyCookie for every cookie name
-// the browser would send to target: the first-party Partitioned cookies a
-// popup that ended on topOrigin leaves behind. Each name is judged alone, so
-// a twin or a foreign partition drops that name only.
-func selectFirstPartyCookies(list []devtoolsCookie, target cookieURL, targetOrigin, topOrigin string, now time.Time) []WebpopupCookie {
-	var out []WebpopupCookie
-	seen := map[string]bool{}
+// selectFirstPartyInventory sorts, from a Storage.getCookies list, the
+// cookies the browser would send to some path of origin (an exact https
+// origin) into the first-party Partitioned ones the rule accepts (key = the
+// origin's own site, no cross-site ancestor, Secure, non-empty, future
+// expiry) and the others, which only matter as twins: they come back as
+// blockers without their values. The page path is deliberately not
+// consulted; the request's path and the ambiguity of a name are judged when
+// the hold is read.
+func selectFirstPartyInventory(list []devtoolsCookie, origin string, now time.Time) (eligible []WebpopupCookie, blockers []fpBlocker) {
+	u, err := url.Parse(origin)
+	if origin == "" || err != nil || httpsOriginOf(origin) != origin {
+		return nil, nil
+	}
+	host := bracketHost(u.Hostname())
+	site := firstPartySiteOf(host)
 	for _, c := range list {
-		if seen[c.Name] || !cookieMatchesURL(c.Domain, c.Path, c.Secure, target) {
+		p := c.Path
+		if p == "" {
+			p = "/"
+		}
+		if !cookieMatchesURL(c.Domain, p, c.Secure, cookieURL{scheme: "https", host: host, path: p}) {
 			continue
 		}
-		seen[c.Name] = true
-		if fp, _ := selectFirstPartyCookie(list, target, targetOrigin, topOrigin, c.Name, now); fp != nil {
-			out = append(out, *fp)
+		k := c.PartitionKey
+		if k != nil && !c.PartitionKeyOpaque && !k.Legacy && !k.HasCrossSiteAncestor && k.TopLevelSite == site &&
+			c.Value != "" && c.Secure && !c.Session && c.Expires > 0 && int64(c.Expires) > now.Unix() {
+			eligible = append(eligible, WebpopupCookie{
+				Name: c.Name, Value: c.Value, Domain: c.Domain, Path: p,
+				Secure: true, HTTPOnly: c.HTTPOnly, Expires: int64(c.Expires),
+			})
+			continue
 		}
+		b := fpBlocker{WebpopupCookie: WebpopupCookie{Name: c.Name, Domain: c.Domain, Path: p, Secure: c.Secure}}
+		if !c.Session && c.Expires > 0 {
+			b.Expires = int64(c.Expires)
+		}
+		// What deletableFirstParty would not remove: another partition.
+		b.foreign = c.PartitionKeyOpaque || (k != nil && (k.Legacy || k.HasCrossSiteAncestor || k.TopLevelSite != site))
+		blockers = append(blockers, b)
 	}
-	return out
+	return eligible, blockers
 }
 
 // deletableFirstParty picks, from a Storage.getCookies list, the

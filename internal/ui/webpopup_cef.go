@@ -1106,7 +1106,6 @@ import "C"
 import (
 	"encoding/base64"
 	"fmt"
-	"net/url"
 	"os"
 	"runtime"
 	"strconv"
@@ -1213,14 +1212,15 @@ type cefSession struct {
 	fpCookie *WebpopupCookie
 	// closing: the popup ended and its browser stays alive until the end
 	// read answers or endTimer fires. endCode is the result that ended it,
-	// endCookies what the read held, hidden that the surface is already off.
-	closing    bool
-	endCode    int
-	endTarget  cookieURL
-	endCookies []WebpopupCookie
-	endTimer   *time.Timer
-	hidden     bool
-	del        *cefDeleteJob // a helper browser that only deletes cookies
+	// endSet what the read held, hidden that the surface is already off.
+	closing bool
+	endCode int
+	endSet  firstPartySet
+	// endAnswered: the end read answered with a parsed inventory.
+	endAnswered bool
+	endTimer    *time.Timer
+	hidden      bool
+	del         *cefDeleteJob // a helper browser that only deletes cookies
 	// visitorWaiting: the visitor found the awaited cookie and a DevTools
 	// read is out to rule out a Partitioned twin before the wait completes.
 	// dtUnanswered is when such reads began going unanswered (zero when the
@@ -1315,6 +1315,11 @@ var (
 	}
 )
 
+// devtoolsResultLimit caps the copy of one DevTools result. Storage.getCookies
+// lists the whole browser context, so the limit leaves room for a large
+// persistent profile.
+const devtoolsResultLimit = 32 << 20
+
 // cefOnDevToolsResult — the result of one DevTools method call (UI thread).
 // The result is copied out of CEF's buffer, which is valid only here.
 //
@@ -1325,7 +1330,7 @@ func cefOnDevToolsResult(data unsafe.Pointer, id, success C.int, result unsafe.P
 		return
 	}
 	var raw []byte
-	if result != nil && n > 0 && n <= 1<<20 {
+	if result != nil && n > 0 && n <= devtoolsResultLimit {
 		raw = C.GoBytes(result, C.int(n))
 	}
 	s.devtoolsResult(int(id), success != 0, raw, time.Now())
@@ -1451,6 +1456,8 @@ type cookieQuery struct {
 	// firstParty is the owner's held Partitioned cookie to add to a
 	// webcookies()/persistWebCookie result (set before the read starts).
 	firstParty *WebpopupCookie
+	// firstPartyAmbiguous names a cookie the hold found ambiguous for the URL.
+	firstPartyAmbiguous string
 	// owner and gen: the plugin the read answers and its popup generation
 	// when the read was allowed; a newer popup supersedes the answer.
 	owner string
@@ -1572,7 +1579,7 @@ func cefCookiesDone(data unsafe.Pointer) {
 		q.done <- []WebpopupCookie{}
 		return
 	}
-	cookies, ambiguous := mergeFirstParty(visits, q.url, q.firstParty)
+	cookies, ambiguous := mergeFirstParty(visits, q.url, q.firstParty, q.firstPartyAmbiguous)
 	if ambiguous > 0 {
 		webpopupDeps.ts.Trace(trace.TRACE_DEBUG, "cef",
 			"webcookies: %d ambiguous cookie name(s) withheld", ambiguous)
@@ -1604,6 +1611,9 @@ func cefCookiesDeleted(data unsafe.Pointer, n C.int) {
 // noteURL remembers the main frame's latest https page; a subframe never
 // moves the popup's origin.
 func (s *cefSession) noteURL(uri string, isMain bool) {
+	if s.closing {
+		return // the page the user closed stays the popup's end
+	}
 	s.topURL = mainFrameURL(s.topURL, uri, isMain)
 }
 
@@ -1954,22 +1964,22 @@ const endReadLimit = 2 * time.Second
 // origin. The read is bounded by endReadLimit; true means the end is
 // deferred to its answer or the bound.
 func (s *cefSession) startEndRead(code int) bool {
-	if s.dtReg == nil || s.browser == nil || s.wr.owner == "" || s.fpCookie != nil ||
+	if s.dtReg == nil || s.browser == nil || s.wr.owner == "" ||
 		popupContextURL(code, s.topURL, s.wait) == "" {
 		return false
 	}
-	u, err := url.Parse(s.topURL)
-	if err != nil || httpsOriginOf(s.topURL) == "" {
+	if httpsOriginOf(s.topURL) == "" {
 		return false
 	}
-	target := cookieURL{scheme: "https", host: bracketHost(u.Hostname()), path: pathOrRoot(u.EscapedPath())}
 	now := time.Now()
 	s.dtNextID++
-	if !cefDevToolsSend(s.browser, devtoolsCookiesRequest(s.dtNextID, s.topURL)) {
+	// The whole browser context, not the page's URL: a first-party cookie of
+	// the origin may sit on another path than the page the popup ended on.
+	if !cefDevToolsSend(s.browser, devtoolsStorageRequest(s.dtNextID)) {
 		return false
 	}
 	s.dt.begin(s.dtNextID, now)
-	s.closing, s.endCode, s.endTarget = true, code, target
+	s.closing, s.endCode = true, code
 	s.hideSurface()
 	s.endTimer = time.AfterFunc(endReadLimit, func() { wpPlatformDispatch(s.endTimeout) })
 	return true
@@ -1979,8 +1989,8 @@ func (s *cefSession) startEndRead(code int) bool {
 func (s *cefSession) endResult(success bool, raw []byte, now time.Time) {
 	if success {
 		if list, err := parseDevToolsCookies(raw); err == nil {
-			origin := httpsOriginOf(s.topURL)
-			s.endCookies = selectFirstPartyCookies(list, s.endTarget, origin, origin, now)
+			s.endSet.cookies, s.endSet.blockers = selectFirstPartyInventory(list, httpsOriginOf(s.topURL), now)
+			s.endAnswered = true
 		}
 	}
 	s.completeFinish(s.endCode)
@@ -2012,12 +2022,16 @@ func (s *cefSession) completeFinish(code int) {
 	s.finished = true
 	s.wr.ResultCode = code
 	ctxURL := popupContextURL(code, s.topURL, s.wait)
-	held := s.endCookies
-	if code == WebpopupCookieFound && s.fpCookie != nil {
-		held = append(held, *s.fpCookie)
+	set := s.endSet
+	// A successful final inventory is authoritative: the wait result only
+	// stands in when that read failed, timed out or never ran.
+	if code == WebpopupCookieFound && s.fpCookie != nil && !s.endAnswered {
+		// The wait's own cookie, in case the end read did not deliver it;
+		// recordFirstPartySet drops the duplicate.
+		set.cookies = append(set.cookies, *s.fpCookie)
 	}
-	cefOwnerCtx.recordFirstParty(s.wr.owner, s.ownerGen, ctxURL, time.Now(), held...)
-	s.fpCookie, s.endCookies = nil, nil
+	cefOwnerCtx.recordFirstPartySet(s.wr.owner, s.ownerGen, ctxURL, time.Now(), set)
+	s.fpCookie, s.endSet, s.endAnswered = nil, firstPartySet{}, false
 	if s.dtReg != nil {
 		// Before the close: the registration is released on the UI thread
 		// while the browser is alive.
@@ -2377,7 +2391,11 @@ func wpPlatformCookies(uri string, r *cookieRead) {
 	if r.owner != "" && r.name != "" {
 		// The popup's browser is gone, and the visitor cannot see a
 		// Partitioned cookie: add what the owner's wait read, if still held.
-		q.firstParty = cefOwnerCtx.firstPartyFor(r.owner, uri, r.name, time.Now())
+		var amb bool
+		q.firstParty, amb = cefOwnerCtx.firstPartyLookup(r.owner, uri, u, r.name, time.Now())
+		if amb {
+			q.firstPartyAmbiguous = r.name
+		}
 	}
 	key, cancel, ok := startCookieQuery(q)
 	if !ok {
