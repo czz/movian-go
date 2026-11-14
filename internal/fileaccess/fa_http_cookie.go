@@ -169,7 +169,7 @@ func (fam *FileAccessManager) loadCookies() {
 		}
 		if r.Imported {
 			hc, ok := validLoadedImported(r, now)
-			if !ok || fam.findImportedLocked(hc.scopeOrigin, hc.name) >= 0 {
+			if !ok || fam.findImportedLocked(hc.scopeOwner, hc.scopeOrigin, hc.name) >= 0 {
 				continue
 			}
 			if ua := fam.ownerHostUALocked(hc.scopeOwner, hc.domain, -1); ua != "" && ua != hc.ua {
