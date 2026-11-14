@@ -136,7 +136,8 @@ func (c *popupOwnerContexts) recordFirstPartySet(owner string, gen uint64, topUR
 			kept.blockers = append(kept.blockers, b)
 		}
 	}
-	if len(kept.cookies) > 0 {
+	// A blocker-only set is held too: its twins make the name ambiguous.
+	if len(kept.cookies) > 0 || len(kept.blockers) > 0 {
 		if c.fp == nil {
 			c.fp = map[string]firstPartyHold{}
 		}
@@ -225,7 +226,7 @@ func (c *popupOwnerContexts) dropFirstParty(host, path string, names map[string]
 		}
 		h.set.blockers = bl
 		c.fp[owner] = h
-		if len(h.set.cookies) == 0 {
+		if len(h.set.cookies) == 0 && len(h.set.blockers) == 0 {
 			delete(c.fp, owner)
 		}
 	}
