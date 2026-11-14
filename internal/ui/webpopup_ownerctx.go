@@ -29,9 +29,9 @@ type popupOwnerContexts struct {
 }
 
 type firstPartyHold struct {
-	origin string
-	cookie WebpopupCookie
-	at     time.Time
+	origin  string
+	cookies map[string]WebpopupCookie // by name
+	at      time.Time
 }
 
 // httpsOriginOf is the scheme://host[:port] of an https URL, lowercased and
@@ -74,13 +74,14 @@ func (c *popupOwnerContexts) begin(owner string) uint64 {
 // owner, an origin that is not https, or a popup that a newer one of the same
 // owner superseded records nothing.
 func (c *popupOwnerContexts) record(owner string, gen uint64, topURL string) {
-	c.recordFirstParty(owner, gen, topURL, nil, time.Time{})
+	c.recordFirstParty(owner, gen, topURL, time.Time{})
 }
 
-// recordFirstParty is record plus the first-party cookie the popup's wait
-// read. The cookie is kept only if the popup ended on the https origin the
-// cookie was read for (its Secure Domain/Path are the browser's own).
-func (c *popupOwnerContexts) recordFirstParty(owner string, gen uint64, topURL string, fp *WebpopupCookie, now time.Time) {
+// recordFirstParty is record plus the first-party cookies the popup read
+// through DevTools. A cookie is kept only if the popup ended on an https
+// origin it would be sent to (its Secure, Domain and Path are the browser's
+// own); a later popup of the owner drops them all.
+func (c *popupOwnerContexts) recordFirstParty(owner string, gen uint64, topURL string, now time.Time, fps ...WebpopupCookie) {
 	origin := httpsOriginOf(topURL)
 	if owner == "" || origin == "" {
 		return
@@ -94,11 +95,17 @@ func (c *popupOwnerContexts) recordFirstParty(owner string, gen uint64, topURL s
 		c.byOwner = map[string]string{}
 	}
 	c.byOwner[owner] = origin
-	if fp != nil && cookieBelongsToOrigin(fp, origin) {
+	kept := map[string]WebpopupCookie{}
+	for _, fp := range fps {
+		if cookieBelongsToOrigin(&fp, origin) {
+			kept[fp.Name] = fp
+		}
+	}
+	if len(kept) > 0 {
 		if c.fp == nil {
 			c.fp = map[string]firstPartyHold{}
 		}
-		c.fp[owner] = firstPartyHold{origin: origin, cookie: *fp, at: now}
+		c.fp[owner] = firstPartyHold{origin: origin, cookies: kept, at: now}
 	}
 	c.mu.Unlock()
 }
@@ -114,16 +121,18 @@ func (c *popupOwnerContexts) firstPartyFor(owner, uri, name string, now time.Tim
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	h, ok := c.fp[owner]
-	if !ok || h.origin != origin || c.byOwner[owner] != origin || h.cookie.Name != name ||
-		now.Sub(h.at) >= firstPartyHoldTTL || h.cookie.Expires <= now.Unix() {
+	if !ok || h.origin != origin || c.byOwner[owner] != origin || now.Sub(h.at) >= firstPartyHoldTTL {
 		return nil
 	}
-	if u, err := url.Parse(uri); err != nil || !cookieMatchesURL(h.cookie.Domain, h.cookie.Path, h.cookie.Secure,
+	hc, ok := h.cookies[name]
+	if !ok || hc.Expires <= now.Unix() {
+		return nil
+	}
+	if u, err := url.Parse(uri); err != nil || !cookieMatchesURL(hc.Domain, hc.Path, hc.Secure,
 		cookieURL{scheme: "https", host: bracketHost(u.Hostname()), path: pathOrRoot(u.EscapedPath())}) {
 		return nil
 	}
-	cp := h.cookie
-	return &cp
+	return &hc
 }
 
 // dropFirstParty forgets every held cookie that a deletion request for
@@ -136,7 +145,12 @@ func (c *popupOwnerContexts) dropFirstParty(host, path string, names map[string]
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	for owner, h := range c.fp {
-		if cookieDeleteMatches(h.cookie.Domain, h.cookie.Path, h.cookie.Name, host, path, names) {
+		for name, hc := range h.cookies {
+			if cookieDeleteMatches(hc.Domain, hc.Path, name, host, path, names) {
+				delete(h.cookies, name)
+			}
+		}
+		if len(h.cookies) == 0 {
 			delete(c.fp, owner)
 		}
 	}

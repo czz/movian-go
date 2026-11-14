@@ -211,3 +211,63 @@ func (r *devtoolsRead) take(id int) bool {
 	r.id = 0
 	return true
 }
+
+// selectFirstPartyCookies is selectFirstPartyCookie for every cookie name
+// the browser would send to target: the first-party Partitioned cookies a
+// popup that ended on topOrigin leaves behind. Each name is judged alone, so
+// a twin or a foreign partition drops that name only.
+func selectFirstPartyCookies(list []devtoolsCookie, target cookieURL, targetOrigin, topOrigin string, now time.Time) []WebpopupCookie {
+	var out []WebpopupCookie
+	seen := map[string]bool{}
+	for _, c := range list {
+		if seen[c.Name] || !cookieMatchesURL(c.Domain, c.Path, c.Secure, target) {
+			continue
+		}
+		seen[c.Name] = true
+		if fp, _ := selectFirstPartyCookie(list, target, targetOrigin, topOrigin, c.Name, now); fp != nil {
+			out = append(out, *fp)
+		}
+	}
+	return out
+}
+
+// deletableFirstParty picks, from a Storage.getCookies list, the
+// Partitioned cookies a deletion request for host and path (names nil = any)
+// may remove: first-party ones only (key = the host's own site, no
+// cross-site ancestor), matched like the visitor's deletion.
+func deletableFirstParty(list []devtoolsCookie, host, path string, names map[string]bool) []devtoolsCookie {
+	site := firstPartySiteOf(bracketHost(host))
+	var out []devtoolsCookie
+	for _, c := range list {
+		k := c.PartitionKey
+		if k == nil || c.PartitionKeyOpaque || k.Legacy || k.HasCrossSiteAncestor || k.TopLevelSite != site {
+			continue
+		}
+		if cookieDeleteMatches(c.Domain, c.Path, c.Name, host, path, names) {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
+// devtoolsStorageRequest asks for every cookie of the browser context, with
+// partition keys.
+func devtoolsStorageRequest(id int) string {
+	return `{"id":` + strconv.Itoa(id) + `,"method":"Storage.getCookies"}`
+}
+
+// devtoolsDeleteRequest deletes exactly the first-party Partitioned cookie c.
+func devtoolsDeleteRequest(id int, c devtoolsCookie) string {
+	p := struct {
+		Name         string `json:"name"`
+		Domain       string `json:"domain"`
+		Path         string `json:"path"`
+		PartitionKey struct {
+			TopLevelSite         string `json:"topLevelSite"`
+			HasCrossSiteAncestor bool   `json:"hasCrossSiteAncestor"`
+		} `json:"partitionKey"`
+	}{Name: c.Name, Domain: c.Domain, Path: c.Path}
+	p.PartitionKey.TopLevelSite = c.PartitionKey.TopLevelSite
+	b, _ := json.Marshal(p)
+	return `{"id":` + strconv.Itoa(id) + `,"method":"Network.deleteCookies","params":` + string(b) + `}`
+}

@@ -1106,6 +1106,7 @@ import "C"
 import (
 	"encoding/base64"
 	"fmt"
+	"net/url"
 	"os"
 	"runtime"
 	"strconv"
@@ -1210,6 +1211,15 @@ type cefSession struct {
 	dtLastList   string
 	// fpCookie is the first-party Partitioned cookie that completed the wait.
 	fpCookie *WebpopupCookie
+	// closing: the popup ended and its browser stays alive until the end
+	// read answers or endTimer fires. endCode is the result that ended it,
+	// endCookies what the read held, hidden that the surface is already off.
+	closing    bool
+	endCode    int
+	endTarget  cookieURL
+	endCookies []WebpopupCookie
+	endTimer   *time.Timer
+	hidden     bool
 	// visitorWaiting: the visitor found the awaited cookie and a DevTools
 	// read is out to rule out a Partitioned twin before the wait completes.
 	// dtUnanswered is when such reads began going unanswered (zero when the
@@ -1333,9 +1343,10 @@ func cefOnBrowserCreated(browser, data unsafe.Pointer) {
 		return
 	}
 	s.browser = browser
-	if s.wait != nil {
-		// Reads of Partitioned cookies need a live browser. A failed
-		// registration leaves the visitor path as the only source.
+	if s.wait != nil || s.wr.owner != "" {
+		// Reads of Partitioned cookies need a live browser, for the wait and
+		// for the end of the popup. A failed registration leaves the visitor
+		// path as the only source.
 		s.dtReg = cefDevToolsAttach(browser, s.key)
 	}
 	cefFocusBrowser(browser)
@@ -1606,7 +1617,7 @@ func (s *cefSession) checkTrapURI(uri string) {
 // cookie. Triggers (page loads, the poll) coalesce: a check that arrives
 // while one runs queues exactly one follow-up. The UI thread never waits.
 func (s *cefSession) checkCookie() {
-	if s.finished || s.wait == nil {
+	if s.finished || s.closing || s.wait == nil {
 		return
 	}
 	if s.cookieQuery != nil || s.dt.busy(time.Now()) {
@@ -1654,7 +1665,7 @@ func (s *cefSession) cookieQueryDone(q *cookieQuery, visits []cookieVisit) {
 	if s.cookieQuery == q {
 		s.cookieQuery, s.cookieCancel = nil, nil
 	}
-	if s.finished {
+	if s.finished || s.closing {
 		return
 	}
 	// The jar is shared: the cookie completes the wait only while the main
@@ -1718,7 +1729,14 @@ func (s *cefSession) startDevToolsRead(now time.Time) bool {
 // cookie is kept for finish() to hand to the owner. Never logs a name or
 // value, only the refusal reason when it changes.
 func (s *cefSession) devtoolsResult(id int, success bool, raw []byte, now time.Time) {
-	if !s.dt.take(id) || s.finished || s.wait == nil {
+	if !s.dt.take(id) || s.finished {
+		return
+	}
+	if s.closing {
+		s.endResult(success, raw, now)
+		return
+	}
+	if s.wait == nil {
 		return
 	}
 	s.dtUnanswered = time.Time{}
@@ -1790,18 +1808,92 @@ func (s *cefSession) finish(code int) {
 	if s.waiter != nil {
 		code = s.waiter.Resolve(code)
 	}
+	if s.finished || s.closing {
+		return
+	}
+	if s.startEndRead(code) {
+		return
+	}
+	s.completeFinish(code)
+}
+
+// endReadLimit bounds how long a popup that has ended keeps its browser for
+// the DevTools read of first-party Partitioned cookies.
+const endReadLimit = 2 * time.Second
+
+// startEndRead reads, before the browser goes away, the first-party
+// Partitioned cookies of the page the popup ended on, so that the owner's
+// persistWebCookie right after the popup still finds them (the visitor
+// cannot see them and the browser is destroyed). It applies to any result
+// that records an owner context, only for an owner and an https page, and
+// holds nothing but cookies the first-party rule accepts for exactly that
+// origin. The read is bounded by endReadLimit; true means the end is
+// deferred to its answer or the bound.
+func (s *cefSession) startEndRead(code int) bool {
+	if s.dtReg == nil || s.browser == nil || s.wr.owner == "" || s.fpCookie != nil ||
+		popupContextURL(code, s.topURL, s.wait) == "" {
+		return false
+	}
+	u, err := url.Parse(s.topURL)
+	if err != nil || httpsOriginOf(s.topURL) == "" {
+		return false
+	}
+	target := cookieURL{scheme: "https", host: bracketHost(u.Hostname()), path: pathOrRoot(u.EscapedPath())}
+	now := time.Now()
+	s.dtNextID++
+	if !cefDevToolsSend(s.browser, devtoolsCookiesRequest(s.dtNextID, s.topURL)) {
+		return false
+	}
+	s.dt.begin(s.dtNextID, now)
+	s.closing, s.endCode, s.endTarget = true, code, target
+	s.hideSurface()
+	s.endTimer = time.AfterFunc(endReadLimit, func() { wpPlatformDispatch(s.endTimeout) })
+	return true
+}
+
+// endResult takes the answer of the end read (UI thread).
+func (s *cefSession) endResult(success bool, raw []byte, now time.Time) {
+	if success {
+		if list, err := parseDevToolsCookies(raw); err == nil {
+			origin := httpsOriginOf(s.topURL)
+			s.endCookies = selectFirstPartyCookies(list, s.endTarget, origin, origin, now)
+		}
+	}
+	s.completeFinish(s.endCode)
+}
+
+// endTimeout is the bound of the end read: finish with nothing held.
+func (s *cefSession) endTimeout() {
+	if s.closing && !s.finished {
+		s.completeFinish(s.endCode)
+	}
+}
+
+func (s *cefSession) hideSurface() {
+	if !s.hidden && wpSurfaceGlueCef.hide != nil {
+		s.hidden = true
+		wpSurfaceGlueCef.hide()
+	}
+}
+
+// completeFinish is the end of the session once nothing is left to read.
+func (s *cefSession) completeFinish(code int) {
 	if s.finished {
 		return
+	}
+	if s.endTimer != nil {
+		s.endTimer.Stop()
+		s.endTimer = nil
 	}
 	s.finished = true
 	s.wr.ResultCode = code
 	ctxURL := popupContextURL(code, s.topURL, s.wait)
+	held := s.endCookies
 	if code == WebpopupCookieFound && s.fpCookie != nil {
-		cefOwnerCtx.recordFirstParty(s.wr.owner, s.ownerGen, ctxURL, s.fpCookie, time.Now())
-	} else {
-		cefOwnerCtx.record(s.wr.owner, s.ownerGen, ctxURL)
+		held = append(held, *s.fpCookie)
 	}
-	s.fpCookie = nil
+	cefOwnerCtx.recordFirstParty(s.wr.owner, s.ownerGen, ctxURL, time.Now(), held...)
+	s.fpCookie, s.endCookies = nil, nil
 	if s.dtReg != nil {
 		// Before the close: the registration is released on the UI thread
 		// while the browser is alive.
@@ -1813,9 +1905,7 @@ func (s *cefSession) finish(code int) {
 		s.cookieQuery, s.cookieCancel = nil, nil
 	}
 	cefActiveN.Add(-1)
-	if wpSurfaceGlueCef.hide != nil {
-		wpSurfaceGlueCef.hide()
-	}
+	s.hideSurface()
 	if s.browser != nil {
 		cefCloseBrowser(s.browser)
 		s.browser = nil
