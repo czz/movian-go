@@ -2025,13 +2025,13 @@ func (s *cefSession) completeFinish(code int) {
 	s.wr.ResultCode = code
 	ctxURL := popupContextURL(code, s.topURL, s.wait)
 	set := s.endSet
-	// Only a successful final inventory is held. When it failed, timed out
-	// or could not be sent, no cookie is held (the one the wait found may be
-	// deleted by now) and the origin is marked unavailable, so the owner's
-	// read withholds the name instead of delivering the visitor's cookie of
-	// it, which a Partitioned twin might make ambiguous. The plugin's next
-	// attempt retries.
-	set.unavailable = !s.endRead && s.dtReg != nil
+	// Only a successful final inventory is held. When it failed, timed out,
+	// could not be sent or had no DevTools registration to run on, no cookie
+	// is held (the one the wait found may be deleted by now) and the origin
+	// is marked unavailable, so the owner's read withholds the name instead
+	// of delivering the visitor's cookie of it, which a Partitioned twin
+	// might make ambiguous. The plugin's next attempt retries.
+	set.unavailable = !s.endRead
 	cefOwnerCtx.recordFirstPartySet(s.wr.owner, s.ownerGen, ctxURL, time.Now(), set)
 	s.fpCookie, s.endSet = nil, firstPartySet{}
 	if s.dtReg != nil {
