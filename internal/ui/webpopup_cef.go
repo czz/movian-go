@@ -1215,9 +1215,11 @@ type cefSession struct {
 	// closing: the popup ended and its browser stays alive until the end
 	// read answers or endTimer fires. endCode is the result that ended it,
 	// endSet what the read held, hidden that the surface is already off.
-	closing  bool
-	endCode  int
-	endSet   firstPartySet
+	closing bool
+	endCode int
+	endSet  firstPartySet
+	// endRead: the final inventory was read and parsed.
+	endRead  bool
 	endTimer *time.Timer
 	hidden   bool
 	del      *cefDeleteJob // a helper browser that only deletes cookies
@@ -1990,6 +1992,7 @@ func (s *cefSession) endResult(success bool, raw []byte, now time.Time) {
 	if success {
 		if list, err := parseDevToolsCookies(raw); err == nil {
 			s.endSet.cookies, s.endSet.blockers = selectFirstPartyInventory(list, httpsOriginOf(s.topURL), now)
+			s.endRead = true
 		}
 	}
 	s.completeFinish(s.endCode)
@@ -2023,8 +2026,12 @@ func (s *cefSession) completeFinish(code int) {
 	ctxURL := popupContextURL(code, s.topURL, s.wait)
 	set := s.endSet
 	// Only a successful final inventory is held. When it failed, timed out
-	// or never ran, nothing is: the cookie the wait found may be deleted by
-	// now, and the plugin's next attempt retries.
+	// or could not be sent, no cookie is held (the one the wait found may be
+	// deleted by now) and the origin is marked unavailable, so the owner's
+	// read withholds the name instead of delivering the visitor's cookie of
+	// it, which a Partitioned twin might make ambiguous. The plugin's next
+	// attempt retries.
+	set.unavailable = !s.endRead && s.dtReg != nil
 	cefOwnerCtx.recordFirstPartySet(s.wr.owner, s.ownerGen, ctxURL, time.Now(), set)
 	s.fpCookie, s.endSet = nil, firstPartySet{}
 	if s.dtReg != nil {
