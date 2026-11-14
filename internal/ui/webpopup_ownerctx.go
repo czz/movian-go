@@ -187,13 +187,17 @@ func (c *popupOwnerContexts) firstPartyLookup(owner, uri string, req cookieURL, 
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	h, ok := c.fp[owner]
-	if !ok || h.origin != origin || c.byOwner[owner] != origin || now.Sub(h.at) >= firstPartyHoldTTL {
+	if !ok || h.origin != origin || c.byOwner[owner] != origin {
 		return nil, false
 	}
 	if h.unavailable {
-		// No inventory: a Partitioned twin of the visitor's cookie cannot be
-		// ruled out, so the name is withheld rather than guessed.
+		// Not bound by the hold TTL: no inventory has ruled a Partitioned twin
+		// out, so the name stays ambiguous until a newer popup of the owner
+		// replaces the state.
 		return nil, true
+	}
+	if now.Sub(h.at) >= firstPartyHoldTTL {
+		return nil, false
 	}
 	// Every cookie of the name the request matches counts: more than one,
 	// an eligible one next to a twin the browser would also send, is
