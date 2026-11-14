@@ -177,8 +177,9 @@ var wpDelCookiesMu sync.Mutex
 
 // WebpopupDeleteCookies removes the webview-store cookies a request to
 // host/path would carry — optionally restricted to the listed names —
-// and returns the removed count. Partitioned cookies are covered too:
-// the native visitor walks the whole store. An empty jar reports 0 via
+// and returns the removed count. CEF's visitor does not see Partitioned
+// cookies: the CEF backend removes the first-party ones (key = the host's
+// own site) through DevTools in a second step. An empty jar reports 0 via
 // the wait timeout, like the read path.
 func WebpopupDeleteCookies(host, path string, names map[string]bool) int {
 	return WebpopupDeleteCookiesFor("", host, path, names)
@@ -201,7 +202,7 @@ func WebpopupDeleteCookiesFor(owner, host, path string, names map[string]bool) i
 	select {
 	case n := <-done:
 		return n
-	case <-time.After(10 * time.Second):
+	case <-time.After(20 * time.Second): // the CEF visitor, then its DevTools step
 		return 0
 	}
 }

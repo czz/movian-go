@@ -1220,6 +1220,7 @@ type cefSession struct {
 	endCookies []WebpopupCookie
 	endTimer   *time.Timer
 	hidden     bool
+	del        *cefDeleteJob // a helper browser that only deletes cookies
 	// visitorWaiting: the visitor found the awaited cookie and a DevTools
 	// read is out to rule out a Partitioned twin before the wait completes.
 	// dtUnanswered is when such reads began going unanswered (zero when the
@@ -1343,7 +1344,7 @@ func cefOnBrowserCreated(browser, data unsafe.Pointer) {
 		return
 	}
 	s.browser = browser
-	if s.wait != nil || s.wr.owner != "" {
+	if s.wait != nil || s.wr.owner != "" || s.del != nil {
 		// Reads of Partitioned cookies need a live browser, for the wait and
 		// for the end of the popup. A failed registration leaves the visitor
 		// path as the only source.
@@ -1352,6 +1353,9 @@ func cefOnBrowserCreated(browser, data unsafe.Pointer) {
 	cefFocusBrowser(browser)
 	webpopupDeps.ts.Trace(trace.TRACE_DEBUG, "cef",
 		"browser created id=%v", browser)
+	if s.del != nil {
+		s.deleteStart()
+	}
 }
 
 //export cefOnPaint
@@ -1729,6 +1733,10 @@ func (s *cefSession) startDevToolsRead(now time.Time) bool {
 // cookie is kept for finish() to hand to the owner. Never logs a name or
 // value, only the refusal reason when it changes.
 func (s *cefSession) devtoolsResult(id int, success bool, raw []byte, now time.Time) {
+	if s.del != nil {
+		s.deleteResult(id, success, raw)
+		return
+	}
 	if !s.dt.take(id) || s.finished {
 		return
 	}
@@ -1815,6 +1823,122 @@ func (s *cefSession) finish(code int) {
 		return
 	}
 	s.completeFinish(code)
+}
+
+// ---- deletion of first-party Partitioned cookies ----
+
+// cefDeleteJob — one deletion run by an invisible helper browser: the
+// visitor cannot see (so cannot delete) a Partitioned cookie, and no popup
+// browser is alive when a plugin forgets its clearance. DevTools lists the
+// store with partition keys and deletes exactly the first-party ones.
+type cefDeleteJob struct {
+	host, path string
+	names      map[string]bool
+	done       func(n int)
+	listID     int
+	pending    map[int]bool
+	deleted    int
+	timer      *time.Timer
+}
+
+// deleteJobLimit bounds the whole helper-browser deletion.
+const deleteJobLimit = 8 * time.Second
+
+// startDeleteJob starts the deletion on the UI thread; done receives the
+// number of cookies removed, exactly once, also on any failure (0).
+func startDeleteJob(host, path string, names map[string]bool, done func(n int)) *cefSession {
+	s := &cefSession{wr: &WebpopupResult{}, done: make(chan *WebpopupResult, 1), hidden: true}
+	s.del = &cefDeleteJob{host: host, path: path, names: names, done: done, pending: map[int]bool{}}
+	s.key = cefTokenNew()
+	cefSessions.Store(s.key, s)
+	if !cefCreateBrowser(s.key, "about:blank") {
+		cefActiveN.Add(1) // balance completeFinish(), as for a failed popup create
+		s.endDeleteJob()
+		return s
+	}
+	cefActiveN.Add(1)
+	s.del.timer = time.AfterFunc(deleteJobLimit, func() { wpPlatformDispatch(s.deleteTimeout) })
+	return s
+}
+
+func (s *cefSession) deleteSend(msg func(id int) string) (id int, ok bool) {
+	if s.dtReg == nil || s.browser == nil {
+		return 0, false
+	}
+	s.dtNextID++
+	if !cefDevToolsSend(s.browser, msg(s.dtNextID)) {
+		return 0, false
+	}
+	return s.dtNextID, true
+}
+
+func (s *cefSession) deleteStart() {
+	id, ok := s.deleteSend(devtoolsStorageRequest)
+	if !ok {
+		s.endDeleteJob()
+		return
+	}
+	s.del.listID = id
+}
+
+func (s *cefSession) deleteResult(id int, success bool, raw []byte) {
+	j := s.del
+	if s.finished || j == nil {
+		return
+	}
+	switch {
+	case id == j.listID:
+		j.listID = 0
+		if !success {
+			s.endDeleteJob()
+			return
+		}
+		list, err := parseDevToolsCookies(raw)
+		if err != nil {
+			s.endDeleteJob()
+			return
+		}
+		for _, c := range deletableFirstParty(list, j.host, j.path, j.names) {
+			c := c
+			if did, ok := s.deleteSend(func(id int) string { return devtoolsDeleteRequest(id, c) }); ok {
+				j.pending[did] = true
+			}
+		}
+		if len(j.pending) == 0 {
+			s.endDeleteJob()
+		}
+	case j.pending[id]:
+		delete(j.pending, id)
+		if success {
+			j.deleted++
+		}
+		if len(j.pending) == 0 {
+			s.endDeleteJob()
+		}
+	}
+}
+
+func (s *cefSession) deleteTimeout() {
+	if s.del != nil && !s.finished {
+		s.endDeleteJob()
+	}
+}
+
+// endDeleteJob reports the count once and closes the helper browser.
+func (s *cefSession) endDeleteJob() {
+	j := s.del
+	if j == nil || s.finished {
+		return
+	}
+	if j.timer != nil {
+		j.timer.Stop()
+	}
+	// A hold for a cookie that is gone must not be served again.
+	cefOwnerCtx.dropFirstParty(j.host, j.path, j.names)
+	n := j.deleted
+	s.del = nil
+	s.completeFinish(WebpopupLoadError)
+	j.done(n)
 }
 
 // endReadLimit bounds how long a popup that has ended keeps its browser for
@@ -2291,10 +2415,25 @@ func wpPlatformDeleteCookies(owner, host, path string, names map[string]bool,
 		cefDelPath = "/"
 	}
 	cefDelNames = names
+	delPath := cefDelPath
 	// The visitor never saw a Partitioned cookie, so the deletion below
 	// cannot reach one; what a wait read and holds must not outlive it.
-	cefOwnerCtx.dropFirstParty(host, cefDelPath, names)
-	cefCookiesDelCh = done
+	cefOwnerCtx.dropFirstParty(host, delPath, names)
+	vis := make(chan int, 1)
+	cefCookiesDelCh = vis
 	cefActiveN.Add(1)
 	C.cef_delete_cookies(nil)
+	// Then the first-party Partitioned ones, through DevTools. Never block
+	// the UI thread on the visitor: wait for it on a goroutine and start
+	// the helper browser back on the UI thread.
+	go func() {
+		n := 0
+		select {
+		case n = <-vis:
+		case <-time.After(deleteJobLimit):
+		}
+		wpPlatformDispatch(func() {
+			startDeleteJob(host, delPath, names, func(m int) { done <- n + m })
+		})
+	}()
 }
