@@ -47,6 +47,8 @@ package ui
 #include <include/capi/cef_display_handler_capi.h>
 #include <include/capi/cef_browser_process_handler_capi.h>
 #include <include/capi/cef_cookie_capi.h>
+#include <include/capi/cef_devtools_message_observer_capi.h>
+#include <include/capi/cef_registration_capi.h>
 #include <include/capi/cef_parser_capi.h>
 #include <include/capi/cef_command_line_capi.h>
 #include <include/cef_api_hash.h>
@@ -65,6 +67,8 @@ extern int cefCookieVisit(void *data, char *name, char *value,
     char *domain, char *path, int secure, int httponly, int has_expires,
     int64_t expires);
 extern void cefCookiesDone(void *data);
+extern void cefOnDevToolsResult(void *data, int id, int success,
+    void *result, size_t n);
 extern int cefCookieDelMatch(char *dom, char *path, char *name);
 extern void cefCookiesDeleted(void *data, int n);
 
@@ -515,15 +519,146 @@ static void *cef_browser_create(void *data, int w, int h,
 	return ok ? (void *)1 : NULL;
 }
 
+// ---- DevTools: Network.getCookies results ----
+// The visitor cannot return Partitioned cookies (cef_cookie_t has no
+// partition field); DevTools reports their partition key. One observer per
+// browser carries the session token like the other handlers; only method
+// results are used (the Go side matches them by message id).
+HANDLER_IMPL(dto, cef_dev_tools_message_observer_t)
+
+static void CEF_CALLBACK dto_on_result(
+    cef_dev_tools_message_observer_t *self, cef_browser_t *b,
+    int id, int success, const void *result, size_t n) {
+	cefOnDevToolsResult(((dto_t *)self)->ud, id, success,
+	    (void *)result, n);
+}
+
+// cef_dt_attach registers a new observer for the browser and returns the
+// registration (the caller releases it with cef_dt_detach), or NULL.
+// Passing the observer to CEF transfers the one reference dto_new created,
+// whatever the call returns (the CefCppToCRefCounted::Wrap rule described at
+// cef_get_cookies), so it is not released here. Releasing the registration
+// makes CEF drop its reference to the observer, which then releases the
+// token reference.
+static void *cef_dt_attach(void *browser, void *tok) {
+	cef_browser_t *b = browser;
+	cef_browser_host_t *h = b->get_host(b);
+	if (!h)
+		return NULL;
+	dto_t *o = dto_new(tok);
+	o->h.on_dev_tools_method_result = dto_on_result;
+	cef_registration_t *r = h->add_dev_tools_message_observer(h, &o->h);
+	h->base.release(&h->base);
+	return r;
+}
+
+static void cef_dt_detach(void *reg) {
+	cef_registration_t *r = reg;
+	r->base.release(&r->base);
+}
+
+// cef_dt_send submits a DevTools message (UI thread only); 1 if accepted.
+static int cef_dt_send(void *browser, const char *msg, size_t n) {
+	cef_browser_t *b = browser;
+	cef_browser_host_t *h = b->get_host(b);
+	if (!h)
+		return 0;
+	int ok = h->send_dev_tools_message(h, msg, n);
+	h->base.release(&h->base);
+	return ok;
+}
+
 // ---- test seam: drive the real client and handlers without libcef ----
 // The browser is a stub whose add_ref does nothing; callbacks are delivered
 // through the objects cl_new built, exactly as CEF would.
 static void CEF_CALLBACK tbr_add_ref(cef_base_ref_counted_t *s) { (void)s; }
+
+// The stub host records DevTools traffic like libcef would: it keeps the
+// observer it was given (and the reference that came with it) until the
+// registration is released, then drops that reference.
+typedef struct { cef_registration_t r; void *host; int released; } treg_t;
+typedef struct {
+	cef_browser_host_t h;
+	cef_dev_tools_message_observer_t *obs;
+	treg_t reg;
+	char sent[512];
+	int nsent, attached;
+} thost_t;
+typedef struct { cef_browser_t b; thost_t host; } tbrowser_t;
+
+static int CEF_CALLBACK tbr_release_noop(cef_base_ref_counted_t *s) {
+	(void)s; return 0;
+}
+static int CEF_CALLBACK treg_release(cef_base_ref_counted_t *s) {
+	treg_t *r = (treg_t *)s;
+	thost_t *h = (thost_t *)r->host;
+	if (!r->released && h->obs) {
+		r->released = 1;
+		cef_dev_tools_message_observer_t *o = h->obs;
+		h->obs = NULL;
+		o->base.release(&o->base);
+	}
+	return 0;
+}
+static cef_registration_t *CEF_CALLBACK thost_add_observer(
+    cef_browser_host_t *self,
+    cef_dev_tools_message_observer_t *obs) {
+	thost_t *h = (thost_t *)self;
+	h->obs = obs;
+	h->attached++;
+	h->reg.released = 0;
+	return &h->reg.r;
+}
+static int CEF_CALLBACK thost_send(cef_browser_host_t *self,
+    const void *msg, size_t n) {
+	thost_t *h = (thost_t *)self;
+	if (n >= sizeof h->sent)
+		n = sizeof h->sent - 1;
+	memcpy(h->sent, msg, n);
+	h->sent[n] = 0;
+	h->nsent++;
+	return 1;
+}
+static cef_browser_host_t *CEF_CALLBACK tbr_get_host(cef_browser_t *self) {
+	return &((tbrowser_t *)self)->host.h;
+}
 static void *cef_test_browser(void) {
-	cef_browser_t *b = (cef_browser_t *)calloc(1, sizeof(cef_browser_t));
-	b->base.size = sizeof(cef_browser_t);
-	b->base.add_ref = tbr_add_ref;
-	return b;
+	tbrowser_t *t = (tbrowser_t *)calloc(1, sizeof(tbrowser_t));
+	t->b.base.size = sizeof(cef_browser_t);
+	t->b.base.add_ref = tbr_add_ref;
+	t->b.get_host = tbr_get_host;
+	t->host.h.base.size = sizeof(cef_browser_host_t);
+	t->host.h.base.add_ref = tbr_add_ref;
+	t->host.h.base.release = tbr_release_noop;
+	t->host.h.add_dev_tools_message_observer = thost_add_observer;
+	t->host.h.send_dev_tools_message = thost_send;
+	t->host.reg.r.base.size = sizeof(cef_registration_t);
+	t->host.reg.r.base.add_ref = tbr_add_ref;
+	t->host.reg.r.base.release = treg_release;
+	t->host.reg.host = &t->host;
+	return t;
+}
+static int cef_test_dt_attached(void *browser) {
+	return ((tbrowser_t *)browser)->host.attached;
+}
+static int cef_test_dt_observer_live(void *browser) {
+	return ((tbrowser_t *)browser)->host.obs != NULL;
+}
+static const char *cef_test_dt_sent(void *browser, int *n) {
+	thost_t *h = &((tbrowser_t *)browser)->host;
+	*n = h->nsent;
+	return h->sent;
+}
+// cef_test_dt_deliver hands a method result to the registered observer, as
+// libcef does on the UI thread; 0 if no observer is registered.
+static int cef_test_dt_deliver(void *browser, int id, int success,
+    const char *json) {
+	cef_dev_tools_message_observer_t *o = ((tbrowser_t *)browser)->host.obs;
+	if (!o)
+		return 0;
+	o->on_dev_tools_method_result(o, (cef_browser_t *)browser, id, success,
+	    json, strlen(json));
+	return 1;
 }
 static void *cef_test_client(void *tok) { return cl_new(tok); }
 static void cef_test_after_created(void *client, void *browser) {
@@ -970,12 +1105,14 @@ import "C"
 
 import (
 	"encoding/base64"
+	"fmt"
 	"os"
 	"runtime"
 	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 	"unsafe"
 
 	"github.com/czz/movian-go/internal/arch"
@@ -1063,6 +1200,36 @@ type cefSession struct {
 	cookieCancel       func()       // detaches it
 	cookieCheckPending bool         // another check came while one ran
 
+	// DevTools read of Partitioned cookies, the wait's second source (UI
+	// thread only). dtReg is the observer registration, released in finish
+	// before the browser is closed.
+	dtReg        unsafe.Pointer
+	dt           devtoolsRead
+	dtNextID     int
+	dtLastReason string
+	dtLastList   string
+	// fpCookie is the first-party Partitioned cookie that completed the wait.
+	// It is never held by itself: only the final inventory is evidence that
+	// the cookie still exists when the popup ends.
+	fpCookie *WebpopupCookie
+	// closing: the popup ended and its browser stays alive until the end
+	// read answers or endTimer fires. endCode is the result that ended it,
+	// endSet what the read held, hidden that the surface is already off.
+	closing bool
+	endCode int
+	endSet  firstPartySet
+	// endRead: the final inventory was read and parsed.
+	endRead  bool
+	endTimer *time.Timer
+	hidden   bool
+	del      *cefDeleteJob // a helper browser that only deletes cookies
+	// visitorWaiting: the visitor found the awaited cookie and a DevTools
+	// read is out to rule out a Partitioned twin before the wait completes.
+	// dtUnanswered is when such reads began going unanswered (zero when the
+	// last one was answered): past devtoolsReadLimit the visitor stands.
+	visitorWaiting bool
+	dtUnanswered   time.Time
+
 	frameMu     sync.Mutex
 	frame       []byte
 	fw, fh      int
@@ -1098,6 +1265,25 @@ func cefTestPaint(c, b unsafe.Pointer, buf []byte, w, h int) {
 	C.cef_test_paint(c, b, unsafe.Pointer(&buf[0]), C.int(w), C.int(h))
 }
 
+func cefTestDevToolsAttached(b unsafe.Pointer) int { return int(C.cef_test_dt_attached(b)) }
+func cefTestDevToolsObserverLive(b unsafe.Pointer) bool {
+	return C.cef_test_dt_observer_live(b) != 0
+}
+func cefTestDevToolsSent(b unsafe.Pointer) (msg string, n int) {
+	var cn C.int
+	m := C.GoString(C.cef_test_dt_sent(b, &cn))
+	return m, int(cn)
+}
+func cefTestDevToolsDeliver(b unsafe.Pointer, id int, ok bool, json string) bool {
+	cs := C.CString(json)
+	defer C.free(unsafe.Pointer(cs))
+	success := C.int(0)
+	if ok {
+		success = 1
+	}
+	return C.cef_test_dt_deliver(b, C.int(id), success, cs) != 0
+}
+
 func cefSessionOf(data unsafe.Pointer) *cefSession {
 	v, _ := cefSessions.Load(data)
 	s, _ := v.(*cefSession)
@@ -1117,6 +1303,41 @@ func cefOnContextInit() {
 // for the late-creation test.
 var cefCloseBrowser = func(browser unsafe.Pointer) { C.cef_close(browser) }
 
+// DevTools seams: the C calls behind the wait's Partitioned-cookie read, so
+// ordering tests need no real browser.
+var (
+	cefDevToolsAttach = func(browser, tok unsafe.Pointer) unsafe.Pointer {
+		return C.cef_dt_attach(browser, tok)
+	}
+	cefDevToolsDetach = func(reg unsafe.Pointer) { C.cef_dt_detach(reg) }
+	cefDevToolsSend   = func(browser unsafe.Pointer, msg string) bool {
+		cmsg := C.CString(msg)
+		defer C.free(unsafe.Pointer(cmsg))
+		return C.cef_dt_send(browser, cmsg, C.size_t(len(msg))) != 0
+	}
+)
+
+// devtoolsResultLimit caps the copy of one DevTools result. Storage.getCookies
+// lists the whole browser context, so the limit leaves room for a large
+// persistent profile.
+const devtoolsResultLimit = 32 << 20
+
+// cefOnDevToolsResult — the result of one DevTools method call (UI thread).
+// The result is copied out of CEF's buffer, which is valid only here.
+//
+//export cefOnDevToolsResult
+func cefOnDevToolsResult(data unsafe.Pointer, id, success C.int, result unsafe.Pointer, n C.size_t) {
+	s := cefSessionOf(data)
+	if s == nil {
+		return
+	}
+	var raw []byte
+	if result != nil && n > 0 && n <= devtoolsResultLimit {
+		raw = C.GoBytes(result, C.int(n))
+	}
+	s.devtoolsResult(int(id), success != 0, raw, time.Now())
+}
+
 // cefFocusBrowser — a seam so ordering tests need no real browser.
 var cefFocusBrowser = func(browser unsafe.Pointer) { C.cef_focus(browser) }
 
@@ -1130,9 +1351,18 @@ func cefOnBrowserCreated(browser, data unsafe.Pointer) {
 		return
 	}
 	s.browser = browser
+	if s.wait != nil || s.wr.owner != "" || s.del != nil {
+		// Reads of Partitioned cookies need a live browser, for the wait and
+		// for the end of the popup. A failed registration leaves the visitor
+		// path as the only source.
+		s.dtReg = cefDevToolsAttach(browser, s.key)
+	}
 	cefFocusBrowser(browser)
 	webpopupDeps.ts.Trace(trace.TRACE_DEBUG, "cef",
 		"browser created id=%v", browser)
+	if s.del != nil {
+		s.deleteStart()
+	}
 }
 
 //export cefOnPaint
@@ -1225,6 +1455,15 @@ type cookieQuery struct {
 	mu        sync.Mutex
 	cancelled bool // guarded by mu
 	visits    []cookieVisit
+	// firstParty is the owner's held Partitioned cookie to add to a
+	// webcookies()/persistWebCookie result (set before the read starts).
+	firstParty *WebpopupCookie
+	// firstPartyAmbiguous names a cookie the hold found ambiguous for the URL.
+	firstPartyAmbiguous string
+	// owner and gen: the plugin the read answers and its popup generation
+	// when the read was allowed; a newer popup supersedes the answer.
+	owner string
+	gen   uint64
 }
 
 // cookieQueries — the reads in flight, keyed by the visitor's user data,
@@ -1338,7 +1577,11 @@ func cefCookiesDone(data unsafe.Pointer) {
 		s.cookieQueryDone(q, visits)
 		return
 	}
-	cookies, ambiguous := scopeCookies(visits, q.url)
+	if !cefOwnerCtx.stillCurrent(q.owner, q.gen) {
+		q.done <- []WebpopupCookie{}
+		return
+	}
+	cookies, ambiguous := mergeFirstParty(visits, q.url, q.firstParty, q.firstPartyAmbiguous)
 	if ambiguous > 0 {
 		webpopupDeps.ts.Trace(trace.TRACE_DEBUG, "cef",
 			"webcookies: %d ambiguous cookie name(s) withheld", ambiguous)
@@ -1348,21 +1591,11 @@ func cefCookiesDone(data unsafe.Pointer) {
 
 //export cefCookieDelMatch
 func cefCookieDelMatch(dom, path, name *C.char) C.int {
-	if cefDelNames != nil && !cefDelNames[C.GoString(name)] {
-		return 0
+	if cookieDeleteMatches(C.GoString(dom), C.GoString(path), C.GoString(name),
+		cefDelHost, cefDelPath, cefDelNames) {
+		return 1
 	}
-	// Same rules as the shared HTTP jar: the cookie's Domain must
-	// domain-match the request host, its Path must be a request-path
-	// prefix.
-	d := strings.TrimPrefix(C.GoString(dom), ".")
-	if cefDelHost != d && !strings.HasSuffix(cefDelHost, "."+d) {
-		return 0
-	}
-	p := C.GoString(path)
-	if !strings.HasPrefix(cefDelPath, p) {
-		return 0
-	}
-	return 1
+	return 0
 }
 
 //export cefCookiesDeleted
@@ -1380,6 +1613,9 @@ func cefCookiesDeleted(data unsafe.Pointer, n C.int) {
 // noteURL remembers the main frame's latest https page; a subframe never
 // moves the popup's origin.
 func (s *cefSession) noteURL(uri string, isMain bool) {
+	if s.closing {
+		return // the page the user closed stays the popup's end
+	}
 	s.topURL = mainFrameURL(s.topURL, uri, isMain)
 }
 
@@ -1397,10 +1633,10 @@ func (s *cefSession) checkTrapURI(uri string) {
 // cookie. Triggers (page loads, the poll) coalesce: a check that arrives
 // while one runs queues exactly one follow-up. The UI thread never waits.
 func (s *cefSession) checkCookie() {
-	if s.finished || s.wait == nil {
+	if s.finished || s.closing || s.wait == nil {
 		return
 	}
-	if s.cookieQuery != nil {
+	if s.cookieQuery != nil || s.dt.busy(time.Now()) {
 		s.cookieCheckPending = true
 		return
 	}
@@ -1445,18 +1681,142 @@ func (s *cefSession) cookieQueryDone(q *cookieQuery, visits []cookieVisit) {
 	if s.cookieQuery == q {
 		s.cookieQuery, s.cookieCancel = nil, nil
 	}
-	if s.finished {
+	if s.finished || s.closing {
 		return
 	}
 	// The jar is shared: the cookie completes the wait only while the main
 	// frame shows the wait origin, judged now and not when the read started.
 	// Otherwise the poll and the next page load ask again.
 	if cookieWaitSatisfied(visits, q.url, s.wait.Name) && cookieWaitMayComplete(s.topURL, s.wait) {
+		// A Partitioned cookie of the same name is invisible to the visitor
+		// but is sent with the other one: let DevTools rule that out first.
+		now := time.Now()
+		if s.dtUnanswered.IsZero() {
+			s.dtUnanswered = now
+		}
+		if now.Sub(s.dtUnanswered) < devtoolsReadLimit && s.startDevToolsRead(now) {
+			s.visitorWaiting = true
+			return
+		}
 		s.waiter.Fire(WebpopupCookieFound)
+		return
+	}
+	// The visitor never returns a Partitioned cookie: ask DevTools too. Its
+	// result runs the coalesced check.
+	if s.startDevToolsRead(time.Now()) {
 		return
 	}
 	if s.cookieCheckPending {
 		s.checkCookie()
+	}
+}
+
+// devtoolsTargetURL is the wait target as DevTools wants it, with the port.
+func (s *cefSession) devtoolsTargetURL() string {
+	host := s.wait.target.host
+	if s.wait.port != "" {
+		host += ":" + s.wait.port
+	}
+	return s.wait.target.scheme + "://" + host + s.wait.target.path
+}
+
+// startDevToolsRead sends one Network.getCookies for the wait target, unless
+// one is in flight (an unanswered one is abandoned after devtoolsReadLimit)
+// or the main frame is not on the wait origin. It reports whether a read is
+// now in flight.
+func (s *cefSession) startDevToolsRead(now time.Time) bool {
+	if s.finished || s.wait == nil || s.dtReg == nil || s.browser == nil ||
+		!cookieWaitMayComplete(s.topURL, s.wait) {
+		return false
+	}
+	if s.dt.busy(now) {
+		return true
+	}
+	s.dtNextID++
+	if !cefDevToolsSend(s.browser, devtoolsCookiesRequest(s.dtNextID, s.devtoolsTargetURL())) {
+		return false
+	}
+	s.dt.begin(s.dtNextID, now)
+	return true
+}
+
+// devtoolsResult — a DevTools read ended (UI thread). A first-party
+// Partitioned cookie completes the wait once, like the visitor's cookie; the
+// cookie is kept for finish() to hand to the owner. Never logs a name or
+// value, only the refusal reason when it changes.
+func (s *cefSession) devtoolsResult(id int, success bool, raw []byte, now time.Time) {
+	if s.del != nil {
+		s.deleteResult(id, success, raw)
+		return
+	}
+	if !s.dt.take(id) || s.finished {
+		return
+	}
+	if s.closing {
+		s.endResult(success, raw, now)
+		return
+	}
+	if s.wait == nil {
+		return
+	}
+	s.dtUnanswered = time.Time{}
+	forVisitor := s.visitorWaiting
+	s.visitorWaiting = false
+	// DevTools failing leaves the visitor's cookie standing; only a twin seen
+	// by DevTools refuses it.
+	standing := forVisitor && cookieWaitMayComplete(s.topURL, s.wait)
+	reason := "devtools-error"
+	if success {
+		list, err := parseDevToolsCookies(raw)
+		if err != nil {
+			reason = "devtools-unreadable"
+		} else {
+			s.traceDevToolsList(list)
+			c, why := selectFirstPartyCookie(list, s.wait.target, waitOrigin(s.wait),
+				httpsOriginOf(s.topURL), s.wait.Name, now)
+			if c != nil {
+				s.fpCookie = c
+				if !s.waiter.Fire(WebpopupCookieFound) {
+					s.fpCookie = nil
+				}
+				return
+			}
+			reason = why
+			if why == "ambiguous-cookie" {
+				standing = false // a twin: neither cookie may be taken
+			}
+		}
+	}
+	if standing {
+		s.waiter.Fire(WebpopupCookieFound)
+		return
+	}
+	if reason != s.dtLastReason {
+		s.dtLastReason = reason
+		webpopupDeps.ts.Trace(trace.TRACE_DEBUG, "cef",
+			"devtools cookie read: %s", reason)
+	}
+	if s.cookieCheckPending {
+		s.checkCookie()
+	}
+}
+
+// traceDevToolsList logs, when it changes, how many cookies DevTools listed
+// and how many of the awaited name, partitioned or not: counts only.
+func (s *cefSession) traceDevToolsList(list []devtoolsCookie) {
+	named, part := 0, 0
+	for _, c := range list {
+		if c.Name == s.wait.Name {
+			named++
+			if c.PartitionKey != nil || c.PartitionKeyOpaque {
+				part++
+			}
+		}
+	}
+	sum := fmt.Sprintf("%d listed, %d named, %d partitioned", len(list), named, part)
+	if sum != s.dtLastList {
+		s.dtLastList = sum
+		webpopupDeps.ts.Trace(trace.TRACE_DEBUG, "cef", "devtools cookie read: %s", sum)
 	}
 }
 
@@ -1468,20 +1828,224 @@ func (s *cefSession) finish(code int) {
 	if s.waiter != nil {
 		code = s.waiter.Resolve(code)
 	}
+	if s.finished || s.closing {
+		return
+	}
+	if s.startEndRead(code) {
+		return
+	}
+	s.completeFinish(code)
+}
+
+// ---- deletion of first-party Partitioned cookies ----
+
+// cefDeleteJob — one deletion run by an invisible helper browser: the
+// visitor cannot see (so cannot delete) a Partitioned cookie, and no popup
+// browser is alive when a plugin forgets its clearance. DevTools lists the
+// store with partition keys and deletes exactly the first-party ones.
+type cefDeleteJob struct {
+	host, path string
+	names      map[string]bool
+	done       func(n int)
+	listID     int
+	pending    map[int]bool
+	deleted    int
+	timer      *time.Timer
+}
+
+// deleteJobLimit bounds the whole helper-browser deletion.
+const deleteJobLimit = 8 * time.Second
+
+// startDeleteJob starts the deletion on the UI thread; done receives the
+// number of cookies removed, exactly once, also on any failure (0).
+func startDeleteJob(host, path string, names map[string]bool, done func(n int)) *cefSession {
+	s := &cefSession{wr: &WebpopupResult{}, done: make(chan *WebpopupResult, 1), hidden: true}
+	s.del = &cefDeleteJob{host: host, path: path, names: names, done: done, pending: map[int]bool{}}
+	s.key = cefTokenNew()
+	cefSessions.Store(s.key, s)
+	if !cefCreateBrowser(s.key, "about:blank") {
+		cefActiveN.Add(1) // balance completeFinish(), as for a failed popup create
+		s.endDeleteJob()
+		return s
+	}
+	cefActiveN.Add(1)
+	s.del.timer = time.AfterFunc(deleteJobLimit, func() { wpPlatformDispatch(s.deleteTimeout) })
+	return s
+}
+
+func (s *cefSession) deleteSend(msg func(id int) string) (id int, ok bool) {
+	if s.dtReg == nil || s.browser == nil {
+		return 0, false
+	}
+	s.dtNextID++
+	if !cefDevToolsSend(s.browser, msg(s.dtNextID)) {
+		return 0, false
+	}
+	return s.dtNextID, true
+}
+
+func (s *cefSession) deleteStart() {
+	id, ok := s.deleteSend(devtoolsStorageRequest)
+	if !ok {
+		s.endDeleteJob()
+		return
+	}
+	s.del.listID = id
+}
+
+func (s *cefSession) deleteResult(id int, success bool, raw []byte) {
+	j := s.del
+	if s.finished || j == nil {
+		return
+	}
+	switch {
+	case id == j.listID:
+		j.listID = 0
+		if !success {
+			s.endDeleteJob()
+			return
+		}
+		list, err := parseDevToolsCookies(raw)
+		if err != nil {
+			s.endDeleteJob()
+			return
+		}
+		for _, c := range deletableFirstParty(list, j.host, j.path, j.names) {
+			c := c
+			if did, ok := s.deleteSend(func(id int) string { return devtoolsDeleteRequest(id, c) }); ok {
+				j.pending[did] = true
+			}
+		}
+		if len(j.pending) == 0 {
+			s.endDeleteJob()
+		}
+	case j.pending[id]:
+		delete(j.pending, id)
+		if success {
+			j.deleted++
+		}
+		if len(j.pending) == 0 {
+			s.endDeleteJob()
+		}
+	}
+}
+
+func (s *cefSession) deleteTimeout() {
+	if s.del != nil && !s.finished {
+		s.endDeleteJob()
+	}
+}
+
+// endDeleteJob reports the count once and closes the helper browser.
+func (s *cefSession) endDeleteJob() {
+	j := s.del
+	if j == nil || s.finished {
+		return
+	}
+	if j.timer != nil {
+		j.timer.Stop()
+	}
+	// A hold for a cookie that is gone must not be served again.
+	cefOwnerCtx.dropFirstParty(j.host, j.path, j.names)
+	n := j.deleted
+	s.del = nil
+	s.completeFinish(WebpopupLoadError)
+	j.done(n)
+}
+
+// endReadLimit bounds how long a popup that has ended keeps its browser for
+// the DevTools read of first-party Partitioned cookies.
+const endReadLimit = 2 * time.Second
+
+// startEndRead reads, before the browser goes away, the first-party
+// Partitioned cookies of the page the popup ended on, so that the owner's
+// persistWebCookie right after the popup still finds them (the visitor
+// cannot see them and the browser is destroyed). It applies to any result
+// that records an owner context, only for an owner and an https page, and
+// holds nothing but cookies the first-party rule accepts for exactly that
+// origin. The read is bounded by endReadLimit; true means the end is
+// deferred to its answer or the bound.
+func (s *cefSession) startEndRead(code int) bool {
+	if s.dtReg == nil || s.browser == nil || s.wr.owner == "" ||
+		popupContextURL(code, s.topURL, s.wait) == "" {
+		return false
+	}
+	if httpsOriginOf(s.topURL) == "" {
+		return false
+	}
+	now := time.Now()
+	s.dtNextID++
+	// The whole browser context, not the page's URL: a first-party cookie of
+	// the origin may sit on another path than the page the popup ended on.
+	if !cefDevToolsSend(s.browser, devtoolsStorageRequest(s.dtNextID)) {
+		return false
+	}
+	s.dt.begin(s.dtNextID, now)
+	s.closing, s.endCode = true, code
+	s.hideSurface()
+	s.endTimer = time.AfterFunc(endReadLimit, func() { wpPlatformDispatch(s.endTimeout) })
+	return true
+}
+
+// endResult takes the answer of the end read (UI thread).
+func (s *cefSession) endResult(success bool, raw []byte, now time.Time) {
+	if success {
+		if list, err := parseDevToolsCookies(raw); err == nil {
+			s.endSet.cookies, s.endSet.blockers = selectFirstPartyInventory(list, httpsOriginOf(s.topURL), now)
+			s.endRead = true
+		}
+	}
+	s.completeFinish(s.endCode)
+}
+
+// endTimeout is the bound of the end read: finish with nothing held.
+func (s *cefSession) endTimeout() {
+	if s.closing && !s.finished {
+		s.completeFinish(s.endCode)
+	}
+}
+
+func (s *cefSession) hideSurface() {
+	if !s.hidden && wpSurfaceGlueCef.hide != nil {
+		s.hidden = true
+		wpSurfaceGlueCef.hide()
+	}
+}
+
+// completeFinish is the end of the session once nothing is left to read.
+func (s *cefSession) completeFinish(code int) {
 	if s.finished {
 		return
 	}
+	if s.endTimer != nil {
+		s.endTimer.Stop()
+		s.endTimer = nil
+	}
 	s.finished = true
 	s.wr.ResultCode = code
-	cefOwnerCtx.record(s.wr.owner, s.ownerGen, popupContextURL(code, s.topURL, s.wait))
+	ctxURL := popupContextURL(code, s.topURL, s.wait)
+	set := s.endSet
+	// Only a successful final inventory is held. When it failed, timed out,
+	// could not be sent or had no DevTools registration to run on, no cookie
+	// is held (the one the wait found may be deleted by now) and the origin
+	// is marked unavailable, so the owner's read withholds the name instead
+	// of delivering the visitor's cookie of it, which a Partitioned twin
+	// might make ambiguous. The plugin's next attempt retries.
+	set.unavailable = !s.endRead
+	cefOwnerCtx.recordFirstPartySet(s.wr.owner, s.ownerGen, ctxURL, time.Now(), set)
+	s.fpCookie, s.endSet = nil, firstPartySet{}
+	if s.dtReg != nil {
+		// Before the close: the registration is released on the UI thread
+		// while the browser is alive.
+		cefDevToolsDetach(s.dtReg)
+		s.dtReg = nil
+	}
 	if s.cookieCancel != nil {
 		s.cookieCancel()
 		s.cookieQuery, s.cookieCancel = nil, nil
 	}
 	cefActiveN.Add(-1)
-	if wpSurfaceGlueCef.hide != nil {
-		wpSurfaceGlueCef.hide()
-	}
+	s.hideSurface()
 	if s.browser != nil {
 		cefCloseBrowser(s.browser)
 		s.browser = nil
@@ -1811,7 +2375,8 @@ func wpPlatformCookies(uri string, r *cookieRead) {
 		r.done <- nil
 		return
 	}
-	if !cefOwnerCtx.readAllowed(r.owner, uri) {
+	gen, allowed := cefOwnerCtx.readAllowedGen(r.owner, uri)
+	if !allowed {
 		// The jar is shared by all plugins: an owner gets a cookie only
 		// from the origin its own popup ended on.
 		r.done <- []WebpopupCookie{}
@@ -1824,7 +2389,16 @@ func wpPlatformCookies(uri string, r *cookieRead) {
 	}
 	curi := C.CString(uri)
 	defer C.free(unsafe.Pointer(curi))
-	q := &cookieQuery{url: u, done: r.done}
+	q := &cookieQuery{url: u, done: r.done, owner: r.owner, gen: gen}
+	if r.owner != "" && r.name != "" {
+		// The popup's browser is gone, and the visitor cannot see a
+		// Partitioned cookie: add what the owner's wait read, if still held.
+		var amb bool
+		q.firstParty, amb = cefOwnerCtx.firstPartyLookup(r.owner, uri, u, r.name, time.Now())
+		if amb {
+			q.firstPartyAmbiguous = r.name
+		}
+	}
 	key, cancel, ok := startCookieQuery(q)
 	if !ok {
 		r.done <- []WebpopupCookie{}
@@ -1861,7 +2435,25 @@ func wpPlatformDeleteCookies(owner, host, path string, names map[string]bool,
 		cefDelPath = "/"
 	}
 	cefDelNames = names
-	cefCookiesDelCh = done
+	delPath := cefDelPath
+	// The visitor never saw a Partitioned cookie, so the deletion below
+	// cannot reach one; what a wait read and holds must not outlive it.
+	cefOwnerCtx.dropFirstParty(host, delPath, names)
+	vis := make(chan int, 1)
+	cefCookiesDelCh = vis
 	cefActiveN.Add(1)
 	C.cef_delete_cookies(nil)
+	// Then the first-party Partitioned ones, through DevTools. Never block
+	// the UI thread on the visitor: wait for it on a goroutine and start
+	// the helper browser back on the UI thread.
+	go func() {
+		n := 0
+		select {
+		case n = <-vis:
+		case <-time.After(deleteJobLimit):
+		}
+		wpPlatformDispatch(func() {
+			startDeleteJob(host, delPath, names, func(m int) { done <- n + m })
+		})
+	}()
 }

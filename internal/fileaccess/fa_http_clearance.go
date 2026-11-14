@@ -158,10 +158,11 @@ func (hc *httpCookie) importedRecord() ImportedCookie {
 }
 
 // findImportedLocked returns the index of the imported record for
-// (origin, name), or -1. Caller holds httpCookies.mu.
-func (fam *FileAccessManager) findImportedLocked(origin, name string) int {
+// (owner, origin, name), or -1: each owner keeps its own record. Caller holds
+// httpCookies.mu.
+func (fam *FileAccessManager) findImportedLocked(owner, origin, name string) int {
 	for i, x := range fam.httpCookies.list {
-		if x.imported && x.scopeOrigin == origin && x.name == name {
+		if x.imported && x.scopeOwner == owner && x.scopeOrigin == origin && x.name == name {
 			return i
 		}
 	}
@@ -195,9 +196,9 @@ func (fam *FileAccessManager) purgeExpiredImportedLocked(now int64) {
 // HTTPImportClearance stores ic as an imported record: sent only to an
 // opted-in request of ic.Owner, which then carries ic.UA. The shared host
 // User-Agent is never changed. A second import for the same owner, origin and
-// name replaces the first; another owner for that origin and name is rejected,
-// as is a UA that differs from the one the owner's other records on the host
-// are bound to.
+// name replaces the first; another owner's record for that origin and name is
+// a record of its own and is never touched. A UA that differs from the one
+// the owner's other records on the host are bound to is rejected.
 func (fam *FileAccessManager) HTTPImportClearance(ic ImportedCookie) error {
 	in := ic
 	err := fam.importClearance(&ic)
@@ -232,11 +233,7 @@ func (fam *FileAccessManager) importClearance(icp *ImportedCookie) error {
 
 	fam.httpCookies.mu.Lock()
 	fam.purgeExpiredImportedLocked(now)
-	idx := fam.findImportedLocked(ic.Origin, ic.Name)
-	if idx >= 0 && fam.httpCookies.list[idx].scopeOwner != ic.Owner {
-		fam.httpCookies.mu.Unlock()
-		return errors.New("import clearance: record belongs to another owner")
-	}
+	idx := fam.findImportedLocked(ic.Owner, ic.Origin, ic.Name)
 	if ua := fam.ownerHostUALocked(ic.Owner, host, idx); ua != "" && ua != ic.UA {
 		fam.httpCookies.mu.Unlock()
 		return errors.New("import clearance: owner already has imported cookies on this host bound to another user agent")
@@ -264,12 +261,12 @@ func (fam *FileAccessManager) HTTPGetImportedClearance(owner, origin, name strin
 	now := time.Now().Unix()
 	fam.httpCookies.mu.Lock()
 	defer fam.httpCookies.mu.Unlock()
-	idx := fam.findImportedLocked(canon, name)
+	idx := fam.findImportedLocked(owner, canon, name)
 	if idx < 0 {
 		return ImportedCookie{}, false
 	}
 	hc := fam.httpCookies.list[idx]
-	if hc.scopeOwner != owner || hc.expire <= now {
+	if hc.expire <= now {
 		return ImportedCookie{}, false
 	}
 	return hc.importedRecord(), true
@@ -283,8 +280,8 @@ func (fam *FileAccessManager) HTTPDeleteImportedClearance(owner, origin, name st
 		return false
 	}
 	fam.httpCookies.mu.Lock()
-	idx := fam.findImportedLocked(canon, name)
-	if idx < 0 || fam.httpCookies.list[idx].scopeOwner != owner {
+	idx := fam.findImportedLocked(owner, canon, name)
+	if idx < 0 {
 		fam.httpCookies.mu.Unlock()
 		return false
 	}
